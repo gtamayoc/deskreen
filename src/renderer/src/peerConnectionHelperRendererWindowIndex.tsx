@@ -30,76 +30,79 @@ const loadDevelopmentText = (): void => {
 	}
 };
 
+let peerConnection: PeerConnection | undefined;
+
 export function handleIpcRenderer(): void {
 	window.electron.ipcRenderer.on('start-peer-connection', () => {
-		let peerConnection: PeerConnection | undefined;
+		console.log('start-peer-connection signal received');
+	});
 
-		window.electron.ipcRenderer.on(
-			'create-peer-connection-with-data',
-			async (_, data) => {
-				// cleanup existing peer connection before creating new one
-				if (peerConnection) {
-					peerConnection.selfDestroy();
-					peerConnection = undefined;
-				}
-
-				const port = await window.electron.ipcRenderer.invoke(
-					IpcEvents.GetPort,
-				);
-				peerConnection = new PeerConnection(
-					data.roomID,
-					data.sharingSessionID,
-					data.user,
-					port,
-				);
-
-				peerConnection.setOnDeviceConnectedCallback((deviceData) => {
-					window.electron.ipcRenderer.send('peer-connected', deviceData);
-				});
-			},
-		);
-
-		window.electron.ipcRenderer.on(
-			'set-desktop-capturer-source-id',
-			(_, id) => {
-				if (peerConnection) {
-					peerConnection.setDesktopCapturerSourceID(id);
-				}
-			},
-		);
-
-		window.electron.ipcRenderer.on('call-peer', () => {
+	window.electron.ipcRenderer.on(
+		'create-peer-connection-with-data',
+		async (_, data) => {
+			console.log('create-peer-connection-with-data received:', data);
+			// cleanup existing peer connection before creating new one
 			if (peerConnection) {
-				peerConnection.callPeer();
+				peerConnection.selfDestroy();
+				peerConnection = undefined;
 			}
-		});
 
-		window.electron.ipcRenderer.on(
-			'disconnect-by-host-machine-user',
-			(_, deviceId: string) => {
-				if (peerConnection) {
-					peerConnection.disconnectByHostMachineUser(deviceId);
-				}
-			},
-		);
+			const port = await window.electron.ipcRenderer.invoke(
+				IpcEvents.GetPort,
+			);
+			peerConnection = new PeerConnection(
+				data.roomID,
+				data.sharingSessionID,
+				data.user,
+				port,
+			);
 
-		window.electron.ipcRenderer.on('deny-connection-for-partner', () => {
+			peerConnection.setOnDeviceConnectedCallback((deviceData) => {
+				window.electron.ipcRenderer.send('peer-connected', deviceData);
+			});
+		},
+	);
+
+	window.electron.ipcRenderer.on(
+		'set-desktop-capturer-source-id',
+		(_, id) => {
 			if (peerConnection) {
-				peerConnection.denyConnectionForPartner();
+				peerConnection.setDesktopCapturerSourceID(id);
 			}
-		});
+		},
+	);
 
-		window.electron.ipcRenderer.on('send-user-allowed-to-connect', () => {
-			if (peerConnection) {
-				peerConnection.sendUserAllowedToConnect();
-			}
-		});
+	window.electron.ipcRenderer.on('call-peer', () => {
+		if (peerConnection) {
+			peerConnection.callPeer();
+		}
+	});
 
-		window.electron.ipcRenderer.on('app-language-changed', () => {
+	window.electron.ipcRenderer.on(
+		'disconnect-by-host-machine-user',
+		(_, deviceId: string) => {
 			if (peerConnection) {
-				peerConnection.notifyClientWithNewLanguage();
+				peerConnection.disconnectByHostMachineUser(deviceId);
 			}
-		});
+		},
+	);
+
+	window.electron.ipcRenderer.on('deny-connection-for-partner', () => {
+		if (peerConnection) {
+			peerConnection.denyConnectionForPartner();
+		}
+	});
+
+	window.electron.ipcRenderer.on('send-user-allowed-to-connect', () => {
+		if (peerConnection) {
+			peerConnection.sendUserAllowedToConnect();
+		}
+	});
+
+	window.electron.ipcRenderer.on('app-language-changed', () => {
+		if (peerConnection) {
+			peerConnection.notifyClientWithNewLanguage();
+		}
 	});
 }
 

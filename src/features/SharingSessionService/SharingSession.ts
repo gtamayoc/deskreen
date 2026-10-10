@@ -46,11 +46,7 @@ export default class SharingSession {
 		this.peerConnectionHelperRenderer =
 			peerConnectionHelperRendererService.createPeerConnectionHelperRenderer();
 
-		this.peerConnectionHelperRenderer.webContents.on('did-finish-load', () => {
-			// TODO: I need to remove dependency on renderer window, just to facilitate development
-			// TODO: OR I can use a Utility or Child process to handle this. https://electron-vite.org/guide/dev#utility-process-and-child-process
-			// TODO: probably using worker thread is the best option, but it will use the same resources as the main thread. child process is using more resources, but it is more isolated.
-			// TODO: https://github.com/alex8088/electron-vite-worker-example
+		const sendSessionData = () => {
 			this.peerConnectionHelperRenderer?.webContents.send(
 				'create-peer-connection-with-data',
 				{
@@ -59,7 +55,16 @@ export default class SharingSession {
 					user,
 				},
 			);
-		});
+		};
+
+		if (this.peerConnectionHelperRenderer.webContents.isLoading()) {
+			this.peerConnectionHelperRenderer.webContents.once(
+				'did-finish-load',
+				sendSessionData,
+			);
+		} else {
+			sendSessionData();
+		}
 
 		this.peerConnectionHelperRenderer.webContents.on(
 			'ipc-message',

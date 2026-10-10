@@ -21,7 +21,12 @@ interface SocketOPTS {
 
 function isLocalhostSocket(socket: Io.Socket) {
 	const remoteAddress = socket.request.socket.remoteAddress ?? '';
-	return remoteAddress.includes(LOCALHOST_SOCKET_IP);
+	return (
+		remoteAddress.includes(LOCALHOST_SOCKET_IP) ||
+		remoteAddress === '::1' ||
+		remoteAddress.includes('::ffff:127.0.0.1') ||
+		remoteAddress === 'localhost'
+	);
 }
 
 export default class Socket implements SocketOPTS {
