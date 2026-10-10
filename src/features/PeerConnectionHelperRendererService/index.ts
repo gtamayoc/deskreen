@@ -42,9 +42,15 @@ export default class RendererWebrtcHelpersService {
 			},
 		});
 
-		helperRendererWindow.loadURL(
-			`file://${this.appPath}/renderer/peerConnectionHelperRendererWindowIndex.html`,
-		);
+		if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+			helperRendererWindow.loadURL(
+				`${process.env['ELECTRON_RENDERER_URL']}/peerConnectionHelperRendererWindowIndex.html`,
+			);
+		} else {
+			helperRendererWindow.loadURL(
+				`file://${this.appPath}/renderer/peerConnectionHelperRendererWindowIndex.html`,
+			);
+		}
 
 		helperRendererWindow.webContents.on('did-finish-load', () => {
 			if (!helperRendererWindow) {

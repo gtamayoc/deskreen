@@ -15,6 +15,7 @@
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:client-viewer && npm run typecheck:node && npm run typecheck:web",
     "start": "electron-vite preview",
+    "predev": "npm run buildClientViewer",
     "dev": "concurrently \"electron-vite dev\" \"npm run devClientViewer\"",
     "devClientViewer": "cd src/client-viewer && npm run dev -- --host --port=5174",
     "buildDev": "npm run buildClientViewer && electron-vite build",
