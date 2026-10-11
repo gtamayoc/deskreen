@@ -153,20 +153,17 @@ export async function handleDeviceIPMessage(
 	};
 	peerConnection.partnerDeviceDetails = device;
 
-	if (isRecognizedReconnect || isUsb) {
+	if (isRecognizedReconnect) {
 		console.log(
-			isUsb
-				? 'Direct USB connection detected. Auto-approving connection without modal prompt.'
-				: 'Recognized reconnecting device. Auto-approving connection without modal prompt.',
+			'Recognized reconnecting device. Auto-approving connection without modal prompt.',
 		);
 		peerConnection.isReconnecting = false;
 		peerConnection.onReconnectingStateChanged(false);
 		await peerConnection.sendUserAllowedToConnect();
 		await peerConnection.createPeer();
 		peerConnection.callPeer();
-	} else {
-		peerConnection.onDeviceConnectedCallback(device);
 	}
+	peerConnection.onDeviceConnectedCallback(device);
 }
 
 export const handleRecieveEncryptedMessage = async (
@@ -205,12 +202,34 @@ export const handleRecieveEncryptedMessage = async (
 		}
 	}
 	if (message.type === 'DEVICE_DETAILS') {
+		let handled = false;
+		const fallbackTimer = setTimeout(() => {
+			if (!handled) {
+				handled = true;
+				void handleDeviceIPMessage(
+					message.payload.transportType === 'usb' ? '127.0.0.1' : 'unknown',
+					peerConnection,
+					message,
+				);
+			}
+		}, 1000);
+
 		peerConnection.socket.emit(
 			'GET_IP_BY_SOCKET_ID',
 			payload.fromSocketID,
 			(deviceIP: string) => {
-				// TODO: need to add myIP in client message.payload.myIP, then if retrieved deviceIP and myIP from client don't match, we were spoofed, then we can interrupt connection immediately!
-				void handleDeviceIPMessage(deviceIP, peerConnection, message);
+				if (!handled) {
+					handled = true;
+					clearTimeout(fallbackTimer);
+					void handleDeviceIPMessage(
+						deviceIP ||
+							(message.payload.transportType === 'usb'
+								? '127.0.0.1'
+								: 'unknown'),
+						peerConnection,
+						message,
+					);
+				}
 			},
 		);
 	}

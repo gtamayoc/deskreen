@@ -96,7 +96,7 @@ function TranslatedContent() {
 				)}
 			</p>
 
-			<p style={{ marginBottom: '24px', fontSize: '14px', color: '#5C7080' }}>
+			<p style={{ marginBottom: '24px', fontSize: '14px', color: 'var(--text-muted-color, #5c7080)' }}>
 				{t('Data goes to: Google Analytics. See')}{' '}
 				<a
 					href="https://policies.google.com/privacy"
@@ -251,7 +251,7 @@ function PrivacyControlDialog(props: PrivacyControlDialogProps) {
 			>
 				<Col xs={6}>
 					<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-						<Icon icon="translate" style={{ color: '#5C7080' }} />
+						<Icon icon="translate" style={{ color: 'var(--text-muted-color, #5c7080)' }} />
 						<HTMLSelect
 							value={currentLanguage}
 							onChange={handleLanguageChange}

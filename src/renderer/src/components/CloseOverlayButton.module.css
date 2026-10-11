@@ -1,0 +1,8 @@
+.closeButton {
+	position: relative;
+	width: 40px;
+	height: 40px;
+	left: calc(100% - 55px);
+	border-radius: 100px;
+	z-index: 9999;
+}

@@ -55,11 +55,26 @@ function MainView() {
 	const [connectionRoomId, setConnectionRoomId] = useState<string>('');
 
 	useEffect(() => {
-		const { pathname } = window.location;
-		const normalizedPath = pathname.startsWith('/')
-			? pathname.slice(1)
-			: pathname;
-		const extractedRoomId = normalizedPath.split('/').filter(Boolean)[0] || '';
+		const { pathname, hash, search } = window.location;
+		let extractedRoomId = '';
+
+		// 1. Check hash (e.g. #/roomId or #roomId)
+		if (hash) {
+			const cleanHash = hash.replace(/^#\/?/, '').split('?')[0];
+			extractedRoomId = cleanHash.split('/').filter(Boolean)[0] || '';
+		}
+
+		// 2. Check pathname (e.g. /roomId)
+		if (!extractedRoomId && pathname) {
+			const cleanPath = pathname.replace(/^\//, '').split('?')[0];
+			extractedRoomId = cleanPath.split('/').filter(Boolean)[0] || '';
+		}
+
+		// 3. Check search query (e.g. ?roomId=... or ?room=...)
+		if (!extractedRoomId && search) {
+			const params = new URLSearchParams(search);
+			extractedRoomId = params.get('roomId') || params.get('room') || '';
+		}
 
 		if (extractedRoomId !== '') {
 			setConnectionRoomId(extractedRoomId);

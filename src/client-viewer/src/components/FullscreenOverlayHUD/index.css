@@ -15,7 +15,15 @@
 	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
 	user-select: none;
 	touch-action: none;
+	max-width: calc(100vw - 16px);
+	box-sizing: border-box;
+	overflow-x: auto;
+	scrollbar-width: none;
 	transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+
+.fullscreen-overlay-hud::-webkit-scrollbar {
+	display: none;
 }
 
 .fullscreen-overlay-hud.hud-dimmed {

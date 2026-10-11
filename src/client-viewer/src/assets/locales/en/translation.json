@@ -3,7 +3,7 @@
 	"Waiting for user to select source to share from screen sharing device...": "Waiting for user to select source to share from screen sharing device...",
 	"My Device Info": "My Device Info",
 	"Device Type": "Device Type",
-	"Your Device IP should match with Device IP in alert popup appeared on your computer, where Deskreen-CE is running": "Your Device IP should match with \"Device IP\" in alert popup appeared on your computer, where Deskreen-CE is running.",
+	"Your Device IP should match with Device IP in alert popup appeared on your computer, where Deskreen-CE is running": "Your Device IP should match with \"Device IP\" in alert popup appeared on screen sharing device.",
 	"Device IP": "Device IP",
 	"Device Browser": "Device Browser",
 	"Device OS": "Device OS",
@@ -41,5 +41,6 @@
 	"Unpair": "Unpair",
 	"Session ID": "Session ID",
 	"Click to boost video stream if it is lagging": "Click to boost video stream if it is lagging",
-	"re-initiate-connection": "Re-initiate Connection"
+	"re-initiate-connection": "Re-initiate Connection",
+	"Privacy Notice: Analytics in This App": "Privacy Notice: Analytics in This App"
 }

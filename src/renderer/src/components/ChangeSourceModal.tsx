@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Dialog, Button, ButtonGroup, Spinner, H3, Text } from '@blueprintjs/core';
 import { Row, Col } from 'react-flexbox-grid';
-import { createStyles, makeStyles } from '@material-ui/core/styles';
 import { useTranslation } from 'react-i18next';
 import { IpcEvents } from '../../../common/IpcEvents.enum';
 import SharingSourcePreviewCard from './SharingSourcePreviewCard';
@@ -15,33 +14,32 @@ interface ChangeSourceModalProps {
 	onClose: () => void;
 }
 
-const useStyles = makeStyles(() =>
-	createStyles({
-		dialogRoot: {
-			width: '90%',
-			maxWidth: '900px',
-			height: '85vh !important',
-			overflowY: 'scroll',
-			borderRadius: '12px',
-		},
-		header: {
-			display: 'flex',
-			justifyContent: 'space-between',
-			alignItems: 'center',
-			padding: '16px 20px',
-			borderBottom: '1px solid rgba(128, 128, 128, 0.2)',
-		},
-		content: {
-			padding: '20px',
-			minHeight: '300px',
-		},
-		modeButtons: {
-			marginBottom: '20px',
-			display: 'flex',
-			justifyContent: 'center',
-		},
-	}),
-);
+const dialogRootStyle: React.CSSProperties = {
+	width: '90%',
+	maxWidth: '900px',
+	height: '85vh',
+	overflowY: 'scroll',
+	borderRadius: '12px',
+};
+
+const headerStyle: React.CSSProperties = {
+	display: 'flex',
+	justifyContent: 'space-between',
+	alignItems: 'center',
+	padding: '16px 20px',
+	borderBottom: '1px solid rgba(128, 128, 128, 0.2)',
+};
+
+const contentStyle: React.CSSProperties = {
+	padding: '20px',
+	minHeight: '300px',
+};
+
+const modeButtonsStyle: React.CSSProperties = {
+	marginBottom: '20px',
+	display: 'flex',
+	justifyContent: 'center',
+};
 
 export const ChangeSourceModal: React.FC<ChangeSourceModalProps> = ({
 	isOpen,
@@ -49,7 +47,6 @@ export const ChangeSourceModal: React.FC<ChangeSourceModalProps> = ({
 	deviceName,
 	onClose,
 }) => {
-	const classes = useStyles();
 	const { t } = useTranslation();
 	const [isEntireScreen, setIsEntireScreen] = useState(true);
 	const [sourceIds, setSourceIds] = useState<string[]>([]);
@@ -104,13 +101,13 @@ export const ChangeSourceModal: React.FC<ChangeSourceModalProps> = ({
 		<Dialog
 			isOpen={isOpen}
 			onClose={onClose}
-			className={classes.dialogRoot}
+			style={dialogRootStyle}
 			usePortal
 			autoFocus
 			canEscapeKeyClose
 			canOutsideClickClose
 		>
-			<div className={classes.header}>
+			<div style={headerStyle}>
 				<div>
 					<H3 style={{ margin: 0 }}>{t('choose-entire-screen-or-app-window-you-want-to-share')}</H3>
 					<Text className="bp3-text-muted">
@@ -120,8 +117,8 @@ export const ChangeSourceModal: React.FC<ChangeSourceModalProps> = ({
 				<CloseOverlayButton onClick={onClose} isDefaultStyles />
 			</div>
 
-			<div className={classes.content}>
-				<div className={classes.modeButtons}>
+			<div style={contentStyle}>
+				<div style={modeButtonsStyle}>
 					<ButtonGroup>
 						<Button
 							intent={isEntireScreen ? 'primary' : 'none'}

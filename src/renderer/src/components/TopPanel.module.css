@@ -1,0 +1,80 @@
+.topPanelRoot {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding-top: 15px;
+	margin-bottom: 20px;
+	position: relative;
+	gap: 12px;
+}
+
+.logoWithAppName {
+	margin: 0 auto;
+}
+
+.appNameHeader {
+	margin: 0 auto;
+	padding-top: 5px;
+	font-family: 'Lexend Peta', sans-serif;
+	font-size: 20px;
+	color: #e2791b;
+	cursor: default !important;
+}
+
+.topPanelControlButtonsRoot {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.topPanelControlsWrapper {
+	position: absolute;
+	right: 15px;
+	top: 15px;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 6px;
+}
+
+.topPanelControlButton {
+	width: 40px;
+	height: 40px;
+	border-radius: 50px;
+	cursor: default !important;
+}
+
+.topPanelControlButtonMargin {
+	cursor: default !important;
+	position: relative;
+}
+
+.updateBadge {
+	border-radius: 12px;
+	cursor: pointer;
+	box-shadow: none;
+}
+
+.topPanelIconOfControlButton {
+	cursor: default !important;
+}
+
+.connectedDevicesBadge {
+	position: absolute;
+	top: -4px;
+	right: -4px;
+	background-color: #ff3b30;
+	color: #ffffff;
+	border-radius: 10px;
+	min-width: 20px;
+	height: 20px;
+	display: flex;
+	align-items: center;
+	justifyContent: center;
+	font-size: 12px;
+	font-weight: 600;
+	padding: 0 6px;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+	z-index: 10;
+	line-height: 1;
+}

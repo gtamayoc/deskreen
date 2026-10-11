@@ -1,4 +1,4 @@
-import shortId from 'shortid';
+import { v4 as uuidv4 } from 'uuid';
 import SimplePeer from 'simple-peer';
 import { UAParser } from 'ua-parser-js';
 import type { Socket } from 'socket.io-client';
@@ -197,7 +197,7 @@ export default class PeerConnection {
 			this.peer = null;
 		}
 
-		// When we are testing with jest, SimplePeer() can not be created, so we just return
+		// In mock/test environments where WebRTC APIs are absent, SimplePeer cannot be instantiated
 		const peer = new SimplePeer({
 			initiator: false,
 			config: { iceServers: [] },
@@ -232,8 +232,8 @@ export default class PeerConnection {
 	}
 
 	createUser(): LocalPeerUser {
-		const username = shortId.generate();
-		const id = shortId.generate();
+		const username = uuidv4();
+		const id = uuidv4();
 
 		return {
 			username,

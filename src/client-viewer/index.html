@@ -4,7 +4,21 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Deskreen CE Viewer</title>
+    <title>Screen Viewer</title>
+    <!-- Anti-flash hydration script for dark mode before initial paint -->
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('deskreen_dark_mode');
+          var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (saved === 'true' || (saved !== 'false' && prefersDark)) {
+            document.documentElement.classList.add('bp3-dark');
+          }
+        } catch (_err) {
+          // Storage access restricted or private mode
+        }
+      })();
+    </script>
     <!-- GA tag ID will be loaded dynamically after user consent -->
     <meta name="ga-tag-id" content="%VITE_CLIENT_VIEWER_GA_TAG%" />
     <meta name="client-viewer-version" content="%VITE_CLIENT_VIEWER_VERSION%" />
@@ -166,6 +180,11 @@
     </script>
   </head>
   <body>
+    <script>
+      if (document.documentElement.classList.contains('bp3-dark')) {
+        document.body.classList.add('bp3-dark');
+      }
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

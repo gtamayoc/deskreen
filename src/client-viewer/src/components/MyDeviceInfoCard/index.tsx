@@ -1,4 +1,4 @@
-import { Callout, Card, H3, Text, Tooltip, Position } from '@blueprintjs/core';
+import { Callout, Card, H4, Text, Tooltip, Position } from '@blueprintjs/core';
 import { useTranslation } from 'react-i18next';
 
 interface MyDeviceDetailsCardProps {
@@ -16,12 +16,15 @@ function MyDeviceInfoCard(props: MyDeviceDetailsCardProps) {
 			elevation={3}
 			style={{
 				backgroundColor: 'var(--card-bg-color, #ffffff)',
-				marginBottom: '30px',
+				marginBottom: '10px',
+				padding: '12px 14px',
+				width: '100%',
+				boxSizing: 'border-box',
 			}}
 		>
-			<H3>{`${t('My Device Info')}:`}</H3>
-			<Callout>
-				<Text>{`${t('Device Type')}: ${myDeviceType}`}</Text>
+			<H4 style={{ margin: '0 0 6px 0', fontSize: '15px' }}>{`${t('My Device Info')}:`}</H4>
+			<Callout style={{ padding: '8px 10px', marginBottom: '6px' }}>
+				<Text style={{ fontSize: '13px' }}>{`${t('Device Type')}: ${myDeviceType}`}</Text>
 				<Tooltip
 					content={t(
 						'Your Device IP should match with Device IP in alert popup appeared on your computer, where Deskreen-CE is running',
@@ -33,21 +36,21 @@ function MyDeviceInfoCard(props: MyDeviceDetailsCardProps) {
 						style={{
 							display: 'inline-block',
 							fontWeight: 900,
-							paddingLeft: '12px',
-							paddingRight: '12px',
+							paddingLeft: '10px',
+							paddingRight: '10px',
 							borderRadius: '20px',
-							marginTop: '4px',
-							marginBottom: '4px',
+							marginTop: '2px',
+							marginBottom: '2px',
 						}}
 					>
-						<Text>{`${t('Device IP')}: ${myIP}`}</Text>
+						<Text style={{ fontSize: '13px' }}>{`${t('Device IP')}: ${myIP}`}</Text>
 					</div>
 				</Tooltip>
-				<Text>{`${t('Device Browser')}: ${myBrowser}`}</Text>
-				<Text>{`${t('Device OS')}: ${myOS}`}</Text>
-				<Text>{`${t('My Current Connection ID')}: ${myRoomId}`}</Text>
+				<Text style={{ fontSize: '13px' }}>{`${t('Device Browser')}: ${myBrowser}`}</Text>
+				<Text style={{ fontSize: '13px' }}>{`${t('Device OS')}: ${myOS}`}</Text>
+				<Text style={{ fontSize: '13px' }}>{`${t('My Current Connection ID')}: ${myRoomId}`}</Text>
 			</Callout>
-			<Text className="bp3-text-muted">
+			<Text className="bp3-text-muted" style={{ fontSize: '11px', lineHeight: '1.2' }}>
 				{t(
 					'These details should match with the ones that you see in alert popup on computer screen, where Deskreen-CE is running',
 				)}

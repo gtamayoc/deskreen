@@ -47,7 +47,13 @@ body.bp3-dark .privacy-consent-buttons-container {
 		0 6px 24px rgba(15, 153, 96, 0.6),
 		0 0 30px rgba(15, 153, 96, 0.4) !important;
 	transform: translateY(-2px);
-	background: linear-gradient(135deg, #15b371 0%, #0f9960 100%) !important;
+	background: linear-gradient(135deg, #0f9960 0%, #0a7a4a 100%) !important;
+}
+
+.allow-analytics-button:focus-visible,
+.disagree-analytics-button:focus-visible {
+	outline: 2px solid var(--link-color, #106ba3) !important;
+	outline-offset: 2px !important;
 }
 
 .allow-analytics-button:active {

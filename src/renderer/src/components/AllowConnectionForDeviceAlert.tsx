@@ -42,6 +42,8 @@ const AllowConnectionForDeviceAlert: React.FC<
 				deviceOS={device?.deviceOS}
 				deviceBrowser={device?.deviceBrowser}
 				deviceRoomId={device?.deviceRoomId}
+				transportType={device?.transportType}
+				isReconnecting={device?.isReconnecting}
 			/>
 			<div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
 				<Checkbox

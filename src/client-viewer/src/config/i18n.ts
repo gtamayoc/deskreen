@@ -26,7 +26,7 @@ i18n
 		backend: {
 			// path where resources get loaded from
 			loadPath: '/locales/{{lng}}/{{ns}}.json',
-			// TODO: in future implement custom nodejs server that accepts missing translations POST requests and updates .missing.json files accordingly. Here is how to do so: https://www.robinwieruch.de/react-internationalization . it can be simple nodejs server that can be started when 'yarn dev' is running, need to ckagne package.json file then
+			// TODO: in future implement custom nodejs server that accepts missing translations POST requests and updates .missing.json files accordingly. Here is how to do so: https://www.robinwieruch.de/react-internationalization . it can be simple nodejs server that can be started when 'npm run dev' is running, need to change package.json file then
 			// path to post missing resources
 			addPath: '/locales/{{lng}}/{{ns}}.json',
 			// jsonIndent to use when storing json files

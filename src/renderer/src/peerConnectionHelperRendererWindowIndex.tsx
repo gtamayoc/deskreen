@@ -84,7 +84,7 @@ export function handleIpcRenderer(): void {
 	window.electron.ipcRenderer.on(
 		'set-desktop-capturer-source-id',
 		(_, id) => {
-			if (peerConnection) {
+			if (peerConnection && peerConnection.desktopCapturerSourceID !== id) {
 				peerConnection.setDesktopCapturerSourceID(id);
 			}
 		},

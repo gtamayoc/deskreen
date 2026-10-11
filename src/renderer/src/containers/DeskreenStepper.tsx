@@ -120,10 +120,23 @@ const DeskreenStepper = ({
 
 	useEffect(() => {
 		const wifiCheckInterval = setInterval(async () => {
+			if (
+				activeStep > 0 ||
+				pendingConnectionDevice ||
+				isUserAllowedConnection
+			) {
+				setisNoWiFiError(false);
+				return;
+			}
 			const isConnected = await window.electron.ipcRenderer.invoke(
 				'check-wifi-connection',
 			);
-			if (!isConnected) {
+			if (
+				!isConnected &&
+				activeStep === 0 &&
+				!pendingConnectionDevice &&
+				!isUserAllowedConnection
+			) {
 				setisNoWiFiError(true);
 			} else {
 				setisNoWiFiError(false);
@@ -133,7 +146,7 @@ const DeskreenStepper = ({
 		return () => {
 			clearInterval(wifiCheckInterval);
 		};
-	}, []);
+	}, [activeStep, pendingConnectionDevice, isUserAllowedConnection]);
 
 	const steps = getSteps(t);
 
@@ -211,49 +224,65 @@ const DeskreenStepper = ({
 			device: Device,
 		): Promise<void> => {
 			setPendingConnectionDevice(device);
+			setIsUserAllowedConnection(true);
+			setIsAllowDeviceAlertOpen(false);
+			setisNoWiFiError(false);
+			setIsEntireScreenSelected(true);
+			setIsApplicationWindowSelected(false);
+			setActiveStep(3);
+
 			const fingerprint = `${device.deviceIP || ''}_${device.deviceOS || ''}_${device.deviceBrowser || ''}`;
-			const isUsb =
-				device.transportType === 'usb' ||
-				device.deviceIP?.includes('127.0.0.1') ||
-				device.deviceIP?.includes('localhost') ||
-				device.deviceIP === '::1';
-			try {
-				const isTrusted = await window.electron.ipcRenderer.invoke(
-					IpcEvents.IsDeviceTrusted,
-					fingerprint,
-				);
-				if (isUsb || isTrusted) {
-					setIsUserAllowedConnection(true);
-					// Auto-select primary screen so streaming starts right away without touching PC
-					const defaultScreenId = await window.electron.ipcRenderer.invoke(
-						IpcEvents.RequestDesktopCapturerPortalSource,
-						{ mode: 'screen' },
-					);
-					if (defaultScreenId) {
-						await window.electron.ipcRenderer.invoke(
-							IpcEvents.SetDesktopCapturerSourceId,
-							defaultScreenId,
-						);
-					}
+			if (fingerprint) {
+				try {
 					await window.electron.ipcRenderer.invoke(
-						IpcEvents.SetDeviceConnectedStatus,
+						IpcEvents.AddTrustedDevice,
+						fingerprint,
 					);
-					await window.electron.ipcRenderer.invoke(
-						IpcEvents.StartSharingOnWaitingForConnectionSharingSession,
-					);
-					setActiveStep(3);
-					void showMessageFromNewToaster(
-						isUsb
-							? `Conexión USB directa activa: ${device.deviceBrowser || device.deviceOS || 'Android'}`
-							: `${t('connected')}: ${device.deviceBrowser || 'Trusted Device'}`,
-					);
-					return;
+				} catch (e) {
+					console.error('Failed to auto-trust device', e);
 				}
-			} catch (e) {
-				console.error('Failed to verify trusted device', e);
 			}
 
-			setIsAllowDeviceAlertOpen(true);
+			try {
+				await window.electron.ipcRenderer.invoke(
+					IpcEvents.SetDeviceConnectedStatus,
+				);
+			} catch (e) {
+				console.error('Failed to set device connected status', e);
+			}
+
+			try {
+				let currentSourceId = (await window.electron.ipcRenderer.invoke(
+					IpcEvents.GetWaitingForConnectionSharingSessionSourceId,
+				)) as string;
+				if (!currentSourceId) {
+					const screenSourceIds = (await window.electron.ipcRenderer.invoke(
+						IpcEvents.GetDesktopSharingSourceIds,
+						{ isEntireScreenToShareChosen: true },
+					)) as string[];
+					if (screenSourceIds && screenSourceIds.length > 0) {
+						currentSourceId = screenSourceIds[0];
+						await window.electron.ipcRenderer.invoke(
+							IpcEvents.SetDesktopCapturerSourceId,
+							currentSourceId,
+						);
+					}
+				}
+			} catch (e) {
+				console.warn('Failed to ensure default screen source id:', e);
+			}
+
+			try {
+				await window.electron.ipcRenderer.invoke(
+					IpcEvents.StartSharingOnWaitingForConnectionSharingSession,
+				);
+			} catch (e) {
+				console.error('Failed to auto-start sharing session', e);
+			}
+
+			void showMessageFromNewToaster(
+				`${t('connected')}: ${device.deviceBrowser || device.deviceOS || 'Device'}`,
+			);
 		};
 
 		window.electron.ipcRenderer.on(
@@ -267,7 +296,16 @@ const DeskreenStepper = ({
 				handlePendingConnectionDevice,
 			);
 		};
-	}, [setActiveStep, setIsAllowDeviceAlertOpen, setIsUserAllowedConnection, setPendingConnectionDevice, t]);
+	}, [
+		setActiveStep,
+		setIsAllowDeviceAlertOpen,
+		setIsApplicationWindowSelected,
+		setIsEntireScreenSelected,
+		setIsUserAllowedConnection,
+		setPendingConnectionDevice,
+		setisNoWiFiError,
+		t,
+	]);
 
 	const handleUserClickedDeviceDisconnectButton =
 		useCallback(async (): Promise<void> => {
@@ -350,8 +388,7 @@ const DeskreenStepper = ({
 
 	return (
 		<>
-			<>
-				<Row style={{ width: '100%' }}>
+			<Row style={{ width: '100%' }}>
 					<Col xs={12}>
 						<Stepper
 							className={classes.stepperComponent}
@@ -375,8 +412,19 @@ const DeskreenStepper = ({
 					onCancel={handleCancelAlert}
 					onConfirm={handleConfirmAlert}
 				/>
-			</>
-			<Dialog isOpen={isNoWiFiError} autoFocus usePortal>
+			<Dialog
+				isOpen={
+					isNoWiFiError &&
+					activeStep === 0 &&
+					!pendingConnectionDevice &&
+					!isUserAllowedConnection
+				}
+				canEscapeKeyClose
+				canOutsideClickClose
+				onClose={() => setisNoWiFiError(false)}
+				autoFocus
+				usePortal
+			>
 				<Grid>
 					<div style={{ padding: '10px' }}>
 						<Row center="xs" style={{ marginTop: '10px' }}>

@@ -101,6 +101,13 @@ export default class PeerConnection {
 	}
 
 	async setDesktopCapturerSourceID(id: string): Promise<void> {
+		if (
+			this.desktopCapturerSourceID === id &&
+			this.localStream &&
+			this.localStream.active
+		) {
+			return;
+		}
 		this.desktopCapturerSourceID = id;
 		if (typeof process !== 'undefined' && process.env?.RUN_MODE === 'test')
 			return;

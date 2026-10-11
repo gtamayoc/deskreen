@@ -35,7 +35,7 @@ function ErrorDialog(props: ErrorDialogProps) {
 			<Row center="xs" style={{ marginTop: '10px' }}>
 				<Col xs={12}>
 					<H3 className={Classes.TEXT_MUTED}>
-						{t('Deskreen CE Error Dialog')}
+						{t('Error occurred')}
 					</H3>
 				</Col>
 			</Row>
@@ -43,12 +43,11 @@ function ErrorDialog(props: ErrorDialogProps) {
 				<Col xs={12} md={10} lg={6}>
 					<Row middle="xs" center="xs">
 						<Col xs={1}>
-							<Icon icon="error" size={52} color="#8A9BA8" />
+							<Icon icon="error" size={52} color="#db3737" />
 						</Col>
 						<Col xs={11}>
 							<H1
-								className={Classes.TEXT_DISABLED}
-								style={{ marginBottom: '0px' }}
+								style={{ color: '#db3737', marginBottom: '0px' }}
 							>
 								{`${t('Something went wrong')} :(`}
 							</H1>

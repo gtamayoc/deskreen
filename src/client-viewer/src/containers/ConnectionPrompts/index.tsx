@@ -1,11 +1,9 @@
-import { Row, Col } from 'react-flexbox-grid';
-import { useTranslation } from 'react-i18next';
-import { LIGHT_UI_BACKGROUND } from '../../constants/styleConstants';
-import MyDeviceInfoCard from '../../components/MyDeviceInfoCard';
+import { Button, H4, Icon } from '@blueprintjs/core';
 import type { TFunction } from 'i18next';
-import { Button, H3 } from '@blueprintjs/core';
+import { useTranslation } from 'react-i18next';
 import ConnectingIndicator from '../../components/ConnectingIndicator';
-import DeskreenLogo from '../../images/deskreen_logo_128x128.png';
+import MyDeviceInfoCard from '../../components/MyDeviceInfoCard';
+import { useTheme } from '../../providers/ThemeProvider';
 
 interface ConnectionPropmptsProps {
 	myDeviceDetails: DeviceDetails;
@@ -20,28 +18,48 @@ function getPromptContent(t: TFunction, step: number) {
 	switch (step) {
 		case 1:
 			return (
-				<H3>
+				<H4
+					style={{
+						margin: '4px 0 8px 0',
+						fontSize: '15px',
+						lineHeight: '1.3',
+					}}
+				>
 					{
 						t(
 							'Waiting for user to click ALLOW button on screen sharing device...',
 						) as string
 					}
-				</H3>
+				</H4>
 			);
 		case 2:
-			return <H3>{t('Connected!') as string}</H3>;
+			return (
+				<H4 style={{ margin: '4px 0 8px 0', fontSize: '15px' }}>
+					{t('Connected!') as string}
+				</H4>
+			);
 		case 3:
 			return (
-				<H3>
+				<H4
+					style={{
+						margin: '4px 0 8px 0',
+						fontSize: '15px',
+						lineHeight: '1.3',
+					}}
+				>
 					{
 						t(
 							'Waiting for user to select source to share from screen sharing device...',
 						) as string
 					}
-				</H3>
+				</H4>
 			);
 		default:
-			return <H3>{`${t('Error occurred')} :(`}</H3>;
+			return (
+				<H4 style={{ margin: '4px 0 8px 0', fontSize: '15px' }}>
+					{`${t('Error occurred')} :(`}
+				</H4>
+			);
 	}
 }
 
@@ -55,6 +73,7 @@ function ConnectionPropmpts(props: ConnectionPropmptsProps) {
 	} = props;
 
 	const { t } = useTranslation();
+	const { isDarkMode, toggleDarkMode } = useTheme();
 
 	const handleReinitiateConnection = () => {
 		window.location.reload();
@@ -62,80 +81,103 @@ function ConnectionPropmpts(props: ConnectionPropmptsProps) {
 
 	return (
 		<div
+			className="connection-prompts-container"
 			style={{
 				position: 'absolute',
 				zIndex: 10,
 				top: 0,
 				left: 0,
 				width: '100%',
-				height: '100vh',
-				backgroundColor: LIGHT_UI_BACKGROUND,
+				minHeight: '100%',
+				maxHeight: '100dvh',
+				overflowY: 'auto',
+				backgroundColor: 'var(--light-bg-color, #f4f8fa)',
 				color: 'var(--text-color, #182026)',
+				display: 'flex',
+				flexDirection: 'column',
+				alignItems: 'center',
+				padding: '12px 14px',
+				boxSizing: 'border-box',
 			}}
 		>
-			<Row
-				bottom="xs"
+			<div
+				className="connection-prompts-theme-toggle"
 				style={{
-					height: '50vh',
-					width: '100%',
-					marginRight: '0px',
-					marginLeft: '0px',
+					position: 'absolute',
+					top: 'max(12px, env(safe-area-inset-top, 12px))',
+					right: 'max(14px, env(safe-area-inset-right, 14px))',
+					zIndex: 20,
 				}}
 			>
-				<Row center="xs" style={{ width: '100%', margin: '0 auto' }}>
-					<Col
-						xs={12}
-						style={{
-							marginBottom: '50px',
-							textAlign: 'center',
-							width: '100%',
-						}}
-					>
-						<div style={{ width: '100%' }}>
-							<Row
-								center="xs"
-								style={{ marginTop: '30px', marginBottom: '10px' }}
-							>
-								<img
-									src={DeskreenLogo}
-									alt="Deskreen Logo"
-									style={{
-										width: '80px',
-										height: '80px',
-										marginBottom: '5px',
-									}}
-								/>
-							</Row>
-							<Row center="xs">
-								<H3>Deskreen CE Viewer</H3>
-							</Row>
-							<Row center="xs" style={{ width: '100%', margin: '0 auto' }}>
-								<Col md={6} xl={4}>
-									<MyDeviceInfoCard deviceDetails={myDeviceDetails} />
-								</Col>
-							</Row>
-							<div id="prompt-text" style={{ fontSize: '20px' }}>
-								{getPromptContent(t, promptStep)}
-							</div>
-							<Row center="xs" style={{ marginTop: '20px' }}>
-								<Button
-									className="rounded-pill-button"
-									intent="warning"
-									onClick={handleReinitiateConnection}
-								>
-									{t('re-initiate-connection') as string}
-								</Button>
-							</Row>
-						</div>
-					</Col>
-				</Row>
-			</Row>
-			<ConnectingIndicator
-				currentStep={promptStep}
-				connectionIconType={connectionIconType}
-				isShownSelectingSharingIcon={isShownSpinnerIcon}
-				selectingSharingIconType={spinnerIconType}
-			/>
+				<Button
+					minimal
+					className="rounded-pill-button theme-toggle-btn"
+					icon={<Icon icon={isDarkMode ? 'flash' : 'moon'} />}
+					onClick={toggleDarkMode}
+					title={
+						isDarkMode
+							? (t('Modo Claro') as string)
+							: (t('Modo Oscuro') as string)
+					}
+					aria-label={
+						isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'
+					}
+					style={{
+						padding: '8px',
+						fontSize: '16px',
+						minHeight: '40px',
+						minWidth: '40px',
+						display: 'inline-flex',
+						alignItems: 'center',
+						justifyContent: 'center',
+					}}
+				/>
+			</div>
+			<div
+				style={{
+					width: '100%',
+					maxWidth: '460px',
+					display: 'flex',
+					flexDirection: 'column',
+					alignItems: 'center',
+					textAlign: 'center',
+					marginTop: '8px',
+				}}
+			>
+				<MyDeviceInfoCard deviceDetails={myDeviceDetails} />
+				<div
+					id="prompt-text"
+					style={{ fontSize: '15px', margin: '4px 0', width: '100%' }}
+				>
+					{getPromptContent(t, promptStep)}
+				</div>
+				<Button
+					className="rounded-pill-button"
+					intent="warning"
+					onClick={handleReinitiateConnection}
+					style={{ marginTop: '8px', marginBottom: '14px' }}
+				>
+					{t('re-initiate-connection') as string}
+				</Button>
+			</div>
+			<div
+				style={{
+					width: '100%',
+					display: 'flex',
+					justifyContent: 'center',
+					alignItems: 'center',
+					flex: 1,
+					minHeight: '110px',
+					position: 'relative',
+				}}
+			>
+				<ConnectingIndicator
+					currentStep={promptStep}
+					connectionIconType={connectionIconType}
+					isShownSelectingSharingIcon={isShownSpinnerIcon}
+					selectingSharingIconType={spinnerIconType}
+				/>
+			</div>
 		</div>
 	);
 }

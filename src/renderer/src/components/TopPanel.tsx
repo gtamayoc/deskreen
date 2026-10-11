@@ -1,85 +1,11 @@
 import React from 'react';
 import { Button, H3, Icon, Position, Tag, Tooltip } from '@blueprintjs/core';
-import { createStyles, makeStyles } from '@material-ui/core/styles';
 import { Col, Row } from 'react-flexbox-grid';
 import SettingsOverlay from './SettingsOverlay/SettingsOverlay';
 import ConnectedDevicesListDrawer from './ConnectedDevicesListDrawer';
 import { useTranslation } from 'react-i18next';
 import { IpcEvents } from '../../../common/IpcEvents.enum';
-
-const useStyles = makeStyles(() =>
-	createStyles({
-		topPanelRoot: {
-			display: 'flex',
-			flexDirection: 'column',
-			alignItems: 'center',
-			paddingTop: '15px',
-			marginBottom: '20px',
-			position: 'relative',
-			gap: '12px',
-		},
-		logoWithAppName: { margin: '0 auto' },
-		appNameHeader: {
-			margin: '0 auto',
-			paddingTop: '5px',
-			fontFamily: 'Lexend Peta',
-			fontSize: '20px',
-			color: '#e2791b',
-			cursor: 'default !important',
-		},
-		topPanelControlButtonsRoot: {
-			display: 'flex',
-			alignItems: 'center',
-			gap: '12px',
-		},
-		topPanelControlsWrapper: {
-			position: 'absolute',
-			right: '15px',
-			top: '15px',
-			display: 'flex',
-			flexDirection: 'column',
-			alignItems: 'flex-end',
-			gap: '6px',
-		},
-		topPanelControlButton: {
-			width: '40px',
-			height: '40px',
-			borderRadius: '50px',
-			cursor: 'default !important',
-		},
-		topPanelControlButtonMargin: {
-			cursor: 'default !important',
-			position: 'relative',
-		},
-		updateBadge: {
-			borderRadius: '12px',
-			cursor: 'pointer',
-			boxShadow: 'none',
-		},
-		topPanelIconOfControlButton: {
-			cursor: 'default !important',
-		},
-		connectedDevicesBadge: {
-			position: 'absolute',
-			top: '-4px',
-			right: '-4px',
-			backgroundColor: '#ff3b30',
-			color: '#ffffff',
-			borderRadius: '10px',
-			minWidth: '20px',
-			height: '20px',
-			display: 'flex',
-			alignItems: 'center',
-			justifyContent: 'center',
-			fontSize: '12px',
-			fontWeight: 600,
-			padding: '0 6px',
-			boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
-			zIndex: 10,
-			lineHeight: '1',
-		},
-	}),
-);
+import classes from './TopPanel.module.css';
 
 interface Props {
 	handleReset: () => void;
@@ -87,7 +13,6 @@ interface Props {
 
 export default function TopPanel({ handleReset }: Props): React.ReactElement {
 	const { t } = useTranslation();
-	const classes = useStyles();
 
 	const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 	const [isConnectedDevicesDrawerOpen, setIsConnectedDevicesDrawerOpen] =

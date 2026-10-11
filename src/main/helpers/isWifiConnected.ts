@@ -1,20 +1,26 @@
 import os from 'os';
-import { interfacesToCheck, interfacesStartsWithCheck } from './getMyLocalIpV4';
+import { getDeskreenGlobal } from './getDeskreenGlobal';
 
 export default function isWifiConnected(): boolean {
+	try {
+		const deskreenGlobal = getDeskreenGlobal();
+		if (
+			deskreenGlobal?.connectedDevicesService?.getDevices().length > 0 ||
+			(deskreenGlobal?.sharingSessionService?.sharingSessions &&
+				deskreenGlobal.sharingSessionService.sharingSessions.size > 0)
+		) {
+			return true;
+		}
+	} catch {
+		// Ignore if globals not yet initialized
+	}
+
 	const networkInterfaces = os.networkInterfaces();
 	let hasValidInterface = false;
+
 	Object.entries(networkInterfaces).some(([networksKey, networks]) => {
 		if (!networks) return false;
 		if (networksKey.startsWith('bridge')) return false;
-		if (
-			!interfacesToCheck.includes(networksKey) &&
-			!interfacesStartsWithCheck.some((prefix) =>
-				networksKey.startsWith(prefix),
-			)
-		) {
-			return false;
-		}
 
 		const hasValidNetwork = networks.some((network) => {
 			if (!network.internal && network.family === 'IPv4') {

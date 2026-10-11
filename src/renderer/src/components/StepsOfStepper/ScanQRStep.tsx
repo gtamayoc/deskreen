@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
 	Button,
 	Callout,
@@ -63,26 +63,74 @@ const ScanQRStep: React.FC = () => {
 		id: string;
 		model?: string;
 	} | null>(null);
+	const usbDeviceRef = useRef<{
+		id: string;
+		model?: string;
+		type?: string;
+	} | null>(null);
 	const [isAdbAvailable, setIsAdbAvailable] = useState<boolean | null>(null);
 
 	useEffect(() => {
-		void window.electron.ipcRenderer
-			.invoke(IpcEvents.AdbCheckAvailability)
-			.then((res: { available: boolean }) => {
-				setIsAdbAvailable(Boolean(res?.available));
-			});
+		usbDeviceRef.current = usbDevice;
+	}, [usbDevice]);
+
+	useEffect(() => {
+		let isMounted = true;
+
+		const checkAndSyncAdb = async (): Promise<void> => {
+			try {
+				const res = (await window.electron.ipcRenderer.invoke(
+					IpcEvents.AdbCheckAvailability,
+				)) as { available: boolean };
+				if (!isMounted) return;
+				const available = Boolean(res?.available);
+				setIsAdbAvailable(available);
+
+				if (available) {
+					const devices = (await window.electron.ipcRenderer.invoke(
+						IpcEvents.AdbGetConnectedDevices,
+					)) as Array<{ id: string; model?: string; type?: string }>;
+					if (!isMounted) return;
+					if (devices && devices.length > 0) {
+						const readyDev =
+							devices.find((d) => d.type === 'device') || devices[0];
+						setUsbDevice(readyDev);
+						const port = Number(clientViewerPort);
+						if (port && port >= 1024 && readyDev.type === 'device') {
+							if (usbDeviceRef.current?.id !== readyDev.id) {
+								void window.electron.ipcRenderer.invoke(
+									IpcEvents.AdbSetupReverse,
+									{
+										deviceId: readyDev.id,
+										port,
+									},
+								);
+							}
+						}
+					} else {
+						setUsbDevice(null);
+					}
+				}
+			} catch (err) {
+				console.error('[ScanQRStep] Failed to sync ADB devices:', err);
+			}
+		};
+
+		void checkAndSyncAdb();
 
 		const handleAdbDeviceConnected = (
 			_: unknown,
-			dev: { id: string; model?: string },
+			dev: { id: string; model?: string; type?: string },
 		) => {
 			setUsbDevice(dev);
 			const port = Number(clientViewerPort);
-			if (port && port >= 1024) {
-				void window.electron.ipcRenderer.invoke(IpcEvents.AdbSetupReverse, {
-					deviceId: dev.id,
-					port,
-				});
+			if (port && port >= 1024 && dev.type === 'device') {
+				if (usbDeviceRef.current?.id !== dev.id) {
+					void window.electron.ipcRenderer.invoke(IpcEvents.AdbSetupReverse, {
+						deviceId: dev.id,
+						port,
+					});
+				}
 			}
 		};
 
@@ -99,7 +147,15 @@ const ScanQRStep: React.FC = () => {
 			handleAdbDeviceDisconnected,
 		);
 
+		const interval = setInterval(() => {
+			if (!usbDeviceRef.current) {
+				void checkAndSyncAdb();
+			}
+		}, 3000);
+
 		return () => {
+			isMounted = false;
+			clearInterval(interval);
 			window.electron.ipcRenderer.removeListener(
 				IpcEvents.AdbDeviceConnected,
 				handleAdbDeviceConnected,
@@ -417,6 +473,47 @@ const ScanQRStep: React.FC = () => {
 							</Row>
 						</Callout>
 					</Col>
+				</Row>
+			)}
+			{!usbDevice && isAdbAvailable === true && isQrInteractive && (
+				<Row
+					center="xs"
+					style={{
+						marginTop: '8px',
+						display: 'flex',
+						justifyContent: 'center',
+					}}
+				>
+					<Button
+						minimal
+						small
+						icon="refresh"
+						text="¿Móvil conectado por USB? Detectar dispositivo"
+						onClick={async () => {
+							try {
+								const devices = (await window.electron.ipcRenderer.invoke(
+									IpcEvents.AdbGetConnectedDevices,
+								)) as Array<{ id: string; model?: string; type?: string }>;
+								if (devices && devices.length > 0) {
+									const readyDev =
+										devices.find((d) => d.type === 'device') || devices[0];
+									setUsbDevice(readyDev);
+									const port = Number(clientViewerPort);
+									if (port && port >= 1024 && readyDev.type === 'device') {
+										void window.electron.ipcRenderer.invoke(
+											IpcEvents.AdbSetupReverse,
+											{
+												deviceId: readyDev.id,
+												port,
+											},
+										);
+									}
+								}
+							} catch (err) {
+								console.error('Error detecting USB devices:', err);
+							}
+						}}
+					/>
 				</Row>
 			)}
 			{!usbDevice && isAdbAvailable === false && isQrInteractive && (

@@ -13,6 +13,8 @@ interface FullscreenOverlayHUDProps {
 	onCycleBrightness?: () => void;
 	onToggleOrientation?: () => void;
 	onOpenSourceSwitcher?: () => void;
+	isDarkMode?: boolean;
+	onToggleDarkMode?: () => void;
 }
 
 const STORAGE_KEY_POS = 'deskreen_fullscreen_hud_pos';
@@ -33,6 +35,8 @@ export const FullscreenOverlayHUD: React.FC<FullscreenOverlayHUDProps> = ({
 	onCycleBrightness,
 	onToggleOrientation,
 	onOpenSourceSwitcher,
+	isDarkMode = false,
+	onToggleDarkMode,
 }) => {
 	const [position, setPosition] = useState<Position | null>(() => {
 		try {
@@ -85,6 +89,44 @@ export const FullscreenOverlayHUD: React.FC<FullscreenOverlayHUDProps> = ({
 		};
 	}, [resetDimTimer]);
 
+	useEffect(() => {
+		const clampPositionToViewport = () => {
+			if (!position) return;
+			const hudEl = hudRef.current;
+			const parent = hudEl?.parentElement;
+			const parentWidth = parent?.clientWidth || window.innerWidth;
+			const parentHeight = parent?.clientHeight || window.innerHeight;
+			const hudWidth = hudEl?.offsetWidth || 220;
+			const hudHeight = hudEl?.offsetHeight || 48;
+
+			const maxX = Math.max(0, parentWidth - hudWidth);
+			const maxY = Math.max(0, parentHeight - hudHeight);
+			const boundMaxX = Math.max(8, maxX - 8);
+			const boundMaxY = Math.max(8, maxY - 8);
+
+			if (
+				position.x > boundMaxX ||
+				position.y > boundMaxY ||
+				position.x < 8 ||
+				position.y < 8
+			) {
+				setPosition((prev) => {
+					if (!prev) return null;
+					return {
+						x: Math.min(Math.max(8, prev.x), boundMaxX),
+						y: Math.min(Math.max(8, prev.y), boundMaxY),
+					};
+				});
+			}
+		};
+
+		clampPositionToViewport();
+		window.addEventListener('resize', clampPositionToViewport);
+		return () => {
+			window.removeEventListener('resize', clampPositionToViewport);
+		};
+	}, [position]);
+
 	// Dragging logic for repositioning HUD
 	const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
 		// Only start drag if dragging handle or container, not directly buttons
@@ -120,8 +162,11 @@ export const FullscreenOverlayHUD: React.FC<FullscreenOverlayHUDProps> = ({
 		const maxX = Math.max(0, parentWidth - hudWidth);
 		const maxY = Math.max(0, parentHeight - hudHeight);
 
-		const nextX = Math.min(Math.max(8, dragStartRef.current.initX + deltaX), maxX - 8);
-		const nextY = Math.min(Math.max(8, dragStartRef.current.initY + deltaY), maxY - 8);
+		const boundMaxX = Math.max(8, maxX - 8);
+		const boundMaxY = Math.max(8, maxY - 8);
+
+		const nextX = Math.min(Math.max(8, dragStartRef.current.initX + deltaX), boundMaxX);
+		const nextY = Math.min(Math.max(8, dragStartRef.current.initY + deltaY), boundMaxY);
 
 		const newPos = { x: nextX, y: nextY };
 		setPosition(newPos);
@@ -229,6 +274,21 @@ export const FullscreenOverlayHUD: React.FC<FullscreenOverlayHUDProps> = ({
 						{Math.round(brightness * 100)}%
 					</span>
 				</Button>
+			)}
+
+			{/* Contrast Theme Toggle */}
+			{onToggleDarkMode && (
+				<Button
+					minimal
+					className={`fullscreen-hud-btn fullscreen-hud-btn-theme ${isDarkMode ? 'is-dark-active' : ''}`}
+					icon={<Icon icon="contrast" />}
+					onClick={(e) => {
+						e.stopPropagation();
+						onToggleDarkMode();
+					}}
+					title={isDarkMode ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
+					aria-label={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+				/>
 			)}
 
 			{/* Native Video Play / Pause */}

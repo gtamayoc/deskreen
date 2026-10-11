@@ -1,3 +1,4 @@
+import { BrowserWindow } from 'electron';
 import { IpcEvents } from '../common/IpcEvents.enum';
 import { getDeskreenGlobal } from '../main/helpers/getDeskreenGlobal';
 import { deskreenApp } from '../main';
@@ -17,8 +18,21 @@ export function onDeviceConnectedCallback(device: Device): void {
 		return;
 	}
 	connectedDevicesService.setPendingConnectionDevice(device);
-	deskreenApp.mainWindow?.webContents.send(
-		IpcEvents.SetPendingConnectionDevice,
-		device,
-	);
+
+	const helperWebContents =
+		sharingSessionService.waitingForConnectionSharingSession
+			?.peerConnectionHelperRenderer?.webContents;
+
+	if (deskreenApp.mainWindow && !deskreenApp.mainWindow.isDestroyed()) {
+		deskreenApp.mainWindow.webContents.send(
+			IpcEvents.SetPendingConnectionDevice,
+			device,
+		);
+	} else {
+		for (const win of BrowserWindow.getAllWindows()) {
+			if (!win.isDestroyed() && win.webContents !== helperWebContents) {
+				win.webContents.send(IpcEvents.SetPendingConnectionDevice, device);
+			}
+		}
+	}
 }

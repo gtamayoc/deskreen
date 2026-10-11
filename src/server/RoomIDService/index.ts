@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import shortID from 'shortid';
+import { v4 as uuidv4 } from 'uuid';
 
 export default class RoomIDService {
 	takenRoomIDs: Set<string>;
@@ -30,9 +30,9 @@ export default class RoomIDService {
 
 	getShortIDStringOfAvailableRoom(): Promise<string> {
 		return new Promise<string>((resolve) => {
-			let newID = shortID();
+			let newID = uuidv4();
 			while (this.takenRoomIDs.has(newID)) {
-				newID = shortID();
+				newID = uuidv4();
 			}
 			resolve(newID);
 		});

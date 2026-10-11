@@ -3,7 +3,7 @@
 	"Waiting for user to select source to share from screen sharing device...": "Esperando que el usuario seleccione la fuente para compartir desde el dispositivo para compartir pantalla ...",
 	"My Device Info": "Información de mi dispositivo",
 	"Device Type": "Tipo del dispositivo",
-	"Your Device IP should match with Device IP in alert popup appeared on your computer, where Deskreen-CE is running": "La IP de tu dispositivo debe coincidir con \"IP del dispositivo \" en la ventana emergente de alerta que apareció en la computadora donde se está ejecutando Deskreen-CE.",
+	"Your Device IP should match with Device IP in alert popup appeared on your computer, where Deskreen-CE is running": "La IP de tu dispositivo debe coincidir con \"IP del dispositivo \" en la ventana emergente de alerta que apareció en el dispositivo para compartir pantalla.",
 	"Device IP": "IP del dispositivo",
 	"Device Browser": "Navegador del dispositivo",
 	"Device OS": "SO del dispositivo",

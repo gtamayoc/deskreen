@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Button, Icon, ControlGroup, Text } from '@blueprintjs/core';
-import { createStyles, makeStyles } from '@material-ui/core/styles';
 import ChooseAppOrScreenOverlay from './StepsOfStepper/ChooseAppOrScreenOverlay/ChooseAppOrScreenOverlay';
 import { useTranslation } from 'react-i18next';
 import { IpcEvents } from '../../../common/IpcEvents.enum';
@@ -11,54 +10,39 @@ interface ShareAppOrScreenControlGroupProps {
 	handleNextApplicationWindow: () => void;
 }
 
-const useStyles = makeStyles(() =>
-	createStyles({
-		controlGroupRoot: {
-			width: '500px',
-			display: 'flex',
-			position: 'relative',
-			left: '20px',
-		},
-		shareEntireScreenButton: {
-			height: '180px',
-			width: '50%',
-			color: 'white',
-			fontSize: '20px',
-			borderRadius: '20px 0px 0px 20px !important',
-			textAlign: 'center',
-		},
-		shareEntireScreenButtonIcon: { marginBottom: '20px' },
-		shareAppButton: {
-			height: '180px',
-			width: '50%',
-			borderRadius: '0px 20px 20px 0px !important',
-			color: 'white',
-			fontSize: '20px',
-			textAlign: 'center',
-			backgroundColor: '#48AFF0 !important',
-			'&:hover': {
-				backgroundColor: '#4097ce !important',
-			},
-		},
-		shareAppButtonIcon: { marginBottom: '20px' },
-		orDecorationButton: {
-			height: '38px',
-			width: '40px',
-			borderRadius: '100px !important',
-			position: 'relative',
-			top: '70px',
-			left: '-190px !important',
-			cursor: 'default',
-		},
-	}),
-);
+const controlGroupRootStyle: React.CSSProperties = {
+	width: '380px',
+	display: 'flex',
+	position: 'relative',
+	left: '20px',
+};
+
+const shareEntireScreenButtonStyle: React.CSSProperties = {
+	height: '180px',
+	width: '50%',
+	color: 'white',
+	fontSize: '20px',
+	borderRadius: '20px 0px 0px 20px',
+	textAlign: 'center',
+};
+
+const orDecorationButtonStyle: React.CSSProperties = {
+	height: '38px',
+	width: '40px',
+	borderRadius: '100px',
+	position: 'relative',
+	top: '70px',
+	left: '-190px',
+	cursor: 'default',
+	zIndex: 999,
+};
 
 export default function ShareAppOrScreenControlGroup(
 	props: ShareAppOrScreenControlGroupProps,
 ) {
 	const { handleNextEntireScreen, handleNextApplicationWindow } = props;
-	const classes = useStyles();
 	const { t } = useTranslation();
+	const [isShareAppHovered, setIsShareAppHovered] = useState(false);
 
 	const [isChooseAppOrScreenOverlayOpen, setChooseAppOrScreenOverlayOpen] =
 		useState(false);
@@ -160,18 +144,17 @@ export default function ShareAppOrScreenControlGroup(
 		<>
 			<ControlGroup
 				id="share-screen-or-app-btn-group"
-				className={classes.controlGroupRoot}
 				fill
 				vertical={false}
-				style={{ width: '380px' }}
+				style={controlGroupRootStyle}
 			>
 				<Button
-					className={classes.shareEntireScreenButton}
+					style={shareEntireScreenButtonStyle}
 					intent="primary"
 					onClick={handleChooseEntireScreenOverlayOpen}
 				>
 					<Icon
-						className={classes.shareEntireScreenButtonIcon}
+						style={{ marginBottom: '20px' }}
 						icon="desktop"
 						size={100}
 						color="white"
@@ -179,12 +162,22 @@ export default function ShareAppOrScreenControlGroup(
 					<Text className="bp3-running-text">{t('entire-screen')}</Text>
 				</Button>
 				<Button
-					className={classes.shareAppButton}
+					style={{
+						height: '180px',
+						width: '50%',
+						borderRadius: '0px 20px 20px 0px',
+						color: 'white',
+						fontSize: '20px',
+						textAlign: 'center',
+						backgroundColor: isShareAppHovered ? '#4097ce' : '#48AFF0',
+					}}
 					intent="primary"
 					onClick={handleChooseAppOverlayOpen}
+					onMouseEnter={() => setIsShareAppHovered(true)}
+					onMouseLeave={() => setIsShareAppHovered(false)}
 				>
 					<Icon
-						className={classes.shareAppButtonIcon}
+						style={{ marginBottom: '20px' }}
 						icon="application"
 						size={100}
 						color="white"
@@ -193,8 +186,7 @@ export default function ShareAppOrScreenControlGroup(
 				</Button>
 				<Button
 					active
-					className={classes.orDecorationButton}
-					style={{ zIndex: 999 }}
+					style={orDecorationButtonStyle}
 				>
 					{t('or')}
 				</Button>

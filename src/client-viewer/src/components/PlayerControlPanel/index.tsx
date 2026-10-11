@@ -13,7 +13,6 @@ import {
 	Position,
 	Popover,
 	Classes,
-	H3,
 } from '@blueprintjs/core';
 import screenfull from 'screenfull';
 import { useTranslation } from 'react-i18next';
@@ -41,6 +40,7 @@ const videoQualityButtonStyle: React.CSSProperties = {
 	justifyContent: 'center',
 	alignItems: 'center',
 	textAlign: 'center',
+	minHeight: '40px',
 };
 
 interface PlayerControlPanelProps {
@@ -99,14 +99,6 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 		setIsFullScreenOn(result === 'entered');
 		return result;
 	}, [setIsFullScreenOn]);
-
-	const handleLogoClick = useCallback(() => {
-		trackAnalyticsEvent('logo_clicked', {
-			destination: 'https://deskreen.com',
-		});
-		window.open('https://deskreen.com', '_blank');
-	}, []);
-
 
 	const handlePlayPauseClick = useCallback(() => {
 		const nextAction = isPlaying ? 'pause' : 'play';
@@ -189,30 +181,8 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 			/>
 			<Card elevation={4}>
 				<Row between="xs" middle="xs">
-					<Col xs={12} md={3}>
-						<Row middle="xs" start="xs">
-							<Col xs>
-								<Tooltip
-									content={t('Click to visit our website')}
-									position={Position.BOTTOM}
-								>
-									<Button minimal onClick={handleLogoClick}>
-										<Row middle="xs">
-											<img
-												src="/img/logo512.png"
-												alt="logo"
-												style={{ height: '72px', marginRight: '12px' }}
-											/>
-											<H3 style={{ margin: 0 }}>Deskreen CE Viewer</H3>
-										</Row>
-									</Button>
-								</Tooltip>
-							</Col>
-
-						</Row>
-					</Col>
-					<Col xs={12} md={5}>
-						<Row center="xs" style={{ height: '42px' }}>
+					<Col xs={12} md={7}>
+						<Row center="xs" start="md" style={{ height: '42px' }}>
 							<ButtonGroup
 								style={{
 									borderRadius: '20px',
@@ -447,33 +417,69 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 							</ButtonGroup>
 						</Row>
 					</Col>
-					<Col xs={12} md={3}>
-						<Row end="xs">
+					<Col xs={12} md={5}>
+						<Row end="xs" middle="xs">
 							<Col xs={12}>
-								<Switch
-									onChange={handleDefaultPlayerToggle}
-									innerLabel={isDefaultPlayerTurnedOn ? t('ON') : t('OFF')}
-									inline
-									label={t('Default Video Player')}
-									alignIndicator={Alignment.RIGHT}
-									checked={isDefaultPlayerTurnedOn}
-									disabled={!isFullScreenAPIAvailable}
+								<div
 									style={{
-										marginBottom: '12px',
-									}}
-								/>
-								<Button
-									minimal
-									icon="shield"
-									onClick={handlePrivacyControlClick}
-									style={{
-										width: 'fit-content',
-										marginLeft: 'auto',
-										color: 'var(--text-muted-color, #5C7080)',
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'flex-end',
+										gap: '12px',
+										flexWrap: 'wrap',
 									}}
 								>
-									{t('Privacy Settings')}
-								</Button>
+									<Switch
+										onChange={handleDefaultPlayerToggle}
+										innerLabel={isDefaultPlayerTurnedOn ? t('ON') : t('OFF')}
+										inline
+										label={t('Default Video Player')}
+										alignIndicator={Alignment.RIGHT}
+										checked={isDefaultPlayerTurnedOn}
+										disabled={!isFullScreenAPIAvailable}
+										style={{
+											marginBottom: '0px',
+										}}
+									/>
+									{onToggleDarkMode && (
+										<Button
+											minimal
+											icon={isDarkMode ? 'flash' : 'moon'}
+											onClick={onToggleDarkMode}
+											title={
+												isDarkMode
+													? (t('Modo Claro') as string)
+													: (t('Modo Oscuro') as string)
+											}
+											aria-label={
+												isDarkMode
+													? 'Cambiar a modo claro'
+													: 'Cambiar a modo oscuro'
+											}
+											style={{
+												color: 'var(--text-color, #182026)',
+												minHeight: '40px',
+												minWidth: '40px',
+												display: 'inline-flex',
+												alignItems: 'center',
+												justifyContent: 'center',
+											}}
+										/>
+									)}
+									<Button
+										minimal
+										icon="shield"
+										onClick={handlePrivacyControlClick}
+										style={{
+											color: 'var(--text-muted-color, #5C7080)',
+											minHeight: '40px',
+											display: 'inline-flex',
+											alignItems: 'center',
+										}}
+									>
+										{t('Privacy Settings')}
+									</Button>
+								</div>
 							</Col>
 						</Row>
 					</Col>

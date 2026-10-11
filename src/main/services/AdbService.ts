@@ -92,6 +92,14 @@ export class AdbService {
 		}
 
 		try {
+			if (this.resolvedAdbPath) {
+				try {
+					await execFileAsync(this.resolvedAdbPath, ['start-server']);
+				} catch (serverErr) {
+					console.warn('[AdbService] Warning starting adb server:', serverErr);
+				}
+			}
+
 			const adbModule = Adb as unknown as {
 				createClient: (options?: { bin?: string }) => AdbClient;
 				default?: { createClient: (options?: { bin?: string }) => AdbClient };
@@ -107,31 +115,7 @@ export class AdbService {
 				bin: this.resolvedAdbPath === 'adb' ? undefined : this.resolvedAdbPath,
 			});
 
-			// Check currently connected devices immediately
-			try {
-				const devices = await this.client.listDevices();
-				for (const dev of devices) {
-					const info: AdbDeviceInfo = {
-						id: dev.id,
-						type: dev.type,
-					};
-					if (dev.type === 'device') {
-						try {
-							const properties = await this.client.getDevice(dev.id).getProperties();
-							if (properties) {
-								info.model = properties['ro.product.model'];
-								info.product = properties['ro.product.name'];
-							}
-						} catch {
-							// safe ignore
-						}
-					}
-					this.connectedDevices.set(dev.id, info);
-					void this.handleDeviceConnected(info);
-				}
-			} catch (listErr) {
-				console.warn('[AdbService] Failed initial listDevices, falling back:', listErr);
-			}
+			await this.refreshConnectedDevices();
 
 			await this.startTracking();
 			this.isInitialized = true;
@@ -278,15 +262,21 @@ export class AdbService {
 				const launchKey = `${info.id}:${roomID}`;
 				if (!this.launchedSessions.has(launchKey)) {
 					this.launchedSessions.add(launchKey);
-					const usbUrl = `http://localhost:${port}/#/${roomID}?transport=usb`;
+					const usbUrl = `http://localhost:${port}/${roomID}?transport=usb`;
 					console.log(`[AdbService] Automatically opening URL on Android device: ${usbUrl}`);
-					await this.launchClientOnDevice(info.id, usbUrl);
+					const launched = await this.launchClientOnDevice(info.id, usbUrl);
+					if (!launched) {
+						this.launchedSessions.delete(launchKey);
+					}
 				}
 			}
 		}
 	}
 
-	async setupReversePort(deviceId: string, port: number): Promise<boolean> {
+	async setupReversePort(deviceId: string, port: number, force = false): Promise<boolean> {
+		if (!force && this.reversedPorts.get(deviceId)?.has(port)) {
+			return true;
+		}
 		try {
 			if (this.resolvedAdbPath) {
 				await execFileAsync(this.resolvedAdbPath, [
@@ -305,8 +295,16 @@ export class AdbService {
 			this.reversedPorts.get(deviceId)?.add(port);
 			console.log(`[AdbService] Successfully reversed tcp:${port} -> tcp:${port} for ${deviceId}`);
 			return true;
-		} catch (err) {
-			console.error(`[AdbService] Failed to reverse port ${port} on ${deviceId}:`, err);
+		} catch (err: unknown) {
+			const errMsg = String(err);
+			if (errMsg.includes('cannot rebind') || errMsg.includes('already')) {
+				if (!this.reversedPorts.has(deviceId)) {
+					this.reversedPorts.set(deviceId, new Set());
+				}
+				this.reversedPorts.get(deviceId)?.add(port);
+				return true;
+			}
+			console.warn(`[AdbService] Notice on reverse port ${port} on ${deviceId}:`, errMsg);
 			return false;
 		}
 	}
@@ -380,7 +378,73 @@ export class AdbService {
 		}
 	}
 
-	getConnectedDevices(): AdbDeviceInfo[] {
+	async refreshConnectedDevices(): Promise<AdbDeviceInfo[]> {
+		if (!this.client) {
+			const initialized = await this.init();
+			if (!initialized || !this.client) {
+				return [];
+			}
+		}
+
+		try {
+			const devices = await this.client.listDevices();
+			const currentIds = new Set<string>();
+
+			for (const dev of devices) {
+				currentIds.add(dev.id);
+				let info = this.connectedDevices.get(dev.id);
+				const isNew = !info;
+				const typeChanged = Boolean(info && info.type !== dev.type);
+				if (isNew || typeChanged) {
+					info = {
+						id: dev.id,
+						type: dev.type,
+					};
+					if (dev.type === 'device') {
+						try {
+							const properties = await this.client.getDevice(dev.id).getProperties();
+							if (properties) {
+								info.model = properties['ro.product.model'];
+								info.product = properties['ro.product.name'];
+							}
+						} catch {
+							// safe ignore
+						}
+					}
+					this.connectedDevices.set(dev.id, info);
+					void this.handleDeviceConnected(info);
+				}
+			}
+
+			for (const id of Array.from(this.connectedDevices.keys())) {
+				if (!currentIds.has(id)) {
+					const info = this.connectedDevices.get(id) || {
+						id,
+						type: 'offline',
+					};
+					this.connectedDevices.delete(id);
+					this.reversedPorts.delete(id);
+					for (const key of Array.from(this.launchedSessions)) {
+						if (key.startsWith(`${id}:`)) {
+							this.launchedSessions.delete(key);
+						}
+					}
+					if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+						this.mainWindow.webContents.send(IpcEvents.AdbDeviceDisconnected, info);
+					}
+				}
+			}
+		} catch (err) {
+			console.warn('[AdbService] Error refreshing connected devices:', err);
+		}
+
+		return Array.from(this.connectedDevices.values());
+	}
+
+	async getConnectedDevices(forceRefresh = false): Promise<AdbDeviceInfo[]> {
+		if (forceRefresh || this.connectedDevices.size === 0) {
+			return await this.refreshConnectedDevices();
+		}
 		return Array.from(this.connectedDevices.values());
 	}
 

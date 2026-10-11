@@ -16,4 +16,6 @@ src/client-viewer/.env
 
 AGENTS.md
 .codebase-memory/
-tasks/
+tasks/
+.agents/
+tests/

@@ -34,6 +34,7 @@ import { adbDownloaderService } from '../services/AdbDownloaderService';
 import { deviceIdentityService } from '../services/DeviceIdentityService';
 import type { DeviceSessionIdentity } from '../../common/types/adb';
 import { isTerminalOrConsoleTitle } from '../../common/terminalDetection';
+import { sourcePreferenceService } from '../services/SourcePreferenceService';
 
 
 export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
@@ -177,6 +178,10 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 					roomID,
 				);
 			waitingSession.setOnDeviceConnectedCallback(onDeviceConnectedCallback);
+
+			const initialSourceId =
+				await sourcePreferenceService.resolveInitialSharingSource();
+			waitingSession.setDesktopCapturerSourceID(initialSourceId);
 
 			if (waitingSession.roomID) {
 				adbService.setSessionInfo(signalingServer.port, waitingSession.roomID);
@@ -399,7 +404,7 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 		},
 	);
 
-	function startSharingOnWaitingForConnectionSharingSession(): void {
+	async function startSharingOnWaitingForConnectionSharingSession(): Promise<void> {
 		const deskreenGlobal = getDeskreenGlobal();
 		const { connectedDevicesService, sharingSessionService, roomIDService } =
 			deskreenGlobal;
@@ -438,6 +443,13 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 		}
 
 		if (sharingSession !== null) {
+			if (!sharingSession.desktopCapturerSourceID) {
+				const fallbackSourceId =
+					await sourcePreferenceService.resolveInitialSharingSource();
+				if (fallbackSourceId) {
+					sharingSession.setDesktopCapturerSourceID(fallbackSourceId);
+				}
+			}
 			sharingSession.callPeer();
 			sharingSession.setStatus(SharingSessionStatusEnum.SHARING);
 			sharingSessionService.waitingForConnectionSharingSession = null;
@@ -448,8 +460,8 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 
 	ipcMain.handle(
 		IpcEvents.StartSharingOnWaitingForConnectionSharingSession,
-		() => {
-			startSharingOnWaitingForConnectionSharingSession();
+		async () => {
+			await startSharingOnWaitingForConnectionSharingSession();
 		},
 	);
 
@@ -488,10 +500,11 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 		},
 	);
 
-	ipcMain.handle(IpcEvents.SetDesktopCapturerSourceId, (_, id) => {
+	ipcMain.handle(IpcEvents.SetDesktopCapturerSourceId, async (_, id) => {
 		getDeskreenGlobal().sharingSessionService.waitingForConnectionSharingSession?.setDesktopCapturerSourceID(
 			id,
 		);
+		await sourcePreferenceService.saveSourcePreference(id);
 	});
 
 	ipcMain.handle(IpcEvents.GetIsFirstTimeAppStart, () => {
@@ -597,11 +610,20 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 
 	ipcMain.handle(
 		IpcEvents.ChangeDesktopCapturerSourceForSession,
-		(_, { sharingSessionId, sourceId }: { sharingSessionId: string; sourceId: string }) => {
+		async (
+			_,
+			{
+				sharingSessionId,
+				sourceId,
+			}: { sharingSessionId: string; sourceId: string },
+		) => {
 			const session =
-				getDeskreenGlobal().sharingSessionService.sharingSessions.get(sharingSessionId);
+				getDeskreenGlobal().sharingSessionService.sharingSessions.get(
+					sharingSessionId,
+				);
 			if (session) {
 				session.setDesktopCapturerSourceID(sourceId);
+				await sourcePreferenceService.saveSourcePreference(sourceId);
 				return true;
 			}
 			return false;
@@ -784,6 +806,10 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 
 	ipcMain.handle(IpcEvents.AdbGetStatus, () => {
 		return adbService.getStatus();
+	});
+
+	ipcMain.handle(IpcEvents.AdbGetConnectedDevices, async () => {
+		return await adbService.refreshConnectedDevices();
 	});
 
 	ipcMain.handle(

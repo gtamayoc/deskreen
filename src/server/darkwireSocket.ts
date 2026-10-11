@@ -20,6 +20,9 @@ interface SocketOPTS {
 }
 
 function isLocalhostSocket(socket: Io.Socket) {
+	if (socket.handshake.query?.isHelper === 'true') {
+		return true;
+	}
 	const remoteAddress = socket.request.socket.remoteAddress ?? '';
 	return (
 		remoteAddress.includes(LOCALHOST_SOCKET_IP) ||
@@ -98,7 +101,10 @@ export default class Socket implements SocketOPTS {
 			if (!isLocalhostSocket(this.socket)) {
 				return;
 			}
-			acknowledgeFunction(socketsIPService.getSocketIPByID(socketID));
+			const ip = socketsIPService.getSocketIPByID(socketID) || '127.0.0.1';
+			if (typeof acknowledgeFunction === 'function') {
+				acknowledgeFunction(ip);
+			}
 		});
 
 		this.socket.on('IS_ROOM_LOCKED', async (acknowledgeFunction) => {

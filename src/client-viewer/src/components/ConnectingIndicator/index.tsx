@@ -42,7 +42,14 @@ function getConnectingStepContent(
 	switch (currentStep) {
 		case 1:
 			return (
-				<div style={{ marginTop: '200px' }}>
+				<div
+					style={{
+						position: 'relative',
+						width: '100px',
+						height: '100px',
+						margin: '8px auto',
+					}}
+				>
 					<div id="pulsing-circle-1" style={pulsingCircle1Styles}></div>
 					<div id="pulsing-circle-2" style={pulsingCircle2Styles}>
 						<ConnectingIndicatorIcon connectionIconType={connectionIconType} />
@@ -53,7 +60,10 @@ function getConnectingStepContent(
 			return (
 				<div
 					style={{
-						marginTop: '200px',
+						position: 'relative',
+						width: '100px',
+						height: '100px',
+						margin: '8px auto',
 					}}
 				>
 					<div
@@ -67,7 +77,7 @@ function getConnectingStepContent(
 			);
 		case 3:
 			return (
-				<div style={{ width: '100%', margin: '200px auto 0 auto' }}>
+				<div style={{ width: '100%', margin: '8px auto 0 auto' }}>
 					<LoadingSharingIcon
 						isShownLoadingSharingIcon={isShownLoadingSharingIcon}
 						loadingSharingIconType={loadingSharingIconType}
@@ -95,25 +105,22 @@ function ConnectingIndicator(props: ConnectingIndicatorProps) {
 	} = props;
 
 	return (
-		<>
-			<Row
-				id="connecting-screen"
-				top="xs"
-				style={{
-					height: '50vh',
-					width: '100%',
-					marginRight: '0px',
-					marginLeft: '0px',
-				}}
-			>
-				{getConnectingStepContent(
-					currentStep,
-					connectionIconType,
-					selectingSharingIconType,
-					isShownSelectingSharingIcon,
-				)}
-			</Row>
-		</>
+		<Row
+			id="connecting-screen"
+			center="xs"
+			middle="xs"
+			style={{
+				width: '100%',
+				margin: '0 auto',
+			}}
+		>
+			{getConnectingStepContent(
+				currentStep,
+				connectionIconType,
+				selectingSharingIconType,
+				isShownSelectingSharingIcon,
+			)}
+		</Row>
 	);
 }
 

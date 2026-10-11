@@ -18,6 +18,7 @@ import { toggleOrientation } from '../../utils/screenOrientation';
 import ConsoleActionPad from '../../components/ConsoleActionPad';
 import FullscreenOverlayHUD from '../../components/FullscreenOverlayHUD';
 import SourceSwitcherModal from '../../components/SourceSwitcherModal';
+import { useTheme } from '../../providers/ThemeProvider';
 import type PeerConnection from '../../features/PeerConnection';
 
 interface PlayerViewProps {
@@ -71,9 +72,7 @@ function PlayerView(props: PlayerViewProps) {
 		}
 		return 1.0;
 	});
-	const [isDarkMode, setIsDarkMode] = useState(() => {
-		return localStorage.getItem('deskreen_dark_mode') === 'true';
-	});
+	const { isDarkMode, toggleDarkMode } = useTheme();
 	const [isFullscreen, setIsFullscreen] = useState(() => isPlayerFullscreen());
 	const [isAIPadOpen, setIsAIPadOpen] = useState(false);
 	const [isSourceSwitcherOpen, setIsSourceSwitcherOpen] = useState(false);
@@ -101,15 +100,6 @@ function PlayerView(props: PlayerViewProps) {
 		localStorage.setItem('deskreen_screen_brightness', String(screenBrightness));
 	}, [screenBrightness]);
 
-	useEffect(() => {
-		if (isDarkMode) {
-			document.body.classList.add('bp3-dark');
-		} else {
-			document.body.classList.remove('bp3-dark');
-		}
-		localStorage.setItem('deskreen_dark_mode', String(isDarkMode));
-	}, [isDarkMode]);
-
 	const handleToggleFlip = useCallback(() => {
 		setIsFlippedHorizontal((prev) => !prev);
 	}, []);
@@ -120,10 +110,6 @@ function PlayerView(props: PlayerViewProps) {
 			const nextIdx = idx === -1 || idx === BRIGHTNESS_LEVELS.length - 1 ? 0 : idx + 1;
 			return BRIGHTNESS_LEVELS[nextIdx];
 		});
-	}, []);
-
-	const handleToggleDarkMode = useCallback(() => {
-		setIsDarkMode((prev) => !prev);
 	}, []);
 
 	const handleResetVisualSettings = useCallback(() => {
@@ -316,7 +302,8 @@ function PlayerView(props: PlayerViewProps) {
 				top: 0,
 				left: 0,
 				width: '100%',
-				height: '100vh',
+				minHeight: '100%',
+				height: '100dvh',
 				display: 'flex',
 				flexDirection: 'column',
 				overflow: 'hidden',
@@ -340,7 +327,7 @@ function PlayerView(props: PlayerViewProps) {
 				isFlippedHorizontal={isFlippedHorizontal}
 				onToggleFlip={handleToggleFlip}
 				isDarkMode={isDarkMode}
-				onToggleDarkMode={handleToggleDarkMode}
+				onToggleDarkMode={toggleDarkMode}
 				onResetVisualSettings={handleResetVisualSettings}
 				onOpenSourceSwitcher={() => setIsSourceSwitcherOpen(true)}
 			/>
@@ -408,6 +395,8 @@ function PlayerView(props: PlayerViewProps) {
 						onCycleBrightness={handleCycleBrightness}
 						onToggleOrientation={handleToggleOrientation}
 						onOpenSourceSwitcher={() => setIsSourceSwitcherOpen(true)}
+						isDarkMode={isDarkMode}
+						onToggleDarkMode={toggleDarkMode}
 					/>
 				)}
 				{isConsoleSharing && (

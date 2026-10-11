@@ -1,12 +1,3 @@
-// import Store from 'electron-store';
-//
-// export const store = new Store() as unknown as {
-//   has: (key: string) => boolean;
-//   get: (key: string) => any;
-//   delete: (key: string) => void;
-//   set: (key: string, value: any) => void;
-// };
-
 // In an Electron app, it's best to use the built-in 'app' module
 // to get the correct path for user data.
 // In a standalone script, you could use os.homedir() and a custom directory.

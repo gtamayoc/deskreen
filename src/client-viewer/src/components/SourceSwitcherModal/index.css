@@ -2,8 +2,8 @@
 	max-width: 90vw !important;
 	width: 520px !important;
 	border-radius: 12px !important;
-	background: #1c2127 !important;
-	color: #f5f8fa !important;
+	background: var(--dialog-bg-color, #ffffff) !important;
+	color: var(--text-color, #182026) !important;
 }
 
 .source-switcher-header {
@@ -12,12 +12,12 @@
 	justify-content: space-between;
 	margin-bottom: 12px;
 	padding-bottom: 8px;
-	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+	border-bottom: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.1));
 }
 
 .source-switcher-subtitle {
 	font-size: 13px;
-	color: #8a9ba8;
+	color: var(--text-muted-color, #5c7080);
 }
 
 .source-switcher-loading,
@@ -28,7 +28,7 @@
 	justify-content: center;
 	padding: 28px 12px;
 	gap: 12px;
-	color: #a7b6c2;
+	color: var(--text-muted-color, #5c7080);
 	font-size: 14px;
 }
 
@@ -47,7 +47,7 @@
 	gap: 8px;
 	font-weight: 600;
 	font-size: 14px;
-	color: #48aff0;
+	color: var(--link-color, #106ba3);
 	margin-bottom: 8px;
 }
 
@@ -61,11 +61,11 @@
 	display: flex;
 	align-items: center;
 	gap: 12px;
-	background: rgba(255, 255, 255, 0.05);
-	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: rgba(0, 0, 0, 0.04);
+	border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.1));
 	border-radius: 8px;
 	padding: 10px 14px;
-	color: #f5f8fa;
+	color: var(--text-color, #182026);
 	cursor: pointer;
 	text-align: left;
 	transition: all 0.2s ease-in-out;
@@ -73,8 +73,13 @@
 }
 
 .source-card:hover {
-	background: rgba(255, 255, 255, 0.1);
-	border-color: #137cbd;
+	background: rgba(0, 0, 0, 0.08);
+	border-color: var(--link-color, #106ba3);
+}
+
+.source-card:focus-visible {
+	outline: 2px solid var(--link-color, #106ba3);
+	outline-offset: 2px;
 }
 
 .source-card.is-selected {
@@ -94,7 +99,7 @@
 	width: 32px;
 	height: 32px;
 	flex-shrink: 0;
-	color: #ced9e0;
+	color: var(--text-muted-color, #5c7080);
 }
 
 .source-app-icon {
@@ -118,4 +123,37 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+/* Dark mode overrides */
+body.bp3-dark .source-switcher-dialog {
+	background: #202b33 !important;
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark .source-switcher-header {
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.bp3-dark .source-switcher-subtitle {
+	color: #8a9ba8;
+}
+
+body.bp3-dark .source-section-title {
+	color: #48aff0;
+}
+
+body.bp3-dark .source-card {
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	color: #f5f8fa;
+}
+
+body.bp3-dark .source-card:hover {
+	background: rgba(255, 255, 255, 0.1);
+	border-color: #48aff0;
+}
+
+body.bp3-dark .source-card-icon {
+	color: #ced9e0;
 }

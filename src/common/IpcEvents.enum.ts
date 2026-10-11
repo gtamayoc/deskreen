@@ -59,6 +59,7 @@ export enum IpcEvents {
 	AdbLaunchUrl = 'adb-launch-url',
 	AdbDownloadBinaries = 'adb-download-binaries',
 	AdbGetStatus = 'adb-get-status',
+	AdbGetConnectedDevices = 'adb-get-connected-devices',
 	RegisterDeviceSessionToken = 'register-device-session-token',
 	VerifyDeviceSessionToken = 'verify-device-session-token',
 	GetDeviceSessionToken = 'get-device-session-token',
