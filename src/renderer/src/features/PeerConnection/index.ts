@@ -202,12 +202,25 @@ export default class PeerConnection {
 					)
 						? DesktopCapturerSourceType.SCREEN
 						: DesktopCapturerSourceType.WINDOW;
-					// @ts-ignore
-					this.peer?.send?.(
-						prepareDataMessageToSendScreenSourceType(sourceType),
-					);
+					const peer = this.peer as {
+						connected?: boolean;
+						_channel?: { readyState?: string };
+						send?: (data: unknown) => void;
+					};
+					if (
+						peer?.connected &&
+						peer?._channel?.readyState === 'open' &&
+						typeof peer?.send === 'function'
+					) {
+						peer.send(
+							prepareDataMessageToSendScreenSourceType(sourceType),
+						);
+					}
 				} catch (notifyError) {
-					console.warn('Failed to notify client viewer of source type change:', notifyError);
+					console.warn(
+						'Failed to notify client viewer of source type change:',
+						notifyError,
+					);
 				}
 
 				// update sourceDisplaySize from actual stream to ensure correct resolution
