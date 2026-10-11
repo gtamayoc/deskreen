@@ -160,8 +160,6 @@
 	"connection-limit-reached-tooltip": "Maximaal aantal verbindingen bereikt. Verbreek de verbinding met de huidige weergaveclient (of wacht tot deze verbreekt) om een nieuwe te verbinden.",
 	"scan-the-qr-code-to-connect": "Scan de QR-code om verbinding te maken",
 	"enter-the-following-address-in-browser-address-bar-on-any-device": "Voer het volgende adres in de adresbalk van een willekeurig apparaat in",
-	"deskreen-ce-allows-only-one-client-at-same-time": "Deskreen CE staat slechts één weergaveapparaat tegelijk toe.",
-	"this-will-be-available-only-in-pro-version": "De optie om meer dan één apparaat te verbinden is alleen beschikbaar in de Pro-versie.",
 	"screen-recording-permission-required": "Schermopnametoestemming vereist",
 	"screen-recording-permission-message": "Deskreen vereist schermopnametoestemming om uw scherm te delen. Ga naar Systeeminstellingen > Privacy en beveiliging > Schermopname en schakel toegang voor Deskreen in. Mogelijk moet u de app opnieuw opstarten nadat u toestemming hebt verleend.",
 	"screen-recording-permission-restart-reminder": "U moet de app opnieuw opstarten na het verlenen van schermopnametoestemming om deze van kracht te laten worden.",

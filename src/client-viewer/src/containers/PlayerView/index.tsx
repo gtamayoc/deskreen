@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { OverlayToaster, Position } from '@blueprintjs/core';
 import { useTranslation } from 'react-i18next';
 import VideoJSPlayer from '../../components/VideoJSPlayer';
@@ -42,6 +42,40 @@ function PlayerView(props: PlayerViewProps) {
 		videoQuality,
 		streamUrl,
 	} = props;
+
+	const [isFlippedHorizontal, setIsFlippedHorizontal] = useState(false);
+	const [rotation, setRotation] = useState(0);
+	const [isDarkMode, setIsDarkMode] = useState(() => {
+		return localStorage.getItem('deskreen_dark_mode') === 'true';
+	});
+
+	useEffect(() => {
+		if (isDarkMode) {
+			document.body.classList.add('bp3-dark');
+		} else {
+			document.body.classList.remove('bp3-dark');
+		}
+		localStorage.setItem('deskreen_dark_mode', String(isDarkMode));
+	}, [isDarkMode]);
+
+	const handleToggleFlip = useCallback(() => {
+		setIsFlippedHorizontal((prev) => !prev);
+	}, []);
+
+	const handleRotate = useCallback(() => {
+		setRotation((prev) => (prev + 90) % 360);
+	}, []);
+
+	const handleToggleDarkMode = useCallback(() => {
+		setIsDarkMode((prev) => !prev);
+	}, []);
+
+	const playerTransform = [
+		isFlippedHorizontal ? 'scaleX(-1)' : '',
+		rotation !== 0 ? `rotate(${rotation}deg)` : '',
+	]
+		.filter(Boolean)
+		.join(' ') || 'none';
 
 	// const player = useRef(null);
 
@@ -223,6 +257,12 @@ function PlayerView(props: PlayerViewProps) {
 				setVideoQuality={setVideoQuality}
 				selectedVideoQuality={videoQuality}
 				screenSharingSourceType={screenSharingSourceType}
+				isFlippedHorizontal={isFlippedHorizontal}
+				onToggleFlip={handleToggleFlip}
+				rotation={rotation}
+				onRotate={handleRotate}
+				isDarkMode={isDarkMode}
+				onToggleDarkMode={handleToggleDarkMode}
 			/>
 			<div
 				id="video-container"
@@ -244,6 +284,8 @@ function PlayerView(props: PlayerViewProps) {
 						width: '100%',
 						height: '100%',
 						backgroundColor: 'black',
+						transform: playerTransform,
+						transition: 'transform 0.3s ease',
 					}}
 				>
 					{isWithControls ? (

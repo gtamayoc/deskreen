@@ -161,8 +161,6 @@
 	"connection-limit-reached-tooltip": "Yhteysraja on saavutettu. Katkaise nykyisen katseluasiakkaan yhteys (tai odota, että se katkeaa), jotta voit yhdistää uuden.",
 	"scan-the-qr-code-to-connect": "Skannaa QR-koodi yhdistääksesi",
 	"enter-the-following-address-in-browser-address-bar-on-any-device": "Kirjoita seuraava osoite minkä tahansa laitteen selaimen osoiteriville",
-	"deskreen-ce-allows-only-one-client-at-same-time": "Deskreen CE sallii vain yhden katselulaitteen yhteyden kerrallaan.",
-	"this-will-be-available-only-in-pro-version": "Useamman kuin yhden laitteen liittämisvaihtoehto on saatavilla vain Pro-versiossa.",
 	"screen-recording-permission-required": "Näytön tallennuslupa vaaditaan",
 	"screen-recording-permission-message": "Deskreen vaatii näytön tallennusluvan näyttösi jakamiseen. Mene järjestelmäasetuksiin > Tietosuoja ja turvallisuus > Näytön tallennus ja ota käyttöön pääsy Deskreenlle. Sinun on ehkä käynnistettävä sovellus uudelleen luvan myöntämisen jälkeen.",
 	"screen-recording-permission-restart-reminder": "Sinun on käynnistettävä sovellus uudelleen näytön tallennusluvan myöntämisen jälkeen, jotta se tulee voimaan.",

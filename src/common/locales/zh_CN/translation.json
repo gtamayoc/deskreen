@@ -160,8 +160,6 @@
 	"connection-limit-reached-tooltip": "已达到连接上限。请断开当前的观看客户端（或等待其断开）后再连接新的客户端。",
 	"scan-the-qr-code-to-connect": "扫描二维码以连接",
 	"enter-the-following-address-in-browser-address-bar-on-any-device": "在任意设备的浏览器地址栏输入以下地址",
-	"deskreen-ce-allows-only-one-client-at-same-time": "Deskreen CE 仅允许同时连接一个观看客户端设备。",
-	"this-will-be-available-only-in-pro-version": "多设备连接选项仅在 Pro 版本中可用。",
 	"screen-recording-permission-required": "需要屏幕录制权限",
 	"screen-recording-permission-message": "Deskreen需要屏幕录制权限才能共享您的屏幕。请前往系统设置 > 隐私与安全性 > 屏幕录制，并启用Deskreen的访问权限。授予权限后，您可能需要重新启动应用程序。",
 	"screen-recording-permission-restart-reminder": "您必须在授予屏幕录制权限后重新启动应用程序才能使其生效。",

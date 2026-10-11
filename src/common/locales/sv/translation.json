@@ -160,8 +160,6 @@
 	"connection-limit-reached-tooltip": "Anslutningsgränsen har nåtts. Koppla från den aktuella visningsklienten (eller vänta tills den kopplar från) för att ansluta en ny.",
 	"scan-the-qr-code-to-connect": "Skanna QR-koden för att ansluta",
 	"enter-the-following-address-in-browser-address-bar-on-any-device": "Ange följande adress i webbläsarens adressfält på valfri enhet",
-	"deskreen-ce-allows-only-one-client-at-same-time": "Deskreen CE tillåter endast en visningsklient ansluten åt gången.",
-	"this-will-be-available-only-in-pro-version": "Alternativet att ansluta fler än en enhet finns endast i Pro-versionen.",
 	"screen-recording-permission-required": "Skärminspelningstillstånd krävs",
 	"screen-recording-permission-message": "Deskreen kräver skärminspelningstillstånd för att dela din skärm. Gå till Systeminställningar > Integritet och säkerhet > Skärminspelning och aktivera åtkomst för Deskreen. Du kan behöva starta om appen efter att ha beviljat tillstånd.",
 	"screen-recording-permission-restart-reminder": "Du måste starta om appen efter att ha beviljat skärminspelningstillstånd för att det ska träda i kraft.",

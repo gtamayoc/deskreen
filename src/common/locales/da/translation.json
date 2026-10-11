@@ -160,8 +160,6 @@
 	"connection-limit-reached-tooltip": "Forbindelsesgrænsen er nået. Afbryd den nuværende visningsklient (eller vent på, at den afbryder), for at tilslutte en ny.",
 	"scan-the-qr-code-to-connect": "Scan QR-koden for at oprette forbindelse",
 	"enter-the-following-address-in-browser-address-bar-on-any-device": "Indtast følgende adresse i adresselinjen på en hvilken som helst enhed",
-	"deskreen-ce-allows-only-one-client-at-same-time": "Deskreen CE tillader kun et enkelt visningsapparat tilsluttet ad gangen.",
-	"this-will-be-available-only-in-pro-version": "Muligheden for at tilslutte mere end én enhed er kun tilgængelig i Pro-versionen.",
 	"screen-recording-permission-required": "Skærmoptagelsestilladelse påkrævet",
 	"screen-recording-permission-message": "Deskreen kræver skærmoptagelsestilladelse for at dele din skærm. Gå venligst til Systemindstillinger > Privatliv og sikkerhed > Skærmoptagelse og aktiver adgang for Deskreen. Du skal muligvis genstarte appen efter at have givet tilladelse.",
 	"screen-recording-permission-restart-reminder": "Du skal genstarte appen efter at have givet skærmoptagelsestilladelse, for at den træder i kraft.",

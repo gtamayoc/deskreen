@@ -160,8 +160,6 @@
 	"connection-limit-reached-tooltip": "연결 한도에 도달했습니다. 새 클라이언트를 연결하려면 현재 시청 중인 클라이언트의 연결을 끊거나 끊어질 때까지 기다리세요.",
 	"scan-the-qr-code-to-connect": "연결하려면 QR 코드를 스캔하세요",
 	"enter-the-following-address-in-browser-address-bar-on-any-device": "어떤 기기의 브라우저 주소창에 다음 주소를 입력하세요",
-	"deskreen-ce-allows-only-one-client-at-same-time": "Deskreen CE는 동시에 하나의 시청 클라이언트만 연결할 수 있습니다.",
-	"this-will-be-available-only-in-pro-version": "두 개 이상의 기기를 연결하는 옵션은 Pro 버전에서만 사용할 수 있습니다.",
 	"screen-recording-permission-required": "화면 녹화 권한 필요",
 	"screen-recording-permission-message": "Deskreen는 화면을 공유하기 위해 화면 녹화 권한이 필요합니다. 시스템 설정 > 개인 정보 보호 및 보안 > 화면 녹화로 이동하여 Deskreen에 대한 액세스를 활성화하십시오. 권한을 부여한 후 앱을 다시 시작해야 할 수 있습니다.",
 	"screen-recording-permission-restart-reminder": "화면 녹화 권한을 부여한 후 앱을 다시 시작해야 적용됩니다.",

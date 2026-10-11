@@ -6,6 +6,7 @@ import {
 	clipboard,
 	shell,
 	app,
+	powerSaveBlocker,
 } from 'electron';
 import i18n from '../configs/i18next.config';
 import { ConnectedDevicesService } from '../../features/ConnectedDevicesService';
@@ -200,9 +201,31 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 		resetWaitingForConnectionSharingSession();
 	});
 
+	let powerSaveBlockerId: number | null = null;
+
+	const updateSleepBlockerState = (): void => {
+		const hasActiveDevices =
+			getDeskreenGlobal().connectedDevicesService.getDevices().length > 0;
+		if (hasActiveDevices) {
+			if (
+				powerSaveBlockerId === null ||
+				!powerSaveBlocker.isStarted(powerSaveBlockerId)
+			) {
+				powerSaveBlockerId = powerSaveBlocker.start('prevent-display-sleep');
+			}
+		} else if (
+			powerSaveBlockerId !== null &&
+			powerSaveBlocker.isStarted(powerSaveBlockerId)
+		) {
+			powerSaveBlocker.stop(powerSaveBlockerId);
+			powerSaveBlockerId = null;
+		}
+	};
+
 	const removeViewerAvailabilityListener =
 		getDeskreenGlobal().connectedDevicesService.addAvailabilityListener(
 			(state) => {
+				updateSleepBlockerState();
 				const isAvailable = state === 'available';
 				const targetWindow = mainWindow?.isDestroyed() ? null : mainWindow;
 				if (targetWindow) {
@@ -221,6 +244,13 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 
 	mainWindow.on('closed', () => {
 		removeViewerAvailabilityListener();
+		if (
+			powerSaveBlockerId !== null &&
+			powerSaveBlocker.isStarted(powerSaveBlockerId)
+		) {
+			powerSaveBlocker.stop(powerSaveBlockerId);
+			powerSaveBlockerId = null;
+		}
 	});
 
 	ipcMain.handle(IpcEvents.SetDeviceConnectedStatus, () => {

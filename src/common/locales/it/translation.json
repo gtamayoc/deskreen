@@ -160,8 +160,6 @@
 	"connection-limit-reached-tooltip": "Limite di connessioni raggiunto. Disconnetti il client di visualizzazione attuale (o attendi che si disconnetta) per collegarne uno nuovo.",
 	"scan-the-qr-code-to-connect": "Scansiona il codice QR per connetterti",
 	"enter-the-following-address-in-browser-address-bar-on-any-device": "Inserisci il seguente indirizzo nella barra del browser su qualsiasi dispositivo",
-	"deskreen-ce-allows-only-one-client-at-same-time": "Deskreen CE consente solo un dispositivo di visualizzazione connesso alla volta.",
-	"this-will-be-available-only-in-pro-version": "L'opzione di connessione di più dispositivi sarà disponibile solo nella versione Pro.",
 	"screen-recording-permission-required": "Autorizzazione registrazione schermo richiesta",
 	"screen-recording-permission-message": "Deskreen richiede lautorizzazione di registrazione dello schermo per condividere il tuo schermo. Si prega di andare su Impostazioni di Sistema > Privacy e sicurezza > Registrazione schermo e abilitare laccesso per Deskreen. Potrebbe essere necessario riavviare lapp dopo aver concesso lautorizzazione.",
 	"screen-recording-permission-restart-reminder": "È necessario riavviare lapp dopo aver concesso lautorizzazione di registrazione schermo affinché abbia effetto.",

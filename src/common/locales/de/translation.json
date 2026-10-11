@@ -160,8 +160,6 @@
 	"connection-limit-reached-tooltip": "Verbindungslimit erreicht. Trenne den aktuell verbundenen Anzeige-Client (oder warte, bis er sich trennt), um einen neuen zu verbinden.",
 	"scan-the-qr-code-to-connect": "QR-Code scannen, um eine Verbindung herzustellen",
 	"enter-the-following-address-in-browser-address-bar-on-any-device": "Gib folgende Adresse in die Adressleiste eines beliebigen Geräts ein",
-	"deskreen-ce-allows-only-one-client-at-same-time": "Deskreen CE erlaubt nur ein gleichzeitig verbundenes Anzeigegerät.",
-	"this-will-be-available-only-in-pro-version": "Die Option zum Verbinden von mehr als einem Gerät ist nur in der Pro-Version verfügbar.",
 	"screen-recording-permission-required": "Bildschirmaufzeichnungsberechtigung erforderlich",
 	"screen-recording-permission-message": "Deskreen benötigt die Bildschirmaufzeichnungsberechtigung, um Ihren Bildschirm zu teilen. Bitte gehen Sie zu Systemeinstellungen > Datenschutz & Sicherheit > Bildschirmaufzeichnung und aktivieren Sie den Zugriff für Deskreen. Möglicherweise müssen Sie die App nach der Erteilung der Berechtigung neu starten.",
 	"screen-recording-permission-restart-reminder": "Sie müssen die App nach dem Erteilen der Bildschirmaufzeichnungsberechtigung neu starten, damit sie wirksam wird.",

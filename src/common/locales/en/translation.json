@@ -174,8 +174,6 @@
 	"one-viewing-client-is-connected-already": "One viewing client is connected already.",
 	"viewing-client-connected-label": "Viewing client connected",
 	"connection-limit-reached-tooltip": "Connection limit reached. Disconnect the current viewing client (or wait for it to disconnect) to connect a new one.",
-	"deskreen-ce-allows-only-one-client-at-same-time": "Deskreen CE allows only one client viewing device connected at the same time.",
-	"this-will-be-available-only-in-pro-version": "More than one devices connection option will be available only in Pro version.",
 	"screen-recording-permission-required": "Screen Recording Permission Required",
 	"screen-recording-permission-message": "Deskreen requires Screen Recording permission to share your screen. Please go to System Settings > Privacy & Security > Screen Recording and enable access for Deskreen. You may need to restart the app after granting permission.",
 	"screen-recording-permission-restart-reminder": "You must restart the app after granting Screen Recording permission for it to take effect.",

@@ -160,8 +160,6 @@
 	"connection-limit-reached-tooltip": "接続数の上限に達しました。新しいクライアントを接続するには、現在接続されている閲覧クライアントの接続を切断するか、切断されるまでお待ちください。",
 	"scan-the-qr-code-to-connect": "接続するにはQRコードをスキャンしてください",
 	"enter-the-following-address-in-browser-address-bar-on-any-device": "任意のデバイスのブラウザのアドレスバーに次のアドレスを入力してください",
-	"deskreen-ce-allows-only-one-client-at-same-time": "Deskreen CEでは同時に接続できる表示クライアントは1つだけです。",
-	"this-will-be-available-only-in-pro-version": "複数デバイス接続のオプションはPro版でのみ利用できます。",
 	"screen-recording-permission-required": "画面収録の許可が必要です",
 	"screen-recording-permission-message": "Deskreenは画面を共有するために画面収録の許可が必要です。システム設定 > プライバシーとセキュリティ > 画面収録に移動して、Deskreenのアクセスを有効にしてください。許可を与えた後、アプリを再起動する必要がある場合があります。",
 	"screen-recording-permission-restart-reminder": "画面収録の許可を付与した後、アプリを再起動して反映させる必要があります。",

@@ -77,7 +77,7 @@ export default class SharingSessionService {
 		if (!this.connectedDevicesService.isSlotAvailable()) {
 			return Promise.reject(
 				new Error(
-					'unable to create waiting session while a device is connected',
+					'unable to create waiting session while maximum devices are connected',
 				),
 			);
 		}

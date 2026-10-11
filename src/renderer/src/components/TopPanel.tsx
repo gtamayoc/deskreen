@@ -95,6 +95,22 @@ export default function TopPanel({ handleReset }: Props): React.ReactElement {
 	const [latestVersion, setLatestVersion] = React.useState('');
 	const [currentVersion, setCurrentVersion] = React.useState('');
 	const [connectedDevicesCount, setConnectedDevicesCount] = React.useState(0);
+	const [isDarkMode, setIsDarkMode] = React.useState(() => {
+		return localStorage.getItem('deskreen_app_dark_mode') === 'true';
+	});
+
+	React.useEffect(() => {
+		if (isDarkMode) {
+			document.body.classList.add('bp3-dark');
+		} else {
+			document.body.classList.remove('bp3-dark');
+		}
+		localStorage.setItem('deskreen_app_dark_mode', String(isDarkMode));
+	}, [isDarkMode]);
+
+	const handleToggleDarkMode = React.useCallback(() => {
+		setIsDarkMode((prev) => !prev);
+	}, []);
 
 	const handleSettingsOpen = React.useCallback(() => {
 		setIsSettingsOpen(true);
@@ -259,6 +275,27 @@ export default function TopPanel({ handleReset }: Props): React.ReactElement {
 		</div>
 	);
 
+	const renderDarkModeButton = (
+		<div className={classes.topPanelControlButtonMargin}>
+			<Tooltip
+				content={isDarkMode ? 'Modo Claro' : 'Modo Oscuro'}
+				position={Position.BOTTOM}
+			>
+				<Button
+					id="top-panel-dark-mode-button"
+					onClick={handleToggleDarkMode}
+					className={classes.topPanelControlButton}
+				>
+					<Icon
+						className={classes.topPanelIconOfControlButton}
+						icon={isDarkMode ? 'flash' : 'moon'}
+						size={20}
+					/>
+				</Button>
+			</Tooltip>
+		</div>
+	);
+
 	const renderLogoWithAppName = (
 		<div
 			id="logo-with-popover-visit-website"
@@ -277,6 +314,7 @@ export default function TopPanel({ handleReset }: Props): React.ReactElement {
 				<div className={classes.topPanelControlsWrapper}>
 					<div className={classes.topPanelControlButtonsRoot}>
 						{renderConnectedDevicesListButton}
+						{renderDarkModeButton}
 						{renderHelpButton}
 						{renderTutorialButton}
 						{renderSettingsButton}

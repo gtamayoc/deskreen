@@ -52,6 +52,12 @@ interface PlayerControlPanelProps {
 	setVideoQuality: (q: VideoQualityType) => void;
 	selectedVideoQuality: VideoQualityType;
 	screenSharingSourceType: ScreenSharingSourceType;
+	isFlippedHorizontal?: boolean;
+	onToggleFlip?: () => void;
+	rotation?: number;
+	onRotate?: () => void;
+	isDarkMode?: boolean;
+	onToggleDarkMode?: () => void;
 	// toaster: undefined | HTMLDivElement;
 }
 
@@ -66,6 +72,12 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 		selectedVideoQuality,
 		setVideoQuality,
 		screenSharingSourceType,
+		isFlippedHorizontal,
+		onToggleFlip,
+		rotation,
+		onRotate,
+		isDarkMode,
+		onToggleDarkMode,
 	} = props;
 
 	const isFullScreenAPIAvailable = screenfull.isEnabled;
@@ -244,10 +256,11 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 											<Row
 												style={{
 													justifyContent: 'center',
+													marginBottom: '6px',
 												}}
 											>
 												<Tooltip
-													content={t('flip-the-screen-is-pro-version-only')}
+													content={t('Modo Teleprompter (Voltear horizontalmente)')}
 													position={Position.TOP}
 												>
 													<span
@@ -260,10 +273,68 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 														<Button
 															icon="key-tab"
 															minimal
+															active={isFlippedHorizontal}
 															style={videoQualityButtonStyle}
-															disabled={true}
+															onClick={onToggleFlip}
 														>
-															{t('Flip')}
+															{isFlippedHorizontal ? `${t('Flip')} (ON)` : t('Flip')}
+														</Button>
+													</span>
+												</Tooltip>
+											</Row>
+											<Row
+												style={{
+													justifyContent: 'center',
+													marginBottom: '6px',
+												}}
+											>
+												<Tooltip
+													content={t('Rotar orientación del video')}
+													position={Position.TOP}
+												>
+													<span
+														style={{
+															display: 'block',
+															width: '100%',
+															textAlign: 'center',
+														}}
+													>
+														<Button
+															icon="refresh"
+															minimal
+															style={videoQualityButtonStyle}
+															onClick={onRotate}
+														>
+															{`Rotar (${rotation ?? 0}°)`}
+														</Button>
+													</span>
+												</Tooltip>
+											</Row>
+											<Row
+												style={{
+													justifyContent: 'center',
+													marginBottom: '6px',
+												}}
+											>
+												<Tooltip
+													content={t('Alternar Modo Oscuro')}
+													position={Position.TOP}
+												>
+													<span
+														style={{
+															display: 'block',
+															width: '100%',
+															textAlign: 'center',
+														}}
+													>
+														<Button
+															icon={isDarkMode ? 'flash' : 'moon'}
+															minimal
+															active={isDarkMode}
+															style={videoQualityButtonStyle}
+															onClick={onToggleDarkMode}
+														>
+															{isDarkMode ? 'Modo Oscuro (ON)' : 'Modo Oscuro'}
 														</Button>
 													</span>
 												</Tooltip>
