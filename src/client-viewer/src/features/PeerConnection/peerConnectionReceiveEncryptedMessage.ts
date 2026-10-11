@@ -14,7 +14,13 @@ export default async (
 	const message = await processMessage(payload);
 	// const message = payload as any;
 	if (message.type === 'CALL_USER') {
-		peerConnection.peer?.signal(message.payload.signalData);
+		try {
+			if (peerConnection.peer && !peerConnection.peer.destroyed) {
+				peerConnection.peer.signal(message.payload.signalData);
+			}
+		} catch (signalError) {
+			console.warn('Caught client WebRTC peer signaling error safely:', signalError);
+		}
 	}
 	if (message.type === 'DENY_TO_CONNECT') {
 		setAndShowErrorDialogMessage(peerConnection, ErrorMessage.DENY_TO_CONNECT);

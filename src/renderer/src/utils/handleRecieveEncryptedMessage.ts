@@ -1,3 +1,4 @@
+import NullSimplePeer from '../features/PeerConnection/NullSimplePeer';
 import { process as processMessage } from './message';
 import { IpcEvents } from '../../../common/IpcEvents.enum';
 
@@ -97,7 +98,21 @@ export const handleRecieveEncryptedMessage = async (
 	}
 	// const message = payload as any;
 	if (message.type === 'CALL_ACCEPTED') {
-		peerConnection.peer.signal(message.payload.signalData);
+		try {
+			const peer = peerConnection.peer as any;
+			if (peer && peer !== NullSimplePeer && !peer.destroyed) {
+				const signalingState = peer._pc?.signalingState;
+				if (signalingState && signalingState !== 'have-local-offer') {
+					console.warn(
+						`Skipping remote answer signal in unexpected signalingState: ${signalingState}`,
+					);
+					return;
+				}
+				peer.signal(message.payload.signalData);
+			}
+		} catch (signalError) {
+			console.warn('Caught WebRTC peer signaling error safely:', signalError);
+		}
 	}
 	if (message.type === 'DEVICE_DETAILS') {
 		peerConnection.socket.emit(

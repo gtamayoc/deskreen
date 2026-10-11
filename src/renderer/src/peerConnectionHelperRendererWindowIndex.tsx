@@ -47,23 +47,31 @@ export function handleIpcRenderer(): void {
 			}
 			// cleanup existing peer connection before creating new one
 			if (peerConnection) {
-				peerConnection.selfDestroy();
+				try {
+					peerConnection.selfDestroy();
+				} catch (err) {
+					console.warn('Error during peer selfDestroy:', err);
+				}
 				peerConnection = undefined;
 			}
 
-			const port = await window.electron.ipcRenderer.invoke(
-				IpcEvents.GetPort,
-			);
-			peerConnection = new PeerConnection(
-				data.roomID,
-				data.sharingSessionID,
-				data.user,
-				port,
-			);
+			try {
+				const port = await window.electron.ipcRenderer.invoke(
+					IpcEvents.GetPort,
+				);
+				peerConnection = new PeerConnection(
+					data.roomID,
+					data.sharingSessionID,
+					data.user,
+					port,
+				);
 
-			peerConnection.setOnDeviceConnectedCallback((deviceData) => {
-				window.electron.ipcRenderer.send('peer-connected', deviceData);
-			});
+				peerConnection.setOnDeviceConnectedCallback((deviceData) => {
+					window.electron.ipcRenderer.send('peer-connected', deviceData);
+				});
+			} catch (initErr) {
+				console.error('Error creating new peer connection:', initErr);
+			}
 		},
 	);
 

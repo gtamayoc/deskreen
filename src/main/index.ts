@@ -161,6 +161,15 @@ export default class DeskreenApp {
 			'webrtc-max-cpu-consumption-percentage',
 			'100',
 		);
+
+		if (process.platform === 'win32') {
+			// Disable Windows Graphics Capture in WebRTC desktop capturer to fallback to DXGI / GDI screen capturer,
+			// avoiding WGC ProcessFrame failure error -2147467259 (E_FAIL).
+			app.commandLine.appendSwitch(
+				'disable-features',
+				'WebRtcAllowWgcDesktopCapturer,WebRtcAllowWgcScreenCapturer,WebRtcAllowWgcWindowCapturer',
+			);
+		}
 	}
 
 	private async checkForLatestVersionAndNotify(): Promise<void> {
