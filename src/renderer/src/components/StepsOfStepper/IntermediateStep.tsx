@@ -93,9 +93,9 @@ export default function IntermediateStep(
 				handleNextApplicationWindow,
 				connectedDevice,
 			)}
-			{process.env.NODE_ENV === 'production' &&
-			process.env.RUN_MODE !== 'dev' &&
-			process.env.RUN_MODE !== 'test' ? (
+			{(typeof process === 'undefined' || process.env?.NODE_ENV === 'production') &&
+			(typeof process === 'undefined' ||
+				(process.env?.RUN_MODE !== 'dev' && process.env?.RUN_MODE !== 'test')) ? (
 				<></>
 			) : activeStep === 0 ? (
 				<Button

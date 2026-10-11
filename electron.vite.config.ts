@@ -81,6 +81,13 @@ export default defineConfig({
 		plugins: [externalizeDepsPlugin(), bytecodePlugin()],
 	},
 	renderer: {
+		define: {
+			'process.env': {
+				NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development'),
+				RUN_MODE: JSON.stringify(process.env.RUN_MODE || 'dev'),
+			},
+			global: 'globalThis',
+		},
 		build: {
 			rollupOptions: {
 				input: {

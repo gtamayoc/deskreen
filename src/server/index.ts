@@ -161,7 +161,7 @@ class DeskreenSignalingServer {
 			pingTimeout: 5000,
 			serveClient: false,
 			cors: {
-				origin: (origin, callback) => {
+				origin: (_origin, callback) => {
 					callback(null, true);
 				},
 				methods: ['GET', 'POST'],

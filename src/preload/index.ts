@@ -26,6 +26,13 @@ if (process.contextIsolated) {
 	try {
 		contextBridge.exposeInMainWorld('electron', electronAPI);
 		contextBridge.exposeInMainWorld('api', api);
+		contextBridge.exposeInMainWorld('process', {
+			env: {
+				NODE_ENV: process.env.NODE_ENV || 'development',
+				RUN_MODE: process.env.RUN_MODE || 'dev',
+			},
+			browser: true,
+		});
 	} catch (error) {
 		console.error(error);
 	}
@@ -34,4 +41,12 @@ if (process.contextIsolated) {
 	window.electron = electronAPI;
 	// @ts-ignore (define in dts)
 	window.api = api;
+	// @ts-ignore
+	(window as any).process = {
+		env: {
+			NODE_ENV: process.env.NODE_ENV || 'development',
+			RUN_MODE: process.env.RUN_MODE || 'dev',
+		},
+		browser: true,
+	};
 }
