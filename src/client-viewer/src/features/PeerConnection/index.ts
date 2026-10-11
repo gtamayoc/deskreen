@@ -225,16 +225,14 @@ export default class PeerConnection {
 		});
 	}
 
-	createUser() {
-		return new Promise<LocalPeerUser>((resolve) => {
-			const username = shortId.generate();
-			const id = shortId.generate();
+	createUser(): LocalPeerUser {
+		const username = shortId.generate();
+		const id = shortId.generate();
 
-			resolve({
-				username,
-				id,
-			});
-		});
+		return {
+			username,
+			id,
+		};
 	}
 
 	sendEncryptedMessage(payload: SendEncryptedMessagePayload) {
@@ -266,19 +264,12 @@ export default class PeerConnection {
 
 		socket.removeAllListeners();
 
-		const userCreatedCallback = (createdUser: LocalPeerUser) => {
-			this.user = createdUser;
+		this.user = this.createUser();
+		peerConnectionHandleSocket(this);
 
-			peerConnectionHandleSocket(this);
-
-			this.beforeunloadHandler = () => {
-				socket.emit('USER_DISCONNECT');
-			};
-			window.addEventListener('beforeunload', this.beforeunloadHandler);
+		this.beforeunloadHandler = () => {
+			socket.emit('USER_DISCONNECT');
 		};
-
-		this.createUser().then((newUser: LocalPeerUser) =>
-			userCreatedCallback(newUser),
-		);
+		window.addEventListener('beforeunload', this.beforeunloadHandler);
 	}
 }

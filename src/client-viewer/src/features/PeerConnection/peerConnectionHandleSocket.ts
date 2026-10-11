@@ -50,7 +50,7 @@ export default (peerConnection: PeerConnection) => {
 		}
 	});
 
-	socket.on('connect', () => {
+	const handleConnect = () => {
 		let ipCallbackReceived = false;
 
 		// clear any existing reconnect timeout
@@ -64,7 +64,7 @@ export default (peerConnection: PeerConnection) => {
 				socket.disconnect();
 				socket.connect();
 			}
-		}, 2500); // 2 seconds timeout to wait for callback
+		}, 3000);
 
 		// clear any existing getMyIP timeout
 		if (peerConnection.getMyIPTimeout) {
@@ -82,8 +82,13 @@ export default (peerConnection: PeerConnection) => {
 				}
 				getMyIPCallback(peerConnection, ip, window.navigator.userAgent);
 			});
-		}, 500);
-	});
+		}, 50);
+	};
+
+	socket.on('connect', handleConnect);
+	if (socket.connected) {
+		handleConnect();
+	}
 
 	socket.on('NOT_ALLOWED', () => {
 		isAllowed = false;

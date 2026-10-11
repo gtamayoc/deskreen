@@ -50,12 +50,12 @@ export default class Socket implements SocketOPTS {
 			return;
 		}
 
+		this.handleSocket();
 		this.init();
 	}
 
 	async init(): Promise<void> {
 		await this.joinRoom();
-		this.handleSocket();
 	}
 
 	sendRoomLocked(): void {
@@ -145,7 +145,10 @@ export default class Socket implements SocketOPTS {
 				if (userFound) return;
 			}
 
-			const isOwnerSocket = isLocalhostSocket(this.socket);
+			const hasExistingOwner = (room.users || []).some((user) => user.isOwner);
+			const isHelperSocket = this.socket.handshake.query?.isHelper === 'true';
+			const isOwnerSocket =
+				isHelperSocket || (!hasExistingOwner && isLocalhostSocket(this.socket));
 			if (!isOwnerSocket) {
 				const connectedViewers = (room.users || []).filter((user) => {
 					return !user.isOwner;

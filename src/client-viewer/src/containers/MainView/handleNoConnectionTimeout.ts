@@ -9,7 +9,7 @@ export default (
 			if (myDeviceDetails === DUMMY_MY_DEVICE_DETAILS) {
 				setIsErrorDialogOpen(true);
 			}
-		}, 10000);
+		}, 20000);
 		return () => {
 			clearTimeout(timeout);
 		};
