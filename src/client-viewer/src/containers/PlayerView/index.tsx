@@ -14,6 +14,7 @@ import {
 	exitPlayerFullscreen,
 	subscribeToPlayerFullscreenChange,
 } from '../../utils/playerFullscreen';
+import { toggleOrientation } from '../../utils/screenOrientation';
 import ConsoleActionPad from '../../components/ConsoleActionPad';
 import FullscreenOverlayHUD from '../../components/FullscreenOverlayHUD';
 import type PeerConnection from '../../features/PeerConnection';
@@ -29,6 +30,7 @@ interface PlayerViewProps {
 	screenSharingSourceType: ScreenSharingSourceType;
 	streamUrl: MediaStream | null;
 	peer?: PeerConnection;
+	isConsoleSharing?: boolean;
 }
 
 type IOSVideoElement = HTMLVideoElement & {
@@ -51,19 +53,34 @@ function PlayerView(props: PlayerViewProps) {
 		videoQuality,
 		streamUrl,
 		peer,
+		isConsoleSharing = false,
 	} = props;
 
 	const [isFlippedHorizontal, setIsFlippedHorizontal] = useState(() => {
 		return localStorage.getItem('deskreen_flip_horizontal') === 'true';
 	});
-	const [rotation, setRotation] = useState(() => {
-		return Number(localStorage.getItem('deskreen_rotation')) || 0;
+	const BRIGHTNESS_LEVELS = [1.0, 0.75, 0.5, 0.3];
+	const [screenBrightness, setScreenBrightness] = useState<number>(() => {
+		const saved = localStorage.getItem('deskreen_screen_brightness');
+		if (saved) {
+			const parsed = parseFloat(saved);
+			if (BRIGHTNESS_LEVELS.includes(parsed)) {
+				return parsed;
+			}
+		}
+		return 1.0;
 	});
 	const [isDarkMode, setIsDarkMode] = useState(() => {
 		return localStorage.getItem('deskreen_dark_mode') === 'true';
 	});
 	const [isFullscreen, setIsFullscreen] = useState(() => isPlayerFullscreen());
 	const [isAIPadOpen, setIsAIPadOpen] = useState(false);
+
+	useEffect(() => {
+		if (!isConsoleSharing) {
+			setIsAIPadOpen(false);
+		}
+	}, [isConsoleSharing]);
 
 	useEffect(() => {
 		const unsubscribe = subscribeToPlayerFullscreenChange((fullscreen) => {
@@ -79,8 +96,8 @@ function PlayerView(props: PlayerViewProps) {
 	}, [isFlippedHorizontal]);
 
 	useEffect(() => {
-		localStorage.setItem('deskreen_rotation', String(rotation));
-	}, [rotation]);
+		localStorage.setItem('deskreen_screen_brightness', String(screenBrightness));
+	}, [screenBrightness]);
 
 	useEffect(() => {
 		if (isDarkMode) {
@@ -95,8 +112,12 @@ function PlayerView(props: PlayerViewProps) {
 		setIsFlippedHorizontal((prev) => !prev);
 	}, []);
 
-	const handleRotate = useCallback(() => {
-		setRotation((prev) => (prev + 90) % 360);
+	const handleCycleBrightness = useCallback(() => {
+		setScreenBrightness((prev) => {
+			const idx = BRIGHTNESS_LEVELS.indexOf(prev);
+			const nextIdx = idx === -1 || idx === BRIGHTNESS_LEVELS.length - 1 ? 0 : idx + 1;
+			return BRIGHTNESS_LEVELS[nextIdx];
+		});
 	}, []);
 
 	const handleToggleDarkMode = useCallback(() => {
@@ -105,17 +126,13 @@ function PlayerView(props: PlayerViewProps) {
 
 	const handleResetVisualSettings = useCallback(() => {
 		setIsFlippedHorizontal(false);
-		setRotation(0);
+		setScreenBrightness(1.0);
 		localStorage.setItem('deskreen_flip_horizontal', 'false');
-		localStorage.setItem('deskreen_rotation', '0');
+		localStorage.removeItem('deskreen_rotation');
+		localStorage.removeItem('deskreen_screen_brightness');
 	}, []);
 
-	const playerTransform = [
-		isFlippedHorizontal ? 'scaleX(-1)' : '',
-		rotation !== 0 ? `rotate(${rotation}deg)` : '',
-	]
-		.filter(Boolean)
-		.join(' ') || 'none';
+	const playerTransform = isFlippedHorizontal ? 'scaleX(-1)' : 'none';
 
 	// const player = useRef(null);
 
@@ -184,6 +201,27 @@ function PlayerView(props: PlayerViewProps) {
 			}
 		}, 50);
 	}, [handlePlayPause, isPlaying, t]);
+
+	const handleToggleOrientation = useCallback(async () => {
+		const result = await toggleOrientation();
+		if (result === 'unsupported') {
+			if (toasterRef.current) {
+				toasterRef.current.show({
+					message: t('La rotación de pantalla no está soportada o permitida en este dispositivo.'),
+					intent: 'warning',
+					timeout: 3000,
+				});
+			}
+		} else {
+			if (toasterRef.current) {
+				toasterRef.current.show({
+					message: `${t('Orientación de pantalla:')} ${result === 'landscape' ? t('Horizontal') : t('Vertical')}`,
+					intent: 'primary',
+					timeout: 2000,
+				});
+			}
+		}
+	}, [t]);
 
 	// handle iPhone fullscreen exit - detect when video stops and auto-resume
 	useEffect(() => {
@@ -299,8 +337,6 @@ function PlayerView(props: PlayerViewProps) {
 				screenSharingSourceType={screenSharingSourceType}
 				isFlippedHorizontal={isFlippedHorizontal}
 				onToggleFlip={handleToggleFlip}
-				rotation={rotation}
-				onRotate={handleRotate}
 				isDarkMode={isDarkMode}
 				onToggleDarkMode={handleToggleDarkMode}
 				onResetVisualSettings={handleResetVisualSettings}
@@ -326,7 +362,8 @@ function PlayerView(props: PlayerViewProps) {
 						height: '100%',
 						backgroundColor: 'black',
 						transform: playerTransform,
-						transition: 'transform 0.3s ease',
+						filter: screenBrightness < 1.0 ? `brightness(${screenBrightness})` : 'none',
+						transition: 'transform 0.3s ease, filter 0.25s ease',
 					}}
 				>
 					{isWithControls ? (
@@ -361,14 +398,23 @@ function PlayerView(props: PlayerViewProps) {
 						onToggleAIPad={() => {
 							setIsAIPadOpen((prev) => !prev);
 						}}
+						showAIPad={isConsoleSharing}
+						isPlaying={isPlaying}
+						onTogglePlayPause={handlePlayPauseWithNotification}
+						brightness={screenBrightness}
+						onCycleBrightness={handleCycleBrightness}
+						onToggleOrientation={handleToggleOrientation}
 					/>
 				)}
-				<ConsoleActionPad
-					peer={peer}
-					isOpen={isAIPadOpen}
-					onOpenChange={setIsAIPadOpen}
-					isFullscreen={isFullscreen}
-				/>
+				{isConsoleSharing && (
+					<ConsoleActionPad
+						peer={peer}
+						isOpen={isAIPadOpen}
+						onOpenChange={setIsAIPadOpen}
+						isFullscreen={isFullscreen}
+						isVisible={isConsoleSharing}
+					/>
+				)}
 			</div>
 		</div>
 	);

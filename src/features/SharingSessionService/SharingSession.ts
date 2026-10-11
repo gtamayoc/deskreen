@@ -53,6 +53,7 @@ export default class SharingSession {
 					roomID: this.roomID,
 					sharingSessionID: this.id,
 					user,
+					desktopCapturerSourceID: this.desktopCapturerSourceID,
 				},
 			);
 		};

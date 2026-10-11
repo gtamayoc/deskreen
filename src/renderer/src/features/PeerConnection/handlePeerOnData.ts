@@ -67,9 +67,16 @@ export default async function handlePeerOnData(
 			: DesktopCapturerSourceType.WINDOW;
 
 		try {
+			if (!peerConnection.sourceName && peerConnection.desktopCapturerSourceID) {
+				await peerConnection.setSourceMetadataByDesktopCapturerSourceID();
+			}
 			if (peerConnection.peer && peerConnection.peer !== NullSimplePeer) {
 				peerConnection.peer.send(
-					prepareDataMessageToSendScreenSourceType(sourceType),
+					prepareDataMessageToSendScreenSourceType(
+						sourceType,
+						peerConnection.isConsoleSource,
+						peerConnection.sourceName,
+					),
 				);
 			}
 		} catch (err) {

@@ -53,6 +53,8 @@ export default class PeerConnection {
 	uaParser: UAParser;
 
 	screenSharingSourceType: string | undefined = undefined;
+	isConsoleSource: boolean = false;
+	sharingSourceName: string = '';
 
 	videoQuality: VideoQualityType = VideoQuality.Q_100_PERCENT;
 

@@ -8,6 +8,7 @@ interface ConsoleActionPadProps {
 	isOpen?: boolean;
 	onOpenChange?: (open: boolean) => void;
 	isFullscreen?: boolean;
+	isVisible?: boolean;
 }
 
 const STORAGE_KEY_AUTOCOLLAPSE = 'deskreen_ai_pad_autocollapse';
@@ -17,6 +18,7 @@ const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({
 	isOpen: externalIsOpen,
 	onOpenChange,
 	isFullscreen = false,
+	isVisible = true,
 }) => {
 	const [internalIsOpen, setInternalIsOpen] = useState(false);
 	const currentIsOpen = typeof externalIsOpen === 'boolean' ? externalIsOpen : internalIsOpen;
@@ -213,6 +215,10 @@ const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({
 		},
 		[inputText, sendInput],
 	);
+
+	if (!isVisible) {
+		return null;
+	}
 
 	return (
 		<>

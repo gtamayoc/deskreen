@@ -7,7 +7,7 @@
 	align-items: center;
 	gap: 6px;
 	padding: 4px 8px 4px 6px;
-	background: rgba(15, 23, 42, 0.82);
+	background: rgba(15, 23, 42, 0.85);
 	backdrop-filter: blur(12px);
 	-webkit-backdrop-filter: blur(12px);
 	border: 1px solid rgba(255, 255, 255, 0.18);
@@ -54,22 +54,80 @@
 	color: #f0f6fc !important;
 	padding: 0 8px !important;
 	position: relative;
-}
-
-.fullscreen-hud-btn-exit {
 	background: rgba(255, 255, 255, 0.08) !important;
 	border: 1px solid rgba(255, 255, 255, 0.1) !important;
+	transition: background-color 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
 }
 
-.fullscreen-hud-btn-exit:hover {
+.fullscreen-hud-btn:hover {
 	background: rgba(255, 255, 255, 0.18) !important;
 }
 
-.fullscreen-hud-btn-exit:active {
+.fullscreen-hud-btn:active {
 	background: rgba(255, 255, 255, 0.26) !important;
 	transform: scale(0.95);
 }
 
+/* Exit button */
+.fullscreen-hud-btn-exit {
+	background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Rotate button */
+.fullscreen-hud-btn-rotate {
+	background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.fullscreen-hud-btn-rotate:hover {
+	background: rgba(56, 139, 253, 0.25) !important;
+	border-color: rgba(56, 139, 253, 0.45) !important;
+}
+
+/* Brightness dimmer button */
+.fullscreen-hud-btn-brightness {
+	background: rgba(255, 255, 255, 0.08) !important;
+	gap: 4px;
+	padding: 0 10px !important;
+}
+
+.fullscreen-hud-btn-brightness.is-dimmed-active {
+	background: rgba(210, 153, 34, 0.25) !important;
+	border-color: rgba(210, 153, 34, 0.5) !important;
+	color: #f0883e !important;
+}
+
+.fullscreen-hud-brightness-badge {
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: 0.3px;
+	line-height: 1;
+}
+
+/* Play / Pause button */
+.fullscreen-hud-btn-playpause {
+	background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.fullscreen-hud-btn-playpause.is-paused {
+	background: rgba(235, 87, 87, 0.25) !important;
+	border-color: rgba(235, 87, 87, 0.5) !important;
+	color: #ff7b72 !important;
+	animation: pulse-pause 1.8s infinite;
+}
+
+@keyframes pulse-pause {
+	0% {
+		box-shadow: 0 0 0 0 rgba(235, 87, 87, 0.4);
+	}
+	70% {
+		box-shadow: 0 0 0 6px rgba(235, 87, 87, 0);
+	}
+	100% {
+		box-shadow: 0 0 0 0 rgba(235, 87, 87, 0);
+	}
+}
+
+/* AI Console Companion */
 .fullscreen-hud-btn-ai {
 	background: rgba(43, 149, 214, 0.25) !important;
 	border: 1px solid rgba(43, 149, 214, 0.45) !important;

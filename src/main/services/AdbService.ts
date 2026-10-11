@@ -11,21 +11,34 @@ import { adbDownloaderService } from './AdbDownloaderService';
 
 const execFileAsync = promisify(execFile);
 
+type AdbClient = ReturnType<typeof Adb.createClient>;
+type AdbTracker = Awaited<ReturnType<AdbClient['trackDevices']>>;
+
 export class AdbService {
-	private client: ReturnType<typeof Adb.createClient> | null = null;
-	private tracker: {
-		on: (event: string, cb: (...args: unknown[]) => void) => void;
-		end?: () => void;
-	} | null = null;
+	private client: AdbClient | null = null;
+	private tracker: AdbTracker | null = null;
 	private resolvedAdbPath: string | null = null;
 	private availabilitySource: 'system' | 'internal' | 'none' = 'none';
 	private mainWindow: BrowserWindow | null = null;
 	private connectedDevices = new Map<string, AdbDeviceInfo>();
 	private reversedPorts = new Map<string, Set<number>>();
-	private isInitialized = false;
+	private launchedSessions = new Set<string>();
+	public currentPort = 0;
+	public currentRoomId = '';
+	public isInitialized = false;
 
 	setMainWindow(window: BrowserWindow | null): void {
 		this.mainWindow = window;
+	}
+
+	setSessionInfo(port: number, roomID: string): void {
+		this.currentPort = port;
+		this.currentRoomId = roomID;
+		console.log(`[AdbService] Session info updated: port=${port}, roomID=${roomID}`);
+		// Trigger reverse port and auto-launch on all currently connected devices
+		for (const dev of this.connectedDevices.values()) {
+			void this.handleDeviceConnected(dev);
+		}
 	}
 
 	async checkAvailability(): Promise<AdbAvailabilityStatus> {
@@ -78,9 +91,47 @@ export class AdbService {
 		}
 
 		try {
-			this.client = Adb.createClient({
+			const adbModule = Adb as unknown as {
+				createClient: (options?: { bin?: string }) => AdbClient;
+				default?: { createClient: (options?: { bin?: string }) => AdbClient };
+				Adb?: { createClient: (options?: { bin?: string }) => AdbClient };
+			};
+			const createClientFn =
+				adbModule.createClient ||
+				adbModule.default?.createClient ||
+				adbModule.Adb?.createClient ||
+				Adb.createClient;
+
+			this.client = createClientFn({
 				bin: this.resolvedAdbPath === 'adb' ? undefined : this.resolvedAdbPath,
 			});
+
+			// Check currently connected devices immediately
+			try {
+				const devices = await this.client.listDevices();
+				for (const dev of devices) {
+					const info: AdbDeviceInfo = {
+						id: dev.id,
+						type: dev.type,
+					};
+					if (dev.type === 'device') {
+						try {
+							const properties = await this.client.getDevice(dev.id).getProperties();
+							if (properties) {
+								info.model = properties['ro.product.model'];
+								info.product = properties['ro.product.name'];
+							}
+						} catch {
+							// safe ignore
+						}
+					}
+					this.connectedDevices.set(dev.id, info);
+					void this.handleDeviceConnected(info);
+				}
+			} catch (listErr) {
+				console.warn('[AdbService] Failed initial listDevices, falling back:', listErr);
+			}
+
 			await this.startTracking();
 			this.isInitialized = true;
 			console.log(
@@ -116,15 +167,15 @@ export class AdbService {
 						}
 					}
 				} catch {
-					// safe fallback if properties cannot be queried
+					// safe fallback
 				}
 
 				this.connectedDevices.set(device.id, info);
-				console.log(`[AdbService] Android device connected via USB: ${info.id} (${info.model || 'Unknown'})`);
+				console.log(
+					`[AdbService] Android device connected via USB: ${info.id} (${info.model || 'Unknown'})`,
+				);
 
-				if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-					this.mainWindow.webContents.send(IpcEvents.AdbDeviceConnected, info);
-				}
+				void this.handleDeviceConnected(info);
 			});
 
 			tracker.on('remove', (deviceUnknown: unknown) => {
@@ -154,10 +205,46 @@ export class AdbService {
 		}
 	}
 
+	private async handleDeviceConnected(info: AdbDeviceInfo): Promise<void> {
+		if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+			this.mainWindow.webContents.send(IpcEvents.AdbDeviceConnected, info);
+		}
+
+		if (info.type !== 'device') return;
+
+		const port = this.currentPort;
+		const roomID = this.currentRoomId;
+
+		if (port > 0) {
+			// Auto setup reverse port
+			await this.setupReversePort(info.id, port);
+
+			// Auto open browser on device
+			if (roomID) {
+				const launchKey = `${info.id}:${roomID}`;
+				if (!this.launchedSessions.has(launchKey)) {
+					this.launchedSessions.add(launchKey);
+					const usbUrl = `http://localhost:${port}/#/${roomID}?transport=usb`;
+					console.log(`[AdbService] Automatically opening URL on Android device: ${usbUrl}`);
+					await this.launchClientOnDevice(info.id, usbUrl);
+				}
+			}
+		}
+	}
+
 	async setupReversePort(deviceId: string, port: number): Promise<boolean> {
-		if (!this.client) return false;
 		try {
-			await this.client.getDevice(deviceId).reverse(`tcp:${port}`, `tcp:${port}`);
+			if (this.resolvedAdbPath) {
+				await execFileAsync(this.resolvedAdbPath, [
+					'-s',
+					deviceId,
+					'reverse',
+					`tcp:${port}`,
+					`tcp:${port}`,
+				]);
+			} else if (this.client) {
+				await this.client.getDevice(deviceId).reverse(`tcp:${port}`, `tcp:${port}`);
+			}
 			if (!this.reversedPorts.has(deviceId)) {
 				this.reversedPorts.set(deviceId, new Set());
 			}
@@ -171,11 +258,16 @@ export class AdbService {
 	}
 
 	async removeReversePort(deviceId: string, port: number): Promise<boolean> {
-		if (!this.client) return false;
 		try {
 			if (this.resolvedAdbPath) {
-				await execFileAsync(this.resolvedAdbPath, ['-s', deviceId, 'reverse', '--remove', `tcp:${port}`]);
-			} else {
+				await execFileAsync(this.resolvedAdbPath, [
+					'-s',
+					deviceId,
+					'reverse',
+					'--remove',
+					`tcp:${port}`,
+				]);
+			} else if (this.client) {
 				const dev = this.client.getDevice(deviceId) as unknown as {
 					reverseRemove?: (p: string) => Promise<void>;
 				};
@@ -190,10 +282,24 @@ export class AdbService {
 	}
 
 	async launchClientOnDevice(deviceId: string, url: string): Promise<boolean> {
-		if (!this.client) return false;
 		try {
-			const command = `am start -a android.intent.action.VIEW -d "${url}"`;
-			await this.client.getDevice(deviceId).shell(command);
+			if (this.resolvedAdbPath) {
+				await execFileAsync(this.resolvedAdbPath, [
+					'-s',
+					deviceId,
+					'shell',
+					'am',
+					'start',
+					'-a',
+					'android.intent.action.VIEW',
+					'-d',
+					url,
+				]);
+			} else if (this.client) {
+				await this.client.getDevice(deviceId).shell(
+					`am start -a android.intent.action.VIEW -d "${url}"`,
+				);
+			}
 			console.log(`[AdbService] Opened browser URL on device ${deviceId}: ${url}`);
 			return true;
 		} catch (err) {

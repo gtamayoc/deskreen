@@ -13,6 +13,7 @@ export default (params: CreatePeerConnectionUseEffectParams) => {
 		setIsShownTextPrompt,
 		setPromptStep,
 		setScreenSharingSourceType,
+		setIsConsoleSharing,
 		setDialogErrorMessage,
 		setIsErrorDialogOpen,
 		setUrl,
@@ -40,7 +41,10 @@ export default (params: CreatePeerConnectionUseEffectParams) => {
 						setPromptStep(3);
 					}, 2000);
 				},
-				setScreenSharingSourceType,
+				(sourceType, isConsole) => {
+					setScreenSharingSourceType(sourceType);
+					setIsConsoleSharing?.(Boolean(isConsole));
+				},
 				changeLanguage,
 				setDialogErrorMessage,
 				setIsErrorDialogOpen,

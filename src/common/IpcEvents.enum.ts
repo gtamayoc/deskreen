@@ -62,4 +62,5 @@ export enum IpcEvents {
 	RegisterDeviceSessionToken = 'register-device-session-token',
 	VerifyDeviceSessionToken = 'verify-device-session-token',
 	GetDeviceSessionToken = 'get-device-session-token',
+	GetSourceMetadataBySourceId = 'get-source-metadata-by-source-id',
 }

@@ -69,6 +69,12 @@ export function handleIpcRenderer(): void {
 				peerConnection.setOnDeviceConnectedCallback((deviceData) => {
 					window.electron.ipcRenderer.send('peer-connected', deviceData);
 				});
+
+				if (data.desktopCapturerSourceID) {
+					void peerConnection.setDesktopCapturerSourceID(
+						data.desktopCapturerSourceID,
+					);
+				}
 			} catch (initErr) {
 				console.error('Error creating new peer connection:', initErr);
 			}

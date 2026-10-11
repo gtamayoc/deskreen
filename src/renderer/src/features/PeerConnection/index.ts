@@ -50,6 +50,8 @@ export default class PeerConnection {
 	onDeviceConnectedCallback: (device: Device) => void;
 	displayID: string;
 	sourceDisplaySize: DisplaySize | undefined;
+	sourceName = '';
+	isConsoleSource = false;
 	beforeunloadHandler: (() => void) | null = null;
 	isReconnecting = false;
 	reconnectToken = '';
@@ -108,8 +110,36 @@ export default class PeerConnection {
 		this.displayID = '';
 
 		await this.setDisplayIDByDesktopCapturerSourceID();
+		await this.setSourceMetadataByDesktopCapturerSourceID();
 
 		await this.handleCreatePeerAfterDesktopCapturerSourceIDWasSet();
+	}
+
+	async setSourceMetadataByDesktopCapturerSourceID(): Promise<void> {
+		if (!this.desktopCapturerSourceID) {
+			this.sourceName = '';
+			this.isConsoleSource = false;
+			return;
+		}
+		try {
+			const meta = (await window.electron.ipcRenderer.invoke(
+				IpcEvents.GetSourceMetadataBySourceId,
+				this.desktopCapturerSourceID,
+			)) as {
+				id?: string;
+				name?: string;
+				type?: string;
+				isConsole?: boolean;
+			} | null;
+			if (meta) {
+				this.sourceName = meta.name || '';
+				this.isConsoleSource = Boolean(meta.isConsole);
+			}
+		} catch (err) {
+			console.warn('Failed to retrieve source metadata:', err);
+			this.sourceName = '';
+			this.isConsoleSource = false;
+		}
 	}
 
 	async setDisplayIDByDesktopCapturerSourceID(): Promise<void> {
@@ -218,7 +248,11 @@ export default class PeerConnection {
 						typeof peer?.send === 'function'
 					) {
 						peer.send(
-							prepareDataMessageToSendScreenSourceType(sourceType),
+							prepareDataMessageToSendScreenSourceType(
+								sourceType,
+								this.isConsoleSource,
+								this.sourceName,
+							),
 						);
 					}
 				} catch (notifyError) {

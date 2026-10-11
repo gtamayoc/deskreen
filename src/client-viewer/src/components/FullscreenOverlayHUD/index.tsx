@@ -6,6 +6,12 @@ interface FullscreenOverlayHUDProps {
 	onExitFullscreen: () => void;
 	isAIPadOpen: boolean;
 	onToggleAIPad: () => void;
+	showAIPad?: boolean;
+	isPlaying?: boolean;
+	onTogglePlayPause?: () => void;
+	brightness?: number;
+	onCycleBrightness?: () => void;
+	onToggleOrientation?: () => void;
 }
 
 const STORAGE_KEY_POS = 'deskreen_fullscreen_hud_pos';
@@ -19,6 +25,12 @@ export const FullscreenOverlayHUD: React.FC<FullscreenOverlayHUDProps> = ({
 	onExitFullscreen,
 	isAIPadOpen,
 	onToggleAIPad,
+	showAIPad = true,
+	isPlaying = true,
+	onTogglePlayPause,
+	brightness = 1.0,
+	onCycleBrightness,
+	onToggleOrientation,
 }) => {
 	const [position, setPosition] = useState<Position | null>(() => {
 		try {
@@ -98,7 +110,7 @@ export const FullscreenOverlayHUD: React.FC<FullscreenOverlayHUDProps> = ({
 
 		const hudEl = hudRef.current;
 		const parent = hudEl?.parentElement;
-		const hudWidth = hudEl?.offsetWidth || 130;
+		const hudWidth = hudEl?.offsetWidth || 220;
 		const hudHeight = hudEl?.offsetHeight || 48;
 		const parentWidth = parent?.clientWidth || window.innerWidth;
 		const parentHeight = parent?.clientHeight || window.innerHeight;
@@ -171,21 +183,69 @@ export const FullscreenOverlayHUD: React.FC<FullscreenOverlayHUDProps> = ({
 				title="Salir de pantalla completa"
 			/>
 
+			{/* Native Screen Orientation Toggle (Landscape / Portrait) */}
+			{onToggleOrientation && (
+				<Button
+					minimal
+					className="fullscreen-hud-btn fullscreen-hud-btn-rotate"
+					icon={<Icon icon="mobile-phone" />}
+					onClick={(e) => {
+						e.stopPropagation();
+						onToggleOrientation();
+					}}
+					title="Rotar orientación de pantalla (Horizontal/Vertical)"
+				/>
+			)}
+
+			{/* Screen Dimmer / Brightness Cycle (100% -> 75% -> 50% -> 30%) */}
+			{onCycleBrightness && (
+				<Button
+					minimal
+					className={`fullscreen-hud-btn fullscreen-hud-btn-brightness ${brightness < 1.0 ? 'is-dimmed-active' : ''}`}
+					icon={<Icon icon={brightness <= 0.5 ? 'moon' : 'flash'} />}
+					onClick={(e) => {
+						e.stopPropagation();
+						onCycleBrightness();
+					}}
+					title={`Iluminación/Brillo: ${Math.round(brightness * 100)}% (Tocar para cambiar)`}
+				>
+					<span className="fullscreen-hud-brightness-badge">
+						{Math.round(brightness * 100)}%
+					</span>
+				</Button>
+			)}
+
+			{/* Native Video Play / Pause */}
+			{onTogglePlayPause && (
+				<Button
+					minimal
+					className={`fullscreen-hud-btn fullscreen-hud-btn-playpause ${!isPlaying ? 'is-paused' : ''}`}
+					icon={<Icon icon={isPlaying ? 'pause' : 'play'} />}
+					onClick={(e) => {
+						e.stopPropagation();
+						onTogglePlayPause();
+					}}
+					title={isPlaying ? 'Pausar video' : 'Reanudar video'}
+				/>
+			)}
+
 			{/* AI Console Companion Trigger Button */}
-			<Button
-				minimal={!isAIPadOpen}
-				intent={isAIPadOpen ? Intent.PRIMARY : Intent.NONE}
-				className={`fullscreen-hud-btn fullscreen-hud-btn-ai ${isAIPadOpen ? 'is-active' : ''}`}
-				icon={<Icon icon="console" />}
-				onClick={(e) => {
-					e.stopPropagation();
-					onToggleAIPad();
-				}}
-				title={isAIPadOpen ? 'Ocultar consola IA' : 'Abrir consola IA'}
-			>
-				<span className="fullscreen-hud-ai-label">IA</span>
-				{isAIPadOpen && <span className="fullscreen-hud-active-dot" />}
-			</Button>
+			{showAIPad && (
+				<Button
+					minimal={!isAIPadOpen}
+					intent={isAIPadOpen ? Intent.PRIMARY : Intent.NONE}
+					className={`fullscreen-hud-btn fullscreen-hud-btn-ai ${isAIPadOpen ? 'is-active' : ''}`}
+					icon={<Icon icon="console" />}
+					onClick={(e) => {
+						e.stopPropagation();
+						onToggleAIPad();
+					}}
+					title={isAIPadOpen ? 'Ocultar consola IA' : 'Abrir consola IA'}
+				>
+					<span className="fullscreen-hud-ai-label">IA</span>
+					{isAIPadOpen && <span className="fullscreen-hud-active-dot" />}
+				</Button>
+			)}
 		</div>
 	);
 };

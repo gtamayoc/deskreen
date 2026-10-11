@@ -70,18 +70,32 @@ export default (peerConnection: PeerConnection) => {
 	});
 
 	peerConnection.peer.on('data', (data) => {
-		const dataJSON = JSON.parse(data);
+		try {
+			const dataJSON = JSON.parse(data);
 
-		if (dataJSON.type === 'screen_sharing_source_type') {
-			peerConnection.screenSharingSourceType = dataJSON.payload.value;
-			if (
-				peerConnection.screenSharingSourceType === ScreenSharingSource.SCREEN ||
-				peerConnection.screenSharingSourceType === ScreenSharingSource.WINDOW
-			) {
-				peerConnection.UIHandler.setScreenSharingSourceTypeCallback(
-					peerConnection.screenSharingSourceType,
-				);
+			if (dataJSON.type === 'screen_sharing_source_type' && dataJSON.payload) {
+				peerConnection.screenSharingSourceType = dataJSON.payload.value;
+				const isConsole = Boolean(dataJSON.payload.isConsole);
+				peerConnection.isConsoleSource = isConsole;
+				peerConnection.sharingSourceName =
+					typeof dataJSON.payload.sourceName === 'string'
+						? dataJSON.payload.sourceName
+						: '';
+
+				if (
+					peerConnection.screenSharingSourceType ===
+						ScreenSharingSource.SCREEN ||
+					peerConnection.screenSharingSourceType ===
+						ScreenSharingSource.WINDOW
+				) {
+					peerConnection.UIHandler.setScreenSharingSourceTypeCallback(
+						peerConnection.screenSharingSourceType,
+						isConsole,
+					);
+				}
 			}
+		} catch (err) {
+			console.warn('Failed to process peer data message:', err);
 		}
 	});
 };

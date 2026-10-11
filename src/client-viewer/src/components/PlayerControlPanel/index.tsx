@@ -54,8 +54,6 @@ interface PlayerControlPanelProps {
 	screenSharingSourceType: ScreenSharingSourceType;
 	isFlippedHorizontal?: boolean;
 	onToggleFlip?: () => void;
-	rotation?: number;
-	onRotate?: () => void;
 	isDarkMode?: boolean;
 	onToggleDarkMode?: () => void;
 	onResetVisualSettings?: () => void;
@@ -75,8 +73,6 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 		screenSharingSourceType,
 		isFlippedHorizontal,
 		onToggleFlip,
-		rotation,
-		onRotate,
 		isDarkMode,
 		onToggleDarkMode,
 		onResetVisualSettings,
@@ -284,34 +280,7 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 													</span>
 												</Tooltip>
 											</Row>
-											<Row
-												style={{
-													justifyContent: 'center',
-													marginBottom: '6px',
-												}}
-											>
-												<Tooltip
-													content={t('Rotar orientación del video')}
-													position={Position.TOP}
-												>
-													<span
-														style={{
-															display: 'block',
-															width: '100%',
-															textAlign: 'center',
-														}}
-													>
-														<Button
-															icon="refresh"
-															minimal
-															style={videoQualityButtonStyle}
-															onClick={onRotate}
-														>
-															{`Rotar (${rotation ?? 0}°)`}
-														</Button>
-													</span>
-												</Tooltip>
-											</Row>
+
 											<Row
 												style={{
 													justifyContent: 'center',

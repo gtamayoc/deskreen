@@ -33,6 +33,7 @@ import { adbService } from '../services/AdbService';
 import { adbDownloaderService } from '../services/AdbDownloaderService';
 import { deviceIdentityService } from '../services/DeviceIdentityService';
 import type { DeviceSessionIdentity } from '../../common/types/adb';
+import { isTerminalOrConsoleTitle } from '../../common/terminalDetection';
 
 
 export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
@@ -177,11 +178,8 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 				);
 			waitingSession.setOnDeviceConnectedCallback(onDeviceConnectedCallback);
 
-			const activeAdbDevices = adbService.getConnectedDevices();
-			if (activeAdbDevices.length > 0) {
-				for (const dev of activeAdbDevices) {
-					void adbService.setupReversePort(dev.id, signalingServer.port);
-				}
+			if (waitingSession.roomID) {
+				adbService.setSessionInfo(signalingServer.port, waitingSession.roomID);
 			}
 		} catch (error) {
 			console.error('Failed to create waiting sharing session', error);
@@ -838,6 +836,39 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 	ipcMain.handle(IpcEvents.GetDeviceSessionToken, (_, token: string) => {
 		return deviceIdentityService.getSession(token) ?? null;
 	});
+
+	ipcMain.handle(
+		IpcEvents.GetSourceMetadataBySourceId,
+		async (_, sourceId: string) => {
+			if (!sourceId) {
+				return { id: '', name: '', type: 'screen', isConsole: false };
+			}
+			const sourcesService =
+				getDeskreenGlobal().desktopCapturerSourcesService;
+			let sourceWithType = sourcesService.sources.get(sourceId);
+			if (!sourceWithType) {
+				try {
+					await sourcesService.refreshDesktopCapturerSources();
+					sourceWithType = sourcesService.sources.get(sourceId);
+				} catch {
+					// ignore
+				}
+			}
+			const name = sourceWithType?.source?.name || '';
+			const isScreen = sourceId.includes(DesktopCapturerSourceType.SCREEN);
+			const type = isScreen
+				? DesktopCapturerSourceType.SCREEN
+				: DesktopCapturerSourceType.WINDOW;
+			const isConsole = !isScreen && isTerminalOrConsoleTitle(name);
+
+			return {
+				id: sourceId,
+				name,
+				type,
+				isConsole,
+			};
+		},
+	);
 
 	void createWaitingForConnectionSharingSession();
 };

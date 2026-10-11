@@ -8,7 +8,10 @@ export default class PeerConnectionUIHandler {
 
 	hostAllowedToConnectCallback: () => void;
 
-	setScreenSharingSourceTypeCallback: (s: ScreenSharingSourceType) => void;
+	setScreenSharingSourceTypeCallback: (
+		s: ScreenSharingSourceType,
+		isConsole?: boolean,
+	) => void;
 
 	setAppLanguageCallback: (newLang: string) => void;
 
@@ -21,7 +24,10 @@ export default class PeerConnectionUIHandler {
 	constructor(
 		setMyDeviceDetails: (details: DeviceDetails) => void,
 		hostAllowedToConnectCallback: () => void,
-		setScreenSharingSourceTypeCallback: (s: ScreenSharingSourceType) => void,
+		setScreenSharingSourceTypeCallback: (
+			s: ScreenSharingSourceType,
+			isConsole?: boolean,
+		) => void,
 		setAppLanguageCallback: (newLang: string) => void,
 		setDialogErrorMessageCallback: (message: ErrorMessageType) => void,
 		setIsErrorDialogOpen: (val: boolean) => void,

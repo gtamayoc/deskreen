@@ -41,6 +41,7 @@ function MainView() {
 	const [url, setUrl] = useState<MediaStream | null>(null);
 	const [screenSharingSourceType, setScreenSharingSourceType] =
 		useState<ScreenSharingSourceType>(ScreenSharingSource.SCREEN);
+	const [isConsoleSharing, setIsConsoleSharing] = useState<boolean>(false);
 	const [isWithControls, setIsWithControls] = useState(!screenfull.isEnabled);
 	const [isShownTextPrompt, setIsShownTextPrompt] = useState(false);
 	const [isShownLoadingSharingIcon, setIsShownLoadingSharingIcon] =
@@ -84,6 +85,7 @@ function MainView() {
 			setIsShownTextPrompt,
 			setPromptStep,
 			setScreenSharingSourceType,
+			setIsConsoleSharing,
 			setDialogErrorMessage,
 			setIsErrorDialogOpen,
 			setUrl,
@@ -138,6 +140,7 @@ function MainView() {
 				setVideoQuality={setVideoQuality}
 				videoQuality={videoQuality}
 				peer={peer}
+				isConsoleSharing={isConsoleSharing}
 			/>
 			<ErrorDialog
 				errorMessage={dialogErrorMessage}
