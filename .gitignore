@@ -15,4 +15,5 @@ tsconfig.web.tsbuildinfo
 src/client-viewer/.env
 
 AGENTS.md
-.codebase-memory/
+.codebase-memory/
+tasks/
