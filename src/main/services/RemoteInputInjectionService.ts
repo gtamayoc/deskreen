@@ -94,6 +94,27 @@ export class RemoteInputInjectionService {
 		const platform = os.platform();
 		let keysToSend = '';
 
+		if (
+			typeof payload.text === 'string' &&
+			payload.text.includes('%20')
+		) {
+			try {
+				payload.text = decodeURIComponent(payload.text);
+			} catch {
+				// ignore
+			}
+		}
+		if (
+			typeof payload.macro === 'string' &&
+			payload.macro.includes('%20')
+		) {
+			try {
+				payload.macro = decodeURIComponent(payload.macro);
+			} catch {
+				// ignore
+			}
+		}
+
 		if (payload.action === 'macro') {
 			if (payload.macro === 'approve') {
 				keysToSend = 'y{ENTER}';

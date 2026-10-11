@@ -10,7 +10,20 @@ interface ProcessedPayload {
 export const process = (
 	payload: ReceiveEncryptedMessagePayload,
 ): Promise<ProcessedMessage> => {
-	return Promise.resolve(payload as ProcessedMessage);
+	const res = { ...payload } as ProcessedMessage;
+	if (
+		res.payload &&
+		typeof (res.payload as { text?: unknown }).text === 'string'
+	) {
+		try {
+			(res.payload as { text: string }).text = decodeURI(
+				(res.payload as { text: string }).text,
+			);
+		} catch {
+			// ignore decode error
+		}
+	}
+	return Promise.resolve(res);
 };
 
 export const prepare = (

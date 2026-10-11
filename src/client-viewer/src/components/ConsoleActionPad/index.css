@@ -98,6 +98,13 @@
 	transform: scale(0.96);
 }
 
+.console-pad-btn:focus,
+.console-pad-btn-option:focus,
+.console-pad-chip:focus {
+	outline: none !important;
+	box-shadow: none !important;
+}
+
 .console-pad-chips-row {
 	display: flex;
 	gap: 6px;

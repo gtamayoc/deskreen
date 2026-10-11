@@ -158,12 +158,33 @@ export const handleRecieveEncryptedMessage = async (
 		const deviceFingerprint = partnerDetails
 			? `${partnerDetails.deviceIP}_${partnerDetails.deviceOS}_${partnerDetails.deviceBrowser}`
 			: undefined;
+		const cleanPayload = { ...message.payload };
+		if (
+			typeof cleanPayload.text === 'string' &&
+			cleanPayload.text.includes('%20')
+		) {
+			try {
+				cleanPayload.text = decodeURIComponent(cleanPayload.text);
+			} catch {
+				// ignore
+			}
+		}
+		if (
+			typeof cleanPayload.macro === 'string' &&
+			cleanPayload.macro.includes('%20')
+		) {
+			try {
+				cleanPayload.macro = decodeURIComponent(cleanPayload.macro);
+			} catch {
+				// ignore
+			}
+		}
 		await window.electron.ipcRenderer.invoke(
 			IpcEvents.InjectRemoteConsoleInput,
 			{
 				sessionId: peerConnection.sharingSessionID,
 				deviceFingerprint,
-				payload: message.payload,
+				payload: cleanPayload,
 			},
 		);
 	}

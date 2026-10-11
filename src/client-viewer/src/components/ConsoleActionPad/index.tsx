@@ -12,6 +12,16 @@ const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({ peer }) => {
 	const [inputText, setInputText] = useState('');
 	const [feedback, setFeedback] = useState<string | null>(null);
 	const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+	const isLockedRef = useRef(false);
+
+	const blurActiveElement = useCallback(() => {
+		if (
+			typeof document !== 'undefined' &&
+			document.activeElement instanceof HTMLElement
+		) {
+			document.activeElement.blur();
+		}
+	}, []);
 
 	const triggerFeedback = useCallback((label: string) => {
 		if (feedbackTimeoutRef.current) {
@@ -24,17 +34,31 @@ const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({ peer }) => {
 	}, []);
 
 	const sendInput = useCallback(
-		(payload: {
-			action: 'key' | 'text' | 'macro';
-			key?: string;
-			text?: string;
-			macro?: string;
-			autoEnter?: boolean;
-		}, label: string) => {
+		(
+			payload: {
+				action: 'key' | 'text' | 'macro';
+				key?: string;
+				text?: string;
+				macro?: string;
+				autoEnter?: boolean;
+			},
+			label: string,
+		) => {
 			if (!peer) {
 				triggerFeedback('Sin conexión');
 				return;
 			}
+			// Prevent accidental double clicks / duplicate submissions
+			if (isLockedRef.current) {
+				return;
+			}
+			isLockedRef.current = true;
+			setTimeout(() => {
+				isLockedRef.current = false;
+			}, 350);
+
+			blurActiveElement();
+
 			try {
 				peer.sendEncryptedMessage({
 					type: 'REMOTE_CONSOLE_INPUT',
@@ -46,7 +70,7 @@ const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({ peer }) => {
 				triggerFeedback('Error de envío');
 			}
 		},
-		[peer, triggerFeedback],
+		[peer, triggerFeedback, blurActiveElement],
 	);
 
 	const handleSendOption = useCallback(
@@ -92,8 +116,12 @@ const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({ peer }) => {
 
 	const handleSubmitText = useCallback(
 		(e?: React.FormEvent) => {
-			if (e) e.preventDefault();
+			if (e) {
+				e.preventDefault();
+				e.stopPropagation();
+			}
 			const trimmed = inputText.trim();
+			setInputText('');
 			if (!trimmed) return;
 			sendInput(
 				{
@@ -103,7 +131,6 @@ const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({ peer }) => {
 				},
 				`"${trimmed}"`,
 			);
-			setInputText('');
 		},
 		[inputText, sendInput],
 	);
@@ -246,9 +273,9 @@ const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({ peer }) => {
 							leftIcon="edit"
 						/>
 						<Button
+							type="submit"
 							intent={Intent.PRIMARY}
 							icon="send-message"
-							onClick={() => handleSubmitText()}
 							text="Enviar"
 						/>
 					</form>
