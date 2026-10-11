@@ -18,12 +18,6 @@ const useStyles = makeStyles(() =>
 			position: 'relative',
 			gap: '12px',
 		},
-		donateButtonRoot: {
-			display: 'flex',
-			justifyContent: 'center',
-			width: '100%',
-			marginTop: '4px',
-		},
 		logoWithAppName: { margin: '0 auto' },
 		appNameHeader: {
 			margin: '0 auto',
@@ -32,47 +26,6 @@ const useStyles = makeStyles(() =>
 			fontSize: '20px',
 			color: '#e2791b',
 			cursor: 'default !important',
-		},
-		donateButton: {
-			borderRadius: '100px',
-			padding: '0',
-			height: '40px',
-			background:
-				'linear-gradient(135deg, hsl(258, 90%, 66%) 0%, hsl(210, 96%, 62%) 30%, hsl(192, 94%, 44%) 70%, hsl(28, 96%, 58%) 100%)',
-			border: 'none',
-			boxShadow:
-				'0 4px 12px rgba(102, 51, 204, 0.4), 0 2px 4px rgba(102, 51, 204, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-			transition: 'all 0.2s ease',
-			'&:hover': {
-				transform: 'translateY(-1px)',
-				boxShadow:
-					'0 6px 16px rgba(102, 51, 204, 0.5), 0 3px 6px rgba(102, 51, 204, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-			},
-		},
-		donateButtonContent: {
-			display: 'flex',
-			alignItems: 'center',
-			justifyContent: 'center',
-			height: '100%',
-			padding: '0 16px',
-			gap: '8px',
-		},
-		donateButtonIcon: {
-			width: '20px',
-			height: '20px',
-			display: 'block',
-			verticalAlign: 'middle',
-			flexShrink: 0,
-			filter: 'brightness(1.1) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2))',
-		},
-		donateButtonLabel: {
-			display: 'flex',
-			alignItems: 'center',
-			lineHeight: '1',
-			fontSize: '14px',
-			fontWeight: 600,
-			color: '#ffffff',
-			textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
 		},
 		topPanelControlButtonsRoot: {
 			display: 'flex',
@@ -155,14 +108,7 @@ export default function TopPanel({ handleReset }: Props): React.ReactElement {
 		setIsConnectedDevicesDrawerOpen(!isConnectedDevicesDrawerOpen);
 	}, [isConnectedDevicesDrawerOpen]);
 
-	const donateTooltipContent = t('get-deskreen-pro-tooltip');
 
-	const handleDonateButtonClick = React.useCallback(() => {
-		window.electron.ipcRenderer.invoke(
-			IpcEvents.OpenExternalLink,
-			'https://deskreen.com/download',
-		);
-	}, []);
 
 	const handleTutorialButtonClick = React.useCallback(() => {
 		window.electron.ipcRenderer.invoke(
@@ -226,27 +172,7 @@ export default function TopPanel({ handleReset }: Props): React.ReactElement {
 		currentVersion !== '' &&
 		latestVersion !== currentVersion;
 
-	const renderDonateButton = (
-		<Tooltip content={donateTooltipContent} position={Position.BOTTOM}>
-			<Button
-				id="top-panel-donate-button"
-				className={classes.donateButton}
-				onClick={handleDonateButtonClick}
-			>
-				<div className={classes.donateButtonContent}>
-					<Icon
-						className={classes.donateButtonIcon}
-						icon="clean"
-						size={20}
-						color="#D4AF37"
-					/>
-					<span className={classes.donateButtonLabel}>
-						{t('get-deskreen-pro')}
-					</span>
-				</div>
-			</Button>
-		</Tooltip>
-	);
+
 
 	const renderConnectedDevicesListButton = (
 		<div className={classes.topPanelControlButtonMargin}>
@@ -348,7 +274,6 @@ export default function TopPanel({ handleReset }: Props): React.ReactElement {
 				<Row middle="xs" center="xs" style={{ width: '100%' }}>
 					<Col>{renderLogoWithAppName}</Col>
 				</Row>
-				<div className={classes.donateButtonRoot}>{renderDonateButton}</div>
 				<div className={classes.topPanelControlsWrapper}>
 					<div className={classes.topPanelControlButtonsRoot}>
 						{renderConnectedDevicesListButton}
