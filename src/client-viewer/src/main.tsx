@@ -6,6 +6,10 @@ initializeGARequestInterceptor();
 import { StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
+
+if (localStorage.getItem('deskreen_dark_mode') === 'true') {
+	document.body.classList.add('bp3-dark');
+}
 import './config/i18n';
 import App from './App.tsx';
 import { AppContextProvider } from './providers/AppContextProvider';

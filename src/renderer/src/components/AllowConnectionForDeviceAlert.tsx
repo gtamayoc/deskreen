@@ -1,5 +1,5 @@
-import React from 'react';
-import { Intent, Alert, H4 } from '@blueprintjs/core';
+import React, { useState } from 'react';
+import { Intent, Alert, H4, Checkbox } from '@blueprintjs/core';
 import DeviceInfoCallout from './DeviceInfoCallout';
 import { Device } from '../../../common/Device';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +8,7 @@ interface AllowConnectionForDeviceAlertProps {
 	device: Device | null;
 	isOpen: boolean;
 	onCancel: () => void;
-	onConfirm: () => void;
+	onConfirm: (trustThisDevice?: boolean) => void;
 }
 
 const AllowConnectionForDeviceAlert: React.FC<
@@ -18,6 +18,7 @@ const AllowConnectionForDeviceAlert: React.FC<
 	const { t } = useTranslation();
 	const denyText = t('deny');
 	const allowText = t('allow');
+	const [trustThisDevice, setTrustThisDevice] = useState(false);
 
 	return (
 		<Alert
@@ -28,7 +29,7 @@ const AllowConnectionForDeviceAlert: React.FC<
 			intent={Intent.DANGER}
 			isOpen={isOpen}
 			onCancel={onCancel}
-			onConfirm={onConfirm}
+			onConfirm={() => onConfirm(trustThisDevice)}
 			transitionDuration={0}
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
@@ -42,6 +43,13 @@ const AllowConnectionForDeviceAlert: React.FC<
 				deviceBrowser={device?.deviceBrowser}
 				deviceRoomId={device?.deviceRoomId}
 			/>
+			<div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
+				<Checkbox
+					checked={trustThisDevice}
+					onChange={(e) => setTrustThisDevice(e.currentTarget.checked)}
+					label="Recordar este dispositivo (permitir reconexión automática)"
+				/>
+			</div>
 		</Alert>
 	);
 };

@@ -168,25 +168,70 @@ const DeskreenStepper = ({
 		);
 	};
 
-	const handleConfirmAlert = useCallback(async () => {
-		setIsAllowDeviceAlertOpen(false);
-		setIsUserAllowedConnection(true);
-		handleNext();
-		await window.electron.ipcRenderer.invoke(
-			IpcEvents.SetDeviceConnectedStatus,
-		);
-	}, [handleNext, setIsAllowDeviceAlertOpen, setIsUserAllowedConnection]);
+	const getDeviceFingerprint = (device: Device | null): string => {
+		if (!device) return '';
+		return `${device.deviceIP || ''}_${device.deviceOS || ''}_${device.deviceBrowser || ''}`;
+	};
+
+	const handleConfirmAlert = useCallback(
+		async (trustThisDevice?: boolean) => {
+			setIsAllowDeviceAlertOpen(false);
+			setIsUserAllowedConnection(true);
+
+			if (trustThisDevice && pendingConnectionDevice) {
+				const fingerprint = getDeviceFingerprint(pendingConnectionDevice);
+				if (fingerprint) {
+					await window.electron.ipcRenderer.invoke(
+						IpcEvents.AddTrustedDevice,
+						fingerprint,
+					);
+				}
+			}
+
+			handleNext();
+			await window.electron.ipcRenderer.invoke(
+				IpcEvents.SetDeviceConnectedStatus,
+			);
+		},
+		[
+			handleNext,
+			pendingConnectionDevice,
+			setIsAllowDeviceAlertOpen,
+			setIsUserAllowedConnection,
+		],
+	);
 
 	useEffect(() => {
 		window.electron.ipcRenderer.invoke(
 			IpcEvents.CreateWaitingForConnectionSharingSession,
 		);
 
-		const handlePendingConnectionDevice = (
+		const handlePendingConnectionDevice = async (
 			_: unknown,
 			device: Device,
-		): void => {
+		): Promise<void> => {
 			setPendingConnectionDevice(device);
+			const fingerprint = `${device.deviceIP || ''}_${device.deviceOS || ''}_${device.deviceBrowser || ''}`;
+			try {
+				const isTrusted = await window.electron.ipcRenderer.invoke(
+					IpcEvents.IsDeviceTrusted,
+					fingerprint,
+				);
+				if (isTrusted) {
+					setIsUserAllowedConnection(true);
+					handleNext();
+					await window.electron.ipcRenderer.invoke(
+						IpcEvents.SetDeviceConnectedStatus,
+					);
+					void showMessageFromNewToaster(
+						`${t('connected')}: ${device.deviceBrowser || 'Trusted Device'}`,
+					);
+					return;
+				}
+			} catch (e) {
+				console.error('Failed to verify trusted device', e);
+			}
+
 			setIsAllowDeviceAlertOpen(true);
 		};
 
@@ -201,7 +246,7 @@ const DeskreenStepper = ({
 				handlePendingConnectionDevice,
 			);
 		};
-	}, [setIsAllowDeviceAlertOpen, setPendingConnectionDevice]);
+	}, [handleNext, setIsAllowDeviceAlertOpen, setIsUserAllowedConnection, setPendingConnectionDevice, t]);
 
 	const handleUserClickedDeviceDisconnectButton =
 		useCallback(async (): Promise<void> => {

@@ -535,5 +535,50 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 		app.exit(0);
 	});
 
+	ipcMain.handle(IpcEvents.GetTrustedDevices, () => {
+		try {
+			const raw = store.get('trusted_devices');
+			return raw ? (JSON.parse(raw) as string[]) : [];
+		} catch {
+			return [];
+		}
+	});
+
+	ipcMain.handle(IpcEvents.AddTrustedDevice, (_, deviceFingerprint: string) => {
+		try {
+			const raw = store.get('trusted_devices');
+			const list: string[] = raw ? (JSON.parse(raw) as string[]) : [];
+			if (!list.includes(deviceFingerprint)) {
+				list.push(deviceFingerprint);
+				store.set('trusted_devices', JSON.stringify(list));
+			}
+			return true;
+		} catch {
+			return false;
+		}
+	});
+
+	ipcMain.handle(IpcEvents.RemoveTrustedDevice, (_, deviceFingerprint: string) => {
+		try {
+			const raw = store.get('trusted_devices');
+			let list: string[] = raw ? (JSON.parse(raw) as string[]) : [];
+			list = list.filter((id) => id !== deviceFingerprint);
+			store.set('trusted_devices', JSON.stringify(list));
+			return true;
+		} catch {
+			return false;
+		}
+	});
+
+	ipcMain.handle(IpcEvents.IsDeviceTrusted, (_, deviceFingerprint: string) => {
+		try {
+			const raw = store.get('trusted_devices');
+			const list: string[] = raw ? (JSON.parse(raw) as string[]) : [];
+			return list.includes(deviceFingerprint);
+		} catch {
+			return false;
+		}
+	});
+
 	void createWaitingForConnectionSharingSession();
 };

@@ -52,9 +52,16 @@ export default class RendererWebrtcHelpersService {
 			);
 		}
 
-		helperRendererWindow.webContents.on('console-message', (_, __, message) => {
-			console.log(`[HelperWindow Console] ${message}`);
-		});
+		helperRendererWindow.webContents.on(
+			'console-message',
+			(event: { message?: string } | unknown) => {
+				const message =
+					typeof event === 'object' && event !== null && 'message' in event
+						? (event as { message: string }).message
+						: String(event);
+				console.log(`[HelperWindow Console] ${message}`);
+			},
+		);
 
 		helperRendererWindow.webContents.on(
 			'did-fail-load',

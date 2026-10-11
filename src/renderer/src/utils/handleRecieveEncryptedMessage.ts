@@ -99,7 +99,11 @@ export const handleRecieveEncryptedMessage = async (
 	// const message = payload as any;
 	if (message.type === 'CALL_ACCEPTED') {
 		try {
-			const peer = peerConnection.peer as any;
+			const peer = peerConnection.peer as {
+				_pc?: RTCPeerConnection;
+				destroyed?: boolean;
+				signal: (data: unknown) => void;
+			};
 			if (peer && peer !== NullSimplePeer && !peer.destroyed) {
 				const signalingState = peer._pc?.signalingState;
 				if (signalingState && signalingState !== 'have-local-offer') {

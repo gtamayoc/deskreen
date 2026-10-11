@@ -2,7 +2,6 @@ import React, { useCallback, useState } from 'react';
 import { Classes } from '@blueprintjs/core';
 import { ToastProvider, DefaultToast } from 'react-toast-notifications';
 
-import { LIGHT_UI_BACKGROUND } from './SettingsProvider';
 import DeskreenStepper from './DeskreenStepper';
 import { Device } from '../../../common/Device';
 import TopPanel from '@renderer/components/TopPanel';
@@ -22,8 +21,8 @@ export const CustomToastWithTheme = ({
 			{...props}
 			// @ts-ignore: some minor type complain, it is fine here
 			style={{
-				color: '#293742',
-				backgroundColor: LIGHT_UI_BACKGROUND,
+				color: 'var(--text-color, #293742)',
+				backgroundColor: 'var(--light-bg-color)',
 			}}
 		>
 			<>{children}</>

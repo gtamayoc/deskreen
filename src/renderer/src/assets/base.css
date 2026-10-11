@@ -141,6 +141,107 @@ body {
 	background-color: var(--light-bg-color);
 }
 
+/* Dark Theme styles for Deskreen Desktop */
+body.bp3-dark {
+	--light-bg-color: #202b33;
+	--light-btn-no-intent-color: #30404d;
+	background-color: #202b33 !important;
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark .bp3-button:not([class*="bp3-intent-"]) {
+	background-color: #394b59 !important;
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark .bp3-button:not([class*="bp3-intent-"]):hover {
+	background-color: #485f70 !important;
+}
+
+body.bp3-dark .bp3-dialog {
+	background-color: #293742 !important;
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark .bp3-drawer {
+	background-color: #293742 !important;
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark .bp3-card {
+	background-color: #293742 !important;
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark .bp3-popover .bp3-popover-content {
+	background-color: #293742 !important;
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark .bp3-popover .bp3-popover-arrow-fill {
+	fill: #293742 !important;
+}
+
+body.bp3-dark .bp3-html-select > select {
+	background-color: #394b59 !important;
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark .bp3-callout {
+	background-color: #293742 !important;
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark h1,
+body.bp3-dark h2,
+body.bp3-dark h3,
+body.bp3-dark h4,
+body.bp3-dark h5,
+body.bp3-dark h6,
+body.bp3-dark .bp3-heading {
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark p,
+body.bp3-dark span:not(.bp3-icon):not([class*="badge"]):not(.device-ip-span) {
+	color: #f5f8fa;
+}
+
+body.bp3-dark .bp3-text-muted,
+body.bp3-dark .MuiStepLabel-label {
+	color: #8a9ba8 !important;
+}
+
+body.bp3-dark .MuiStepLabel-label.MuiStepLabel-active {
+	color: #ffffff !important;
+}
+
+body.bp3-dark #logo-with-popover-visit-website h3 {
+	color: #e2791b !important;
+}
+
+body.bp3-dark .bp3-tab {
+	color: #8a9ba8 !important;
+}
+
+body.bp3-dark .bp3-tab[aria-selected="true"] {
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark .bp3-tab-panel {
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark [class*="overlayInsideFade"] {
+	background-color: #202b33 !important;
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark .bp3-input {
+	background-color: #30404d !important;
+	color: #f5f8fa !important;
+}
+
 /* for really small screen sizes (ex. Raspberry PI display etc. */
 @media screen and (max-height: 419px) {
 	body {

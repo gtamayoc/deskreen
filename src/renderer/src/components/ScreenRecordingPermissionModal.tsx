@@ -30,7 +30,9 @@ const ScreenRecordingPermissionModal: React.FC<ScreenRecordingPermissionModalPro
 	return (
 		<Dialog
 			isOpen={isOpen}
-			onClose={() => {}}
+			onClose={() => {
+				/* non-dismissible modal */
+			}}
 			title={t('screen-recording-permission-required')}
 			icon='warning-sign'
 			isCloseButtonShown={false}

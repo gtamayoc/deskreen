@@ -7,6 +7,21 @@ overrideGlobalConsole();
 startConsoleRateLimiting();
 
 import { app, shell, BrowserWindow, Notification } from 'electron';
+
+// Suppress insecure CSP warnings in development
+process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
+
+// Chromium command line switches must be appended synchronously before any subsystem starts
+app.commandLine.appendSwitch('webrtc-max-cpu-consumption-percentage', '100');
+
+if (process.platform === 'win32') {
+	// Disable Windows Graphics Capture in WebRTC desktop capturer to fallback to DXGI / GDI screen capturer,
+	// avoiding WGC ProcessFrame failure error -2147467259 (E_FAIL).
+	app.commandLine.appendSwitch(
+		'disable-features',
+		'AllowWgcScreenCapturer,AllowWgcWindowCapturer,AllowWgcDesktopCapturer,WebRtcAllowWgcScreenCapturer,WebRtcAllowWgcWindowCapturer,WebRtcAllowWgcDesktopCapturer',
+	);
+}
 import { join } from 'path';
 import { is, optimizer } from '@electron-toolkit/utils';
 import icon from '../../resources/icon.png?asset';
@@ -156,20 +171,6 @@ export default class DeskreenApp {
 				this.createWindow();
 			}
 		});
-
-		app.commandLine.appendSwitch(
-			'webrtc-max-cpu-consumption-percentage',
-			'100',
-		);
-
-		if (process.platform === 'win32') {
-			// Disable Windows Graphics Capture in WebRTC desktop capturer to fallback to DXGI / GDI screen capturer,
-			// avoiding WGC ProcessFrame failure error -2147467259 (E_FAIL).
-			app.commandLine.appendSwitch(
-				'disable-features',
-				'WebRtcAllowWgcDesktopCapturer,WebRtcAllowWgcScreenCapturer,WebRtcAllowWgcWindowCapturer',
-			);
-		}
 	}
 
 	private async checkForLatestVersionAndNotify(): Promise<void> {

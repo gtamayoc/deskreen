@@ -56,6 +56,45 @@ export default function ConnectedDevicesListDrawer(
 		DeviceWithDesktopCapturerSourceId[]
 	>([]);
 	const [devicesDisplayed, setDevicesDisplayed] = useState(new Map());
+	const [trustedList, setTrustedList] = useState<string[]>([]);
+
+	const refreshTrustedList = useCallback(async () => {
+		try {
+			const list = await window.electron.ipcRenderer.invoke(
+				IpcEvents.GetTrustedDevices,
+			);
+			if (Array.isArray(list)) {
+				setTrustedList(list);
+			}
+		} catch (e) {
+			console.error(e);
+		}
+	}, []);
+
+	useEffect(() => {
+		if (props.isOpen) {
+			void refreshTrustedList();
+		}
+	}, [props.isOpen, refreshTrustedList]);
+
+	const handleToggleTrust = useCallback(
+		async (device: Device) => {
+			const fingerprint = `${device.deviceIP || ''}_${device.deviceOS || ''}_${device.deviceBrowser || ''}`;
+			if (trustedList.includes(fingerprint)) {
+				await window.electron.ipcRenderer.invoke(
+					IpcEvents.RemoveTrustedDevice,
+					fingerprint,
+				);
+			} else {
+				await window.electron.ipcRenderer.invoke(
+					IpcEvents.AddTrustedDevice,
+					fingerprint,
+				);
+			}
+			await refreshTrustedList();
+		},
+		[trustedList, refreshTrustedList],
+	);
 
 	useEffect(() => {
 		function getConnectedDevicesCallback() {
@@ -233,7 +272,24 @@ export default function ConnectedDevicesListDrawer(
 													/>
 												</Col>
 											</Row>
-											<Row center="xs">
+											<Row center="xs" style={{ gap: '12px', marginTop: '12px' }}>
+												{(() => {
+													const fingerprint = `${device.deviceIP || ''}_${device.deviceOS || ''}_${device.deviceBrowser || ''}`;
+													const isTrusted = trustedList.includes(fingerprint);
+													return (
+														<Button
+															intent={isTrusted ? 'warning' : 'primary'}
+															minimal={!isTrusted}
+															onClick={() => handleToggleTrust(device)}
+															icon={isTrusted ? 'star' : 'star-empty'}
+															style={{ borderRadius: '100px' }}
+														>
+															{isTrusted
+																? 'Dispositivo Recordado'
+																: 'Recordar Dispositivo'}
+														</Button>
+													);
+												})()}
 												<Button
 													id={`disconnect-device-${device.deviceIP}`}
 													intent="danger"

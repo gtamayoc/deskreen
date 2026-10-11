@@ -7,6 +7,11 @@ overrideGlobalConsole();
 startConsoleRateLimiting();
 
 import './assets/main.css';
+
+if (localStorage.getItem('deskreen_app_dark_mode') === 'true') {
+	document.body.classList.add('bp3-dark');
+}
+
 import { createRoot } from 'react-dom/client';
 import { StrictMode, Suspense } from 'react';
 import Root from './containers/Root';

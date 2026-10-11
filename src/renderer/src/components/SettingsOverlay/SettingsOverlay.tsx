@@ -12,7 +12,6 @@ import {
 } from '@blueprintjs/core';
 import { Col, Row } from 'react-flexbox-grid';
 import { createStyles, makeStyles } from '@material-ui/core/styles';
-import { LIGHT_UI_BACKGROUND } from '../../containers/SettingsProvider';
 import CloseOverlayButton from '../CloseOverlayButton';
 import SettingRowLabelAndInput from './SettingRowLabelAndInput';
 import LanguageSelector from '../LanguageSelector';
@@ -43,7 +42,7 @@ const useStyles = makeStyles(() =>
 		overlayInnerRoot: { width: '90%' },
 		overlayInsideFade: {
 			height: '90vh',
-			backgroundColor: LIGHT_UI_BACKGROUND,
+			backgroundColor: 'var(--light-bg-color)',
 		},
 		absoluteCloseButton: { position: 'absolute', left: 'calc(100% - 65px)' },
 		tabNavigationRowButton: {

@@ -33,4 +33,8 @@ export enum IpcEvents {
 	WriteTextToClipboard = 'write-text-to-clipboard',
 	CheckScreenRecordingPermission = 'check-screen-recording-permission',
 	RelaunchApp = 'relaunch-app',
+	GetTrustedDevices = 'get-trusted-devices',
+	AddTrustedDevice = 'add-trusted-device',
+	RemoveTrustedDevice = 'remove-trusted-device',
+	IsDeviceTrusted = 'is-device-trusted',
 }
