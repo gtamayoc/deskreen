@@ -6,6 +6,7 @@ export const connectSocket = (port: string, roomId: string) => {
 			roomId,
 			isHelper: 'true',
 		},
+		transports: ['websocket', 'polling'],
 		forceNew: true,
 	});
 };

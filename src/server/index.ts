@@ -160,6 +160,13 @@ class DeskreenSignalingServer {
 			pingInterval: 20000,
 			pingTimeout: 5000,
 			serveClient: false,
+			cors: {
+				origin: (origin, callback) => {
+					callback(null, true);
+				},
+				methods: ['GET', 'POST'],
+				credentials: true,
+			},
 		});
 
 		io.sockets.on('connection', (socket) => {

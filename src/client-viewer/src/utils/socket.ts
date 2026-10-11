@@ -8,6 +8,7 @@ export const connect = (roomId: string) => {
 		query: {
 			roomId,
 		},
+		transports: ['websocket', 'polling'],
 		forceNew: true,
 	});
 	return socket;
