@@ -54,6 +54,17 @@ export type DisconnectByHostMachineUserMessageWithPayload = {
 	payload: Record<string, unknown>;
 };
 
+export type RemoteConsoleInputMessageWithPayload = {
+	type: 'REMOTE_CONSOLE_INPUT';
+	payload: {
+		action: 'key' | 'text' | 'macro';
+		key?: string;
+		text?: string;
+		macro?: string;
+		autoEnter?: boolean;
+	};
+};
+
 export type ProcessedMessage =
 	| CallAcceptedMessageWithPayload
 	| CallUserMessageWithPayload
@@ -62,7 +73,8 @@ export type ProcessedMessage =
 	| AppLanguageMessageWithPayload
 	| DenyToConnectMessageWithPayload
 	| AllowedToConnectMessageWithPayload
-	| DisconnectByHostMachineUserMessageWithPayload;
+	| DisconnectByHostMachineUserMessageWithPayload
+	| RemoteConsoleInputMessageWithPayload;
 
 export function handleDeviceIPMessage(
 	deviceIP: string,
@@ -140,5 +152,19 @@ export const handleRecieveEncryptedMessage = async (
 				value: appLanguage,
 			},
 		});
+	}
+	if (message.type === 'REMOTE_CONSOLE_INPUT') {
+		const partnerDetails = peerConnection.partnerDeviceDetails;
+		const deviceFingerprint = partnerDetails
+			? `${partnerDetails.deviceIP}_${partnerDetails.deviceOS}_${partnerDetails.deviceBrowser}`
+			: undefined;
+		await window.electron.ipcRenderer.invoke(
+			IpcEvents.InjectRemoteConsoleInput,
+			{
+				sessionId: peerConnection.sharingSessionID,
+				deviceFingerprint,
+				payload: message.payload,
+			},
+		);
 	}
 };

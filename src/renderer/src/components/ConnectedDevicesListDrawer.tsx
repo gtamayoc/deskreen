@@ -9,6 +9,7 @@ import {
 	H4,
 	DrawerSize,
 	InputGroup,
+	Switch,
 } from '@blueprintjs/core';
 import { Row, Col } from 'react-flexbox-grid';
 import { createStyles, makeStyles } from '@material-ui/core/styles';
@@ -62,6 +63,9 @@ export default function ConnectedDevicesListDrawer(
 	const [selectedDeviceForChangeSource, setSelectedDeviceForChangeSource] =
 		useState<DeviceWithDesktopCapturerSourceId | null>(null);
 	const [aliases, setAliases] = useState<Record<string, string>>({});
+	const [remoteControlAllowedMap, setRemoteControlAllowedMap] = useState<
+		Record<string, boolean>
+	>({});
 
 	const refreshAliases = useCallback(async () => {
 		try {
@@ -85,6 +89,24 @@ export default function ConnectedDevicesListDrawer(
 			void refreshAliases();
 		},
 		[refreshAliases],
+	);
+
+	const handleToggleRemoteControl = useCallback(
+		async (fingerprint: string, currentAllowed: boolean) => {
+			const newAllowed = !currentAllowed;
+			await window.electron.ipcRenderer.invoke(
+				IpcEvents.SetDeviceRemoteControlAllowed,
+				{
+					fingerprint,
+					allowed: newAllowed,
+				},
+			);
+			setRemoteControlAllowedMap((prev) => ({
+				...prev,
+				[fingerprint]: newAllowed,
+			}));
+		},
+		[],
 	);
 
 	const refreshTrustedList = useCallback(async () => {
@@ -138,6 +160,19 @@ export default function ConnectedDevicesListDrawer(
 							IpcEvents.GetDesktopCapturerSourceIdBySharingSessionId,
 							device.sharingSessionID,
 						);
+						const fp = `${device.deviceIP || ''}_${device.deviceOS || ''}_${device.deviceBrowser || ''}`;
+						try {
+							const isAllowed = await window.electron.ipcRenderer.invoke(
+								IpcEvents.GetDeviceRemoteControlAllowed,
+								fp,
+							);
+							setRemoteControlAllowedMap((prev) => ({
+								...prev,
+								[fp]: isAllowed,
+							}));
+						} catch {
+							// ignore
+						}
 						devicesWithSourceIds.push({
 							...device,
 							desktopCapturerSourceId: sharingSourceId,
@@ -330,6 +365,19 @@ export default function ConnectedDevicesListDrawer(
 														sharingSourceID={device.desktopCapturerSourceId}
 													/>
 												</Col>
+											</Row>
+											<Row start="xs" style={{ marginTop: '10px', paddingLeft: '8px' }}>
+												<Switch
+													checked={remoteControlAllowedMap[fingerprint] !== false}
+													label="Permitir Control Remoto (Consola e IA)"
+													onChange={() =>
+														handleToggleRemoteControl(
+															fingerprint,
+															remoteControlAllowedMap[fingerprint] !== false,
+														)
+													}
+													style={{ marginBottom: 0, fontWeight: 600 }}
+												/>
 											</Row>
 											<Row center="xs" style={{ gap: '12px', marginTop: '14px' }}>
 												<Button

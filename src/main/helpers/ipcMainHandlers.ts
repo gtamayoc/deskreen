@@ -24,6 +24,10 @@ import { store } from '../../common/deskreen-electron-store';
 import DesktopCapturerSourceType from '../../common/DesktopCapturerSourceType';
 import isLinuxWaylandSession from '../utils/isLinuxWaylandSession';
 import { checkScreenRecordingPermission } from './checkScreenRecordingPermission';
+import {
+	remoteInputInjectionService,
+	type RemoteInputPayload,
+} from '../services/RemoteInputInjectionService';
 
 export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 	ipcMain.on('client-changed-language', async (_, newLangCode) => {
@@ -636,6 +640,101 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 					delete map[fingerprint];
 				}
 				store.set('device_aliases', JSON.stringify(map));
+				return true;
+			} catch {
+				return false;
+			}
+		},
+	);
+
+	ipcMain.handle(
+		IpcEvents.InjectRemoteConsoleInput,
+		async (
+			_,
+			{
+				sessionId,
+				deviceFingerprint,
+				payload,
+			}: {
+				sessionId?: string;
+				deviceFingerprint?: string;
+				payload: RemoteInputPayload;
+			},
+		) => {
+			try {
+				const rawBlocked = store.get('remote_control_blocked_devices');
+				const blockedMap: Record<string, boolean> = rawBlocked
+					? (JSON.parse(rawBlocked) as Record<string, boolean>)
+					: {};
+				if (deviceFingerprint && blockedMap[deviceFingerprint] === true) {
+					console.warn(
+						'[RemoteInput] Blocked input from unpermitted device:',
+						deviceFingerprint,
+					);
+					return false;
+				}
+			} catch {
+				// ignore parse error
+			}
+
+			if (sessionId) {
+				const session =
+					getDeskreenGlobal().sharingSessionService.sharingSessions.get(
+						sessionId,
+					);
+				if (session?.desktopCapturerSourceID) {
+					const sourceInfo =
+						getDeskreenGlobal().desktopCapturerSourcesService.sources.get(
+							session.desktopCapturerSourceID,
+						);
+					if (sourceInfo?.source?.name) {
+						payload.targetWindowTitle = sourceInfo.source.name;
+					}
+				}
+			}
+
+			return remoteInputInjectionService.injectInput(payload);
+		},
+	);
+
+	ipcMain.handle(
+		IpcEvents.GetDeviceRemoteControlAllowed,
+		(_, fingerprint: string) => {
+			try {
+				const rawBlocked = store.get('remote_control_blocked_devices');
+				const blockedMap: Record<string, boolean> = rawBlocked
+					? (JSON.parse(rawBlocked) as Record<string, boolean>)
+					: {};
+				return blockedMap[fingerprint] !== true;
+			} catch {
+				return true;
+			}
+		},
+	);
+
+	ipcMain.handle(
+		IpcEvents.SetDeviceRemoteControlAllowed,
+		(
+			_,
+			{
+				fingerprint,
+				allowed,
+			}: { fingerprint: string; allowed: boolean },
+		) => {
+			try {
+				const rawBlocked = store.get('remote_control_blocked_devices');
+				const blockedMap: Record<string, boolean> = rawBlocked
+					? (JSON.parse(rawBlocked) as Record<string, boolean>)
+					: {};
+				if (allowed) {
+					delete blockedMap[fingerprint];
+				} else {
+					blockedMap[fingerprint] = true;
+				}
+				store.set(
+					'remote_control_blocked_devices',
+					JSON.stringify(blockedMap),
+				);
 				return true;
 			} catch {
 				return false;

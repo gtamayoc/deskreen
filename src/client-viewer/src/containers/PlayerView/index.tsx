@@ -9,6 +9,8 @@ import {
 } from '../../constants/appConstants';
 import { type VideoQualityType } from '../../features/VideoAutoQualityOptimizer/VideoQualityEnum';
 import { togglePlayerFullscreen } from '../../utils/playerFullscreen';
+import ConsoleActionPad from '../../components/ConsoleActionPad';
+import type PeerConnection from '../../features/PeerConnection';
 
 interface PlayerViewProps {
 	isWithControls: boolean;
@@ -20,6 +22,7 @@ interface PlayerViewProps {
 	videoQuality: VideoQualityType;
 	screenSharingSourceType: ScreenSharingSourceType;
 	streamUrl: MediaStream | null;
+	peer?: PeerConnection;
 }
 
 type IOSVideoElement = HTMLVideoElement & {
@@ -41,6 +44,7 @@ function PlayerView(props: PlayerViewProps) {
 		setVideoQuality,
 		videoQuality,
 		streamUrl,
+		peer,
 	} = props;
 
 	const [isFlippedHorizontal, setIsFlippedHorizontal] = useState(() => {
@@ -332,6 +336,7 @@ function PlayerView(props: PlayerViewProps) {
 				</div>
 				<canvas id={COMPARISON_CANVAS_ID} style={{ display: 'none' }}></canvas>
 			</div>
+			<ConsoleActionPad peer={peer} />
 		</div>
 	);
 }

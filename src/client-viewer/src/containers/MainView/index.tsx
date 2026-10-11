@@ -137,6 +137,7 @@ function MainView() {
 				setPlaying={setPlaying}
 				setVideoQuality={setVideoQuality}
 				videoQuality={videoQuality}
+				peer={peer}
 			/>
 			<ErrorDialog
 				errorMessage={dialogErrorMessage}

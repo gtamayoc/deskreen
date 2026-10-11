@@ -1,0 +1,131 @@
+.console-action-pad-toggle {
+	position: fixed;
+	bottom: max(16px, env(safe-area-inset-bottom, 16px));
+	left: 16px;
+	z-index: 999;
+	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+	border-radius: 24px !important;
+	font-weight: 600;
+	backdrop-filter: blur(8px);
+}
+
+.console-action-pad-drawer {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	z-index: 1000;
+	background: rgba(22, 27, 34, 0.94);
+	backdrop-filter: blur(16px);
+	-webkit-backdrop-filter: blur(16px);
+	border-top: 1px solid rgba(255, 255, 255, 0.15);
+	padding: 12px 16px max(14px, env(safe-area-inset-bottom, 14px));
+	box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.5);
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	max-width: 600px;
+	margin: 0 auto;
+	border-top-left-radius: 16px;
+	border-top-right-radius: 16px;
+	transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.console-pad-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding-bottom: 4px;
+}
+
+.console-pad-title {
+	font-size: 13px;
+	font-weight: 700;
+	color: #58a6ff;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.console-pad-feedback-badge {
+	font-size: 11px;
+	background: rgba(46, 160, 67, 0.25);
+	color: #3fb950;
+	border: 1px solid rgba(46, 160, 67, 0.4);
+	padding: 2px 8px;
+	border-radius: 12px;
+	animation: pulseFeedback 0.3s ease-in-out;
+}
+
+@keyframes pulseFeedback {
+	0% {
+		transform: scale(0.9);
+		opacity: 0.5;
+	}
+	100% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+.console-pad-grid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 6px;
+}
+
+.console-pad-btn {
+	min-height: 42px !important;
+	font-weight: 700 !important;
+	font-size: 14px !important;
+	border-radius: 8px !important;
+	display: flex !important;
+	justify-content: center !important;
+	align-items: center !important;
+	touch-action: manipulation;
+}
+
+.console-pad-btn-option {
+	background: #21262d !important;
+	color: #f0f6fc !important;
+	border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+.console-pad-btn-option:active {
+	background: #30363d !important;
+	transform: scale(0.96);
+}
+
+.console-pad-chips-row {
+	display: flex;
+	gap: 6px;
+	overflow-x: auto;
+	padding-bottom: 2px;
+	-webkit-overflow-scrolling: touch;
+}
+
+.console-pad-chip {
+	font-size: 12px !important;
+	min-height: 28px !important;
+	padding: 0 10px !important;
+	border-radius: 14px !important;
+	white-space: nowrap;
+}
+
+.console-pad-input-row {
+	display: flex;
+	gap: 6px;
+}
+
+.console-pad-input {
+	flex: 1;
+}
+
+.console-pad-input input {
+	border-radius: 8px !important;
+	height: 38px !important;
+	background: #0d1117 !important;
+	color: #f0f6fc !important;
+}

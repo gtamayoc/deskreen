@@ -45,4 +45,7 @@ export enum IpcEvents {
 	SetCustomServerPort = 'set-custom-server-port',
 	GetDeviceAliases = 'get-device-aliases',
 	SetDeviceAlias = 'set-device-alias',
+	InjectRemoteConsoleInput = 'inject-remote-console-input',
+	GetDeviceRemoteControlAllowed = 'get-device-remote-control-allowed',
+	SetDeviceRemoteControlAllowed = 'set-device-remote-control-allowed',
 }
