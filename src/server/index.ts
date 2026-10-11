@@ -31,25 +31,37 @@ const getRoomIdHash = (id: string): string => {
 };
 
 const ioHandleOnConnection = (socket): void => {
-	const { roomId } = socket.handshake.query;
+	let { roomId } = socket.handshake.query;
 	const store = getStore();
 
 	(async () => {
-		if (!getDeskreenGlobal().roomIDService.isRoomIDTaken(roomId)) {
+		const waitingSession =
+			getDeskreenGlobal().sharingSessionService
+				.waitingForConnectionSharingSession;
+		if (
+			(!roomId ||
+				!getDeskreenGlobal().roomIDService.isRoomIDTaken(String(roomId))) &&
+			waitingSession
+		) {
+			roomId = waitingSession.roomID;
+		}
+
+		if (!roomId || !getDeskreenGlobal().roomIDService.isRoomIDTaken(String(roomId))) {
 			socket.emit('NOT_ALLOWED');
 			setTimeout(() => {
 				socket.disconnect(true);
 			}, 1000);
 			return;
 		}
-		const roomIdHash = getRoomIdHash(roomId);
+		const finalRoomId = String(roomId);
+		const roomIdHash = getRoomIdHash(finalRoomId);
 
 		const storedRoom = await store.get('rooms', roomIdHash);
 		const parsedRoom =
 			typeof storedRoom === 'string' ? JSON.parse(storedRoom) : {};
 
 		new DarkwireSocket({
-			roomIdOriginal: roomId,
+			roomIdOriginal: finalRoomId,
 			roomId: roomIdHash,
 			socket,
 			room: parsedRoom as Room,
@@ -118,6 +130,15 @@ class DeskreenSignalingServer {
 
 		if (clientDistDirectory) {
 			this.app.use(async (ctx, next) => {
+				if (ctx.path === '/' || ctx.path === '') {
+					const waitingSession =
+						getDeskreenGlobal().sharingSessionService
+							.waitingForConnectionSharingSession;
+					if (waitingSession && waitingSession.roomID) {
+						ctx.redirect(`/${waitingSession.roomID}`);
+						return;
+					}
+				}
 				setStaticFileHeaders(ctx);
 				await koaStatic(clientDistDirectory)(ctx, next);
 			});
