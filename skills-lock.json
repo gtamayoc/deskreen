@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "ralph-tui-prd": {
+      "source": "subsy/ralph-tui",
+      "sourceType": "github",
+      "skillPath": "skills/ralph-tui-prd/SKILL.md",
+      "computedHash": "29b4fe8d3cce2abce4eee7f6a3101095430d4d3a825c82663db479ee2a7a46d7"
+    }
+  }
+}
