@@ -51,6 +51,11 @@ export default class PeerConnection {
 	displayID: string;
 	sourceDisplaySize: DisplaySize | undefined;
 	beforeunloadHandler: (() => void) | null = null;
+	isReconnecting = false;
+	reconnectToken = '';
+	onReconnectingStateChanged: (isReconnecting: boolean) => void = () => {
+		// noop until listener registered
+	};
 
 	constructor(
 		roomID: string,
@@ -153,8 +158,8 @@ export default class PeerConnection {
 
 				const newStream = await getDesktopSourceStreamBySourceID(
 					this.desktopCapturerSourceID,
-					this.sourceDisplaySize?.width,
-					this.sourceDisplaySize?.height,
+					this.sourceDisplaySize?.width || 1920,
+					this.sourceDisplaySize?.height || 1080,
 					0.5,
 					1,
 				);
@@ -255,6 +260,12 @@ export default class PeerConnection {
 		this.onDeviceConnectedCallback = callback;
 	}
 
+	setOnReconnectingStateChanged(
+		callback: (isReconnecting: boolean) => void,
+	): void {
+		this.onReconnectingStateChanged = callback;
+	}
+
 	async denyConnectionForPartner(): Promise<void> {
 		await this.sendEncryptedMessage({
 			type: 'DENY_TO_CONNECT',
@@ -263,10 +274,35 @@ export default class PeerConnection {
 		this.disconnectPartner();
 	}
 
-	sendUserAllowedToConnect(): void {
-		this.sendEncryptedMessage({
+	async sendUserAllowedToConnect(): Promise<void> {
+		if (!this.reconnectToken) {
+			this.reconnectToken =
+				Math.random().toString(36).substring(2) + Date.now().toString(36);
+		}
+		try {
+			await window.electron.ipcRenderer.invoke(
+				IpcEvents.RegisterDeviceSessionToken,
+				{
+					deviceId: this.partnerDeviceDetails.id,
+					adbSerial: this.partnerDeviceDetails.adbSerial,
+					userAgent: this.partnerDeviceDetails.deviceBrowser,
+					deviceModel: this.partnerDeviceDetails.deviceOS,
+					deviceIP: this.partnerDeviceDetails.deviceIP,
+					sessionAuthToken: this.reconnectToken,
+					transportType: this.partnerDeviceDetails.transportType || 'wifi',
+					authorizedAt: Date.now(),
+					lastSeenAt: Date.now(),
+				},
+			);
+		} catch (e) {
+			console.warn('Failed to register device session token:', e);
+		}
+
+		await this.sendEncryptedMessage({
 			type: 'ALLOWED_TO_CONNECT',
-			payload: {},
+			payload: {
+				reconnectToken: this.reconnectToken,
+			},
 		});
 	}
 

@@ -4,6 +4,7 @@ import { createStyles, makeStyles } from '@material-ui/core/styles';
 import ChooseAppOrScreenOverlay from './StepsOfStepper/ChooseAppOrScreenOverlay/ChooseAppOrScreenOverlay';
 import { useTranslation } from 'react-i18next';
 import { IpcEvents } from '../../../common/IpcEvents.enum';
+import { ensureVirtualDisplay } from '../features/VirtualDisplay/virtualDisplayRenderer';
 
 interface ShareAppOrScreenControlGroupProps {
 	handleNextEntireScreen: () => void;
@@ -80,6 +81,11 @@ export default function ShareAppOrScreenControlGroup(
 			.catch((error: unknown) => {
 				console.error('failed to detect session environment', error);
 			});
+
+		// Auto-detect and trigger virtual display provisioner if needed
+		ensureVirtualDisplay().catch((error: unknown) => {
+			console.warn('[VirtualDisplay] Auto-provision check error:', error);
+		});
 
 		return () => {
 			cancelled = true;

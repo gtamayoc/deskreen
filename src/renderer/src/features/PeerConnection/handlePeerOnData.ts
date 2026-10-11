@@ -8,27 +8,29 @@ export default async function handlePeerOnData(
 	peerConnection: PeerConnection,
 	data: string,
 ): Promise<void> {
-	const dataJSON = JSON.parse(data);
+	let dataJSON: { type?: string; payload?: { value?: number } };
+	try {
+		dataJSON = JSON.parse(data);
+	} catch (err) {
+		console.warn('Failed to parse peer data message:', err);
+		return;
+	}
 
-	if (dataJSON.type === 'set_video_quality') {
-		const maxVideoQualityMultiplier = dataJSON.payload.value;
+	if (dataJSON.type === 'set_video_quality' && dataJSON.payload) {
+		const maxVideoQualityMultiplier = dataJSON.payload.value ?? 1;
 		const minVideoQualityMultiplier =
 			maxVideoQualityMultiplier === 1 ? 0.5 : maxVideoQualityMultiplier;
 
-		if (
-			!peerConnection.desktopCapturerSourceID.includes(
-				DesktopCapturerSourceType.SCREEN,
-			)
-		)
-			return;
+		const targetWidth = peerConnection.sourceDisplaySize?.width || 1920;
+		const targetHeight = peerConnection.sourceDisplaySize?.height || 1080;
 
 		const newStream = await getDesktopSourceStreamBySourceID(
 			peerConnection.desktopCapturerSourceID,
-			peerConnection.sourceDisplaySize?.width,
-			peerConnection.sourceDisplaySize?.height,
+			targetWidth,
+			targetHeight,
 			minVideoQualityMultiplier,
 			maxVideoQualityMultiplier,
-			60,
+			30,
 			60,
 		);
 		const newVideoTrack = newStream.getVideoTracks()[0];
@@ -64,8 +66,14 @@ export default async function handlePeerOnData(
 			? DesktopCapturerSourceType.SCREEN
 			: DesktopCapturerSourceType.WINDOW;
 
-		peerConnection.peer.send(
-			prepareDataMessageToSendScreenSourceType(sourceType),
-		);
+		try {
+			if (peerConnection.peer && peerConnection.peer !== NullSimplePeer) {
+				peerConnection.peer.send(
+					prepareDataMessageToSendScreenSourceType(sourceType),
+				);
+			}
+		} catch (err) {
+			console.warn('Failed to send screen source type to peer:', err);
+		}
 	}
 }

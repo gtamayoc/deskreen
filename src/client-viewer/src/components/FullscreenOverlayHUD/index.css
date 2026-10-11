@@ -1,0 +1,111 @@
+.fullscreen-overlay-hud {
+	position: absolute;
+	top: max(16px, env(safe-area-inset-top, 16px));
+	right: max(16px, env(safe-area-inset-right, 16px));
+	z-index: 9999;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 8px 4px 6px;
+	background: rgba(15, 23, 42, 0.82);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	border-radius: 28px;
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+	user-select: none;
+	touch-action: none;
+	transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+
+.fullscreen-overlay-hud.hud-dimmed {
+	opacity: 0.22;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.fullscreen-overlay-hud:hover,
+.fullscreen-overlay-hud:active {
+	opacity: 1 !important;
+}
+
+.fullscreen-hud-drag-handle {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: grab;
+	color: rgba(255, 255, 255, 0.45);
+	padding: 4px 2px;
+	touch-action: none;
+}
+
+.fullscreen-hud-drag-handle:active {
+	cursor: grabbing;
+	color: #58a6ff;
+}
+
+.fullscreen-hud-btn {
+	min-width: 40px !important;
+	min-height: 40px !important;
+	border-radius: 20px !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	touch-action: manipulation !important;
+	color: #f0f6fc !important;
+	padding: 0 8px !important;
+	position: relative;
+}
+
+.fullscreen-hud-btn-exit {
+	background: rgba(255, 255, 255, 0.08) !important;
+	border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.fullscreen-hud-btn-exit:hover {
+	background: rgba(255, 255, 255, 0.18) !important;
+}
+
+.fullscreen-hud-btn-exit:active {
+	background: rgba(255, 255, 255, 0.26) !important;
+	transform: scale(0.95);
+}
+
+.fullscreen-hud-btn-ai {
+	background: rgba(43, 149, 214, 0.25) !important;
+	border: 1px solid rgba(43, 149, 214, 0.45) !important;
+	color: #58a6ff !important;
+	font-weight: 700 !important;
+	gap: 4px;
+}
+
+.fullscreen-hud-btn-ai.is-active {
+	background: #1f6feb !important;
+	border-color: #388bfd !important;
+	color: #ffffff !important;
+	box-shadow: 0 0 12px rgba(56, 139, 253, 0.5);
+}
+
+.fullscreen-hud-btn-ai:hover {
+	background: rgba(43, 149, 214, 0.4) !important;
+}
+
+.fullscreen-hud-btn-ai.is-active:hover {
+	background: #388bfd !important;
+}
+
+.fullscreen-hud-ai-label {
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.5px;
+}
+
+.fullscreen-hud-active-dot {
+	position: absolute;
+	top: 4px;
+	right: 4px;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #3fb950;
+	box-shadow: 0 0 6px #3fb950;
+}

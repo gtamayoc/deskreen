@@ -1,14 +1,87 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Button, InputGroup, Icon, Intent } from '@blueprintjs/core';
 import type PeerConnection from '../../features/PeerConnection';
 import './index.css';
 
 interface ConsoleActionPadProps {
 	peer?: PeerConnection;
+	isOpen?: boolean;
+	onOpenChange?: (open: boolean) => void;
+	isFullscreen?: boolean;
 }
 
-const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({ peer }) => {
-	const [isOpen, setIsOpen] = useState(false);
+const STORAGE_KEY_AUTOCOLLAPSE = 'deskreen_ai_pad_autocollapse';
+
+const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({
+	peer,
+	isOpen: externalIsOpen,
+	onOpenChange,
+	isFullscreen = false,
+}) => {
+	const [internalIsOpen, setInternalIsOpen] = useState(false);
+	const currentIsOpen = typeof externalIsOpen === 'boolean' ? externalIsOpen : internalIsOpen;
+
+	const setIsOpen = useCallback(
+		(open: boolean) => {
+			if (typeof externalIsOpen === 'boolean') {
+				onOpenChange?.(open);
+			} else {
+				setInternalIsOpen(open);
+			}
+		},
+		[externalIsOpen, onOpenChange],
+	);
+
+	const [autoCollapse, setAutoCollapse] = useState<boolean>(() => {
+		try {
+			const saved = localStorage.getItem(STORAGE_KEY_AUTOCOLLAPSE);
+			return saved !== null ? saved === 'true' : true;
+		} catch {
+			return true;
+		}
+	});
+
+	const [keyboardOffset, setKeyboardOffset] = useState(0);
+
+	useEffect(() => {
+		if (typeof window === 'undefined' || !window.visualViewport) return;
+		const vv = window.visualViewport;
+		const handleViewportChange = () => {
+			const offset = Math.max(0, window.innerHeight - (vv.offsetTop + vv.height));
+			setKeyboardOffset(offset);
+		};
+		vv.addEventListener('resize', handleViewportChange);
+		vv.addEventListener('scroll', handleViewportChange);
+		return () => {
+			vv.removeEventListener('resize', handleViewportChange);
+			vv.removeEventListener('scroll', handleViewportChange);
+		};
+	}, []);
+
+	useEffect(() => {
+		if (!currentIsOpen) return;
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') {
+				setIsOpen(false);
+			}
+		};
+		window.addEventListener('keydown', handleKeyDown);
+		return () => {
+			window.removeEventListener('keydown', handleKeyDown);
+		};
+	}, [currentIsOpen, setIsOpen]);
+
+	const toggleAutoCollapse = useCallback(() => {
+		setAutoCollapse((prev) => {
+			const next = !prev;
+			try {
+				localStorage.setItem(STORAGE_KEY_AUTOCOLLAPSE, String(next));
+			} catch {
+				// ignore
+			}
+			return next;
+		});
+	}, []);
 	const [inputText, setInputText] = useState('');
 	const [feedback, setFeedback] = useState<string | null>(null);
 	const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -65,12 +138,15 @@ const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({ peer }) => {
 					payload,
 				});
 				triggerFeedback(`Enviado: ${label}`);
+				setTimeout(() => {
+					setIsOpen(false);
+				}, 120);
 			} catch (err) {
 				console.warn('[ConsoleActionPad] Failed to send remote input:', err);
 				triggerFeedback('Error de envío');
 			}
 		},
-		[peer, triggerFeedback, blurActiveElement],
+		[peer, triggerFeedback, blurActiveElement, setIsOpen],
 	);
 
 	const handleSendOption = useCallback(
@@ -110,8 +186,11 @@ const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({ peer }) => {
 				},
 				key,
 			);
+			if (key === 'Esc' || key === 'Escape') {
+				setIsOpen(false);
+			}
 		},
-		[sendInput],
+		[sendInput, setIsOpen],
 	);
 
 	const handleSubmitText = useCallback(
@@ -137,7 +216,7 @@ const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({ peer }) => {
 
 	return (
 		<>
-			{!isOpen && (
+			{!currentIsOpen && !isFullscreen && (
 				<Button
 					className="console-action-pad-toggle"
 					intent={Intent.PRIMARY}
@@ -147,9 +226,23 @@ const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({ peer }) => {
 				/>
 			)}
 
-			{isOpen && (
-				<div className="console-action-pad-drawer">
-					<div className="console-pad-header">
+			{currentIsOpen && (
+				<>
+					<div
+						className={`console-action-pad-backdrop ${isFullscreen ? 'is-fullscreen' : ''}`}
+						onClick={() => setIsOpen(false)}
+						aria-label="Cerrar modal"
+					/>
+					<div
+						className={`console-action-pad-drawer ${isFullscreen ? 'is-fullscreen' : ''}`}
+						style={keyboardOffset > 0 ? { bottom: `${keyboardOffset}px` } : undefined}
+					>
+						<div
+							className="console-pad-handle-bar"
+							onClick={() => setIsOpen(false)}
+							title="Tocar para ocultar"
+						/>
+						<div className="console-pad-header">
 						<div className="console-pad-title">
 							<Icon icon="console" />
 							<span>IA Console Companion</span>
@@ -157,13 +250,28 @@ const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({ peer }) => {
 								<span className="console-pad-feedback-badge">{feedback}</span>
 							)}
 						</div>
-						<Button
-							minimal
-							small
-							icon="chevron-down"
-							onClick={() => setIsOpen(false)}
-							text="Ocultar"
-						/>
+						<div className="console-pad-header-actions">
+							<Button
+								minimal
+								small
+								className={`console-pad-autocollapse-btn ${autoCollapse ? 'is-active' : ''}`}
+								icon={autoCollapse ? 'eye-off' : 'eye-open'}
+								onClick={toggleAutoCollapse}
+								title={
+									autoCollapse
+										? 'Auto-ocultar activado (se cierra al enviar respuesta)'
+										: 'Auto-ocultar desactivado (permanece abierto)'
+								}
+								text={autoCollapse ? 'Auto-ocultar' : 'Fijado'}
+							/>
+							<Button
+								minimal
+								small
+								icon="chevron-down"
+								onClick={() => setIsOpen(false)}
+								text="Ocultar"
+							/>
+						</div>
 					</div>
 
 					{/* AI Options Grid: A, B, C, D & 1, 2, 3, 4 */}
@@ -280,9 +388,10 @@ const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({ peer }) => {
 						/>
 					</form>
 				</div>
-			)}
-		</>
-	);
+			</>
+		)}
+	</>
+);
 };
 
 export default ConsoleActionPad;

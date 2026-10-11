@@ -101,14 +101,18 @@ export default class PeerConnection {
 
 	videoQualityChangedCallback() {
 		if (!this.peer) return;
-		if (this.videoQuality === VideoQuality.Q_AUTO) {
-			this.peer.send(prepareDataMessageToChangeQuality(1));
-		} else {
-			this.peer.send(
-				prepareDataMessageToChangeQuality(
-					VIDEO_QUALITY_TO_DECIMAL[this.videoQuality],
-				),
-			);
+		try {
+			if (this.videoQuality === VideoQuality.Q_AUTO) {
+				this.peer.send(prepareDataMessageToChangeQuality(1));
+			} else {
+				this.peer.send(
+					prepareDataMessageToChangeQuality(
+						VIDEO_QUALITY_TO_DECIMAL[this.videoQuality],
+					),
+				);
+			}
+		} catch (e) {
+			console.warn('Failed to send video quality message to peer:', e);
 		}
 	}
 

@@ -15,6 +15,9 @@ export default async (
 	// const message = payload as any;
 	if (message.type === 'CALL_USER') {
 		try {
+			if (!peerConnection.peer || peerConnection.peer.destroyed) {
+				peerConnection.createPeer();
+			}
 			if (peerConnection.peer && !peerConnection.peer.destroyed) {
 				peerConnection.peer.signal(message.payload.signalData);
 			}
@@ -29,6 +32,19 @@ export default async (
 		setAndShowErrorDialogMessage(peerConnection, ErrorMessage.DISCONNECTED);
 	}
 	if (message.type === 'ALLOWED_TO_CONNECT') {
+		const payloadObj = message.payload as
+			| { reconnectToken?: string }
+			| undefined;
+		if (payloadObj?.reconnectToken) {
+			try {
+				localStorage.setItem(
+					'deskreen_reconnect_token',
+					payloadObj.reconnectToken,
+				);
+			} catch {
+				// ignore localStorage errors
+			}
+		}
 		peerConnection.UIHandler.hostAllowedToConnectCallback();
 	}
 	if (message.type === 'APP_LANGUAGE') {

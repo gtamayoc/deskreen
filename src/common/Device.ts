@@ -8,4 +8,7 @@ export interface Device {
 	deviceScreenWidth: number;
 	deviceScreenHeight: number;
 	deviceRoomId: string;
+	transportType?: 'wifi' | 'usb';
+	adbSerial?: string;
+	isReconnecting?: boolean;
 }

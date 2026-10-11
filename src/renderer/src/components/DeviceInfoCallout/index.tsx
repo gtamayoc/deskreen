@@ -1,5 +1,5 @@
 import React from 'react';
-import { Callout, Text, H4, Tooltip, Position } from '@blueprintjs/core';
+import { Callout, Text, H4, Tooltip, Position, Tag } from '@blueprintjs/core';
 import { Row, Col } from 'react-flexbox-grid';
 import { useTranslation } from 'react-i18next';
 import { TFunction } from 'i18next';
@@ -25,11 +25,25 @@ interface DeviceInfoCalloutProps {
 	deviceOS: string | undefined;
 	deviceBrowser: string | undefined;
 	deviceRoomId: string | undefined;
+	transportType?: 'wifi' | 'usb';
+	isReconnecting?: boolean;
 }
 
 const DeviceInfoCallout: React.FC<DeviceInfoCalloutProps> = (props) => {
 	const { t } = useTranslation();
-	const { deviceType, deviceIP, deviceOS, deviceRoomId, deviceBrowser } = props;
+	const {
+		deviceType,
+		deviceIP,
+		deviceOS,
+		deviceRoomId,
+		deviceBrowser,
+		transportType,
+		isReconnecting,
+	} = props;
+	const isUsb =
+		transportType === 'usb' ||
+		deviceIP?.includes('127.0.0.1') ||
+		deviceIP?.includes('localhost');
 
 	return (
 		<>
@@ -68,6 +82,22 @@ const DeviceInfoCallout: React.FC<DeviceInfoCalloutProps> = (props) => {
 						<Text>
 							{t('device-connection-id')}: <span>{deviceRoomId}</span>
 						</Text>
+						<div style={{ marginTop: '8px' }}>
+							{isReconnecting && (
+								<Tag intent="warning" round style={{ marginRight: '6px' }}>
+									Reconectando...
+								</Tag>
+							)}
+							{isUsb ? (
+								<Tag intent="success" icon="flash" round>
+									USB (Reverse ADB)
+								</Tag>
+							) : (
+								<Tag intent="primary" icon="feed" round>
+									Wi-Fi
+								</Tag>
+							)}
+						</div>
 					</Col>
 				</Row>
 			</Callout>

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
 	Button,
+	Callout,
 	Text,
 	Tooltip,
 	Position,
@@ -58,6 +59,55 @@ const ScanQRStep: React.FC = () => {
 	const [roomID, setRoomID] = useState('');
 	const [LOCAL_LAN_IP, setLocalLanIP] = useState('');
 	const [isQRCodeMagnified, setIsQRCodeMagnified] = useState(false);
+	const [usbDevice, setUsbDevice] = useState<{
+		id: string;
+		model?: string;
+	} | null>(null);
+	const [isAdbAvailable, setIsAdbAvailable] = useState<boolean | null>(null);
+
+	useEffect(() => {
+		void window.electron.ipcRenderer
+			.invoke(IpcEvents.AdbCheckAvailability)
+			.then((res: { available: boolean }) => {
+				setIsAdbAvailable(Boolean(res?.available));
+			});
+
+		const handleAdbDeviceConnected = (
+			_: unknown,
+			dev: { id: string; model?: string },
+		) => {
+			setUsbDevice(dev);
+			const port = Number(clientViewerPort) || 80;
+			void window.electron.ipcRenderer.invoke(IpcEvents.AdbSetupReverse, {
+				deviceId: dev.id,
+				port,
+			});
+		};
+
+		const handleAdbDeviceDisconnected = () => {
+			setUsbDevice(null);
+		};
+
+		window.electron.ipcRenderer.on(
+			IpcEvents.AdbDeviceConnected,
+			handleAdbDeviceConnected,
+		);
+		window.electron.ipcRenderer.on(
+			IpcEvents.AdbDeviceDisconnected,
+			handleAdbDeviceDisconnected,
+		);
+
+		return () => {
+			window.electron.ipcRenderer.removeListener(
+				IpcEvents.AdbDeviceConnected,
+				handleAdbDeviceConnected,
+			);
+			window.electron.ipcRenderer.removeListener(
+				IpcEvents.AdbDeviceDisconnected,
+				handleAdbDeviceDisconnected,
+			);
+		};
+	}, [clientViewerPort]);
 
 	useEffect(() => {
 		window.electron.ipcRenderer
@@ -318,6 +368,83 @@ const ScanQRStep: React.FC = () => {
 					<Text className="bp3-text-muted" style={{ fontSize: '12px' }}>
 						{`o escribe en tu navegador: http://deskreen.local${portString}${roomPath}`}
 					</Text>
+				</Row>
+			)}
+			{usbDevice && isQrInteractive && (
+				<Row
+					center="xs"
+					style={{
+						marginTop: '12px',
+						marginBottom: '6px',
+						display: 'flex',
+						justifyContent: 'center',
+					}}
+				>
+					<Col xs={11}>
+						<Callout
+							intent="success"
+							icon="flash"
+							title={`Dispositivo USB Detectado: ${usbDevice.model || usbDevice.id}`}
+							style={{ textAlign: 'left', borderRadius: '8px' }}
+						>
+							<Row between="xs" middle="xs">
+								<Col xs={12} md={8}>
+									<Text style={{ fontSize: '12px' }}>
+										Canal USB directo activo (Reverse ADB a 60 FPS sin lag de Wi-Fi).
+									</Text>
+								</Col>
+								<Col xs={12} md={4} style={{ textAlign: 'right' }}>
+									<Button
+										intent="success"
+										icon="mobile-phone"
+										small
+										onClick={async () => {
+											const usbUrl = `http://localhost:${clientViewerPort}${roomPath}?transport=usb`;
+											await window.electron.ipcRenderer.invoke(
+												IpcEvents.AdbLaunchUrl,
+												{
+													deviceId: usbDevice.id,
+													url: usbUrl,
+												},
+											);
+										}}
+									>
+										Abrir en el móvil
+									</Button>
+								</Col>
+							</Row>
+						</Callout>
+					</Col>
+				</Row>
+			)}
+			{!usbDevice && isAdbAvailable === false && isQrInteractive && (
+				<Row
+					center="xs"
+					style={{
+						marginTop: '8px',
+						display: 'flex',
+						justifyContent: 'center',
+					}}
+				>
+					<Button
+						minimal
+						small
+						icon="download"
+						text="¿Conectar por cable USB? Descargar Platform-Tools internamente"
+						onClick={async () => {
+							try {
+								await window.electron.ipcRenderer.invoke(
+									IpcEvents.AdbDownloadBinaries,
+								);
+								const res = await window.electron.ipcRenderer.invoke(
+									IpcEvents.AdbCheckAvailability,
+								);
+								setIsAdbAvailable(Boolean(res?.available));
+							} catch (dlErr) {
+								console.error('Error downloading ADB binaries:', dlErr);
+							}
+						}}
+					/>
 				</Row>
 			)}
 			{!isQrInteractive && (

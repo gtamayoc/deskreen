@@ -358,6 +358,8 @@ export default function ConnectedDevicesListDrawer(
 														deviceIP={device.deviceIP}
 														deviceBrowser={alias || device.deviceBrowser}
 														deviceRoomId={device.deviceRoomId}
+														transportType={device.transportType}
+														isReconnecting={device.isReconnecting}
 													/>
 												</Col>
 												<Col xs={6}>

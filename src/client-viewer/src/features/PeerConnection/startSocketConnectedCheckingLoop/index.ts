@@ -56,13 +56,22 @@ export default (peerConnection: PeerConnection): NodeJS.Timeout => {
 	};
 
 	const handleDisconnection = () => {
-		// show error and stop stream after sustained disconnection
-		if (disconnectedStreak >= 3) {
+		// Attempt automatic socket reconnection
+		if (peerConnection.socket && !peerConnection.socket.connected) {
+			try {
+				peerConnection.socket.connect();
+			} catch {
+				// ignore
+			}
+		}
+
+		// show error and stop stream only after sustained failure (12 streaks = 60s)
+		if (disconnectedStreak >= 12) {
 			// stop the video stream
 			if (peerConnection.isStreamStarted) {
 				peerConnection.stopStream();
 			}
-			// show error dialog (now allows showing even when stream was started)
+			// show error dialog
 			setAndShowErrorDialogMessage(peerConnection, ErrorMessage.DISCONNECTED);
 		}
 	};

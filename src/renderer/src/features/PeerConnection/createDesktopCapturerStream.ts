@@ -19,8 +19,18 @@ export default async function createDesktopCapturerStream(
 			);
 			peerConnection.localStream = stream;
 		} else {
-			// when source is app window
-			const stream = await getDesktopSourceStreamBySourceID(sourceID);
+			// when source is app window, request full high resolution (1080p fallback) at 30-60 fps
+			const targetWidth = peerConnection.sourceDisplaySize?.width || 1920;
+			const targetHeight = peerConnection.sourceDisplaySize?.height || 1080;
+			const stream = await getDesktopSourceStreamBySourceID(
+				sourceID,
+				targetWidth,
+				targetHeight,
+				0.5,
+				1,
+				30,
+				60,
+			);
 			peerConnection.localStream = stream;
 		}
 	} catch (e) {

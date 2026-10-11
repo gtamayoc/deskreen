@@ -36,6 +36,7 @@
   "dependencies": {
     "@blueprintjs/core": "^6.3.4",
     "@blueprintjs/select": "^6.0.8",
+    "@devicefarmer/adbkit": "^3.3.9",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@fortawesome/fontawesome-free": "^7.1.0",

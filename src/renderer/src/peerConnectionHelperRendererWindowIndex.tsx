@@ -107,7 +107,7 @@ export function handleIpcRenderer(): void {
 
 	window.electron.ipcRenderer.on('send-user-allowed-to-connect', () => {
 		if (peerConnection) {
-			peerConnection.sendUserAllowedToConnect();
+			void peerConnection.sendUserAllowedToConnect();
 		}
 	});
 

@@ -28,6 +28,12 @@ import {
 	remoteInputInjectionService,
 	type RemoteInputPayload,
 } from '../services/RemoteInputInjectionService';
+import { virtualDisplayService } from '../services/virtualDisplay/VirtualDisplayService';
+import { adbService } from '../services/AdbService';
+import { adbDownloaderService } from '../services/AdbDownloaderService';
+import { deviceIdentityService } from '../services/DeviceIdentityService';
+import type { DeviceSessionIdentity } from '../../common/types/adb';
+
 
 export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 	ipcMain.on('client-changed-language', async (_, newLangCode) => {
@@ -170,6 +176,13 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 					roomID,
 				);
 			waitingSession.setOnDeviceConnectedCallback(onDeviceConnectedCallback);
+
+			const activeAdbDevices = adbService.getConnectedDevices();
+			if (activeAdbDevices.length > 0) {
+				for (const dev of activeAdbDevices) {
+					void adbService.setupReversePort(dev.id, signalingServer.port);
+				}
+			}
 		} catch (error) {
 			console.error('Failed to create waiting sharing session', error);
 		}
@@ -741,6 +754,90 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 			}
 		},
 	);
+
+	ipcMain.handle(IpcEvents.GetVirtualDisplayStatus, () => {
+		return virtualDisplayService.getStatus();
+	});
+
+	ipcMain.handle(IpcEvents.EnsureVirtualDisplay, async () => {
+		return await virtualDisplayService.ensureVirtualDisplay();
+	});
+
+	ipcMain.handle(
+		IpcEvents.MoveWindowToVirtualDisplay,
+		async (_, windowTitle: string) => {
+			return await virtualDisplayService.moveWindowToVirtualDisplay(windowTitle);
+		},
+	);
+
+	ipcMain.handle(
+		IpcEvents.RestoreWindowFromVirtualDisplay,
+		async (_, windowTitle: string) => {
+			return await virtualDisplayService.restoreWindow(windowTitle);
+		},
+	);
+
+	adbService.setMainWindow(mainWindow);
+	void adbService.init();
+
+	ipcMain.handle(IpcEvents.AdbCheckAvailability, async () => {
+		return await adbService.checkAvailability();
+	});
+
+	ipcMain.handle(IpcEvents.AdbGetStatus, () => {
+		return adbService.getStatus();
+	});
+
+	ipcMain.handle(
+		IpcEvents.AdbSetupReverse,
+		async (_, { deviceId, port }: { deviceId: string; port: number }) => {
+			return await adbService.setupReversePort(deviceId, port);
+		},
+	);
+
+	ipcMain.handle(
+		IpcEvents.AdbLaunchUrl,
+		async (_, { deviceId, url }: { deviceId: string; url: string }) => {
+			return await adbService.launchClientOnDevice(deviceId, url);
+		},
+	);
+
+	ipcMain.handle(IpcEvents.AdbDownloadBinaries, async () => {
+		await adbDownloaderService.downloadAndInstall();
+		return await adbService.init();
+	});
+
+	ipcMain.handle(
+		IpcEvents.RegisterDeviceSessionToken,
+		(_, identity: DeviceSessionIdentity) => {
+			deviceIdentityService.registerSession(identity);
+			return true;
+		},
+	);
+
+	ipcMain.handle(
+		IpcEvents.VerifyDeviceSessionToken,
+		(
+			_,
+			{
+				token,
+				candidate,
+			}: {
+				token: string;
+				candidate: {
+					deviceId?: string;
+					adbSerial?: string;
+					deviceIP?: string;
+				};
+			},
+		) => {
+			return deviceIdentityService.verifySession(token, candidate);
+		},
+	);
+
+	ipcMain.handle(IpcEvents.GetDeviceSessionToken, (_, token: string) => {
+		return deviceIdentityService.getSession(token) ?? null;
+	});
 
 	void createWaitingForConnectionSharingSession();
 };

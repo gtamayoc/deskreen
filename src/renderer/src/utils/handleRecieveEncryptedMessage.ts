@@ -24,6 +24,9 @@ export type DeviceDetailsMessageWithPayload = {
 		browser: string;
 		deviceScreenWidth: number;
 		deviceScreenHeight: number;
+		reconnectToken?: string;
+		adbSerial?: string;
+		transportType?: 'usb' | 'wifi';
 	};
 };
 
@@ -76,14 +79,52 @@ export type ProcessedMessage =
 	| DisconnectByHostMachineUserMessageWithPayload
 	| RemoteConsoleInputMessageWithPayload;
 
-export function handleDeviceIPMessage(
+export async function handleDeviceIPMessage(
 	deviceIP: string,
 	peerConnection: PeerConnection,
 	message: ProcessedMessage,
-): void {
+): Promise<void> {
 	if (message.type !== 'DEVICE_DETAILS') return;
+	const isUsb =
+		message.payload.transportType === 'usb' ||
+		deviceIP.includes('127.0.0.1') ||
+		deviceIP.includes('localhost') ||
+		deviceIP === '::1';
+
+	const candidateToken = message.payload.reconnectToken;
+	let isRecognizedReconnect = false;
+
+	if (candidateToken) {
+		try {
+			const verified = await window.electron.ipcRenderer.invoke(
+				IpcEvents.VerifyDeviceSessionToken,
+				{
+					token: candidateToken,
+					candidate: {
+						deviceIP,
+						adbSerial: message.payload.adbSerial,
+					},
+				},
+			);
+			if (verified) {
+				isRecognizedReconnect = true;
+			}
+		} catch (err) {
+			console.warn('Error verifying device session token:', err);
+		}
+	} else if (
+		peerConnection.isReconnecting &&
+		peerConnection.partnerDeviceDetails &&
+		peerConnection.partnerDeviceDetails.deviceIP === deviceIP
+	) {
+		isRecognizedReconnect = true;
+	}
+
 	const device = {
-		id: Math.random().toString(),
+		id:
+			isRecognizedReconnect && peerConnection.partnerDeviceDetails.id
+				? peerConnection.partnerDeviceDetails.id
+				: Math.random().toString(),
 		deviceIP,
 		deviceType: message.payload.deviceType,
 		deviceOS: message.payload.os,
@@ -92,9 +133,24 @@ export function handleDeviceIPMessage(
 		deviceScreenHeight: message.payload.deviceScreenHeight,
 		sharingSessionID: peerConnection.sharingSessionID,
 		deviceRoomId: peerConnection.roomID,
+		transportType: (isUsb ? 'usb' : 'wifi') as 'usb' | 'wifi',
+		adbSerial: message.payload.adbSerial,
+		isReconnecting: false,
 	};
 	peerConnection.partnerDeviceDetails = device;
-	peerConnection.onDeviceConnectedCallback(device);
+
+	if (isRecognizedReconnect) {
+		console.log(
+			'Recognized reconnecting device. Auto-approving connection without modal prompt.',
+		);
+		peerConnection.isReconnecting = false;
+		peerConnection.onReconnectingStateChanged(false);
+		await peerConnection.sendUserAllowedToConnect();
+		await peerConnection.createPeer();
+		peerConnection.callPeer();
+	} else {
+		peerConnection.onDeviceConnectedCallback(device);
+	}
 }
 
 export const handleRecieveEncryptedMessage = async (
@@ -138,7 +194,7 @@ export const handleRecieveEncryptedMessage = async (
 			payload.fromSocketID,
 			(deviceIP: string) => {
 				// TODO: need to add myIP in client message.payload.myIP, then if retrieved deviceIP and myIP from client don't match, we were spoofed, then we can interrupt connection immediately!
-				handleDeviceIPMessage(deviceIP, peerConnection, message);
+				void handleDeviceIPMessage(deviceIP, peerConnection, message);
 			},
 		);
 	}

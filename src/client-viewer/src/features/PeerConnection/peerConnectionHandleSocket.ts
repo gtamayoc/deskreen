@@ -38,20 +38,21 @@ export default (peerConnection: PeerConnection) => {
 
 	socket.on('disconnect', () => {
 		disconnectCount++;
-		// handle disconnect even when stream is started - stop stream and show error
-		if (peerConnection.isStreamStarted && disconnectCount >= 1) {
-			peerConnection.stopStream();
-			setAndShowErrorDialogMessage(peerConnection, ErrorMessage.DISCONNECTED);
-			return;
-		}
-		// for pre-stream disconnects, wait for sustained disconnection before showing error
-		if (disconnectCount > 6 && isAllowed) {
+		console.warn(
+			`[Socket] Disconnected from server (count: ${disconnectCount}). Attempting auto-reconnect...`,
+		);
+		// Wait for sustained failure (e.g. > 15 attempts / > 60 seconds) before showing fatal error
+		if (disconnectCount > 15 && isAllowed) {
+			if (peerConnection.isStreamStarted) {
+				peerConnection.stopStream();
+			}
 			setAndShowErrorDialogMessage(peerConnection, ErrorMessage.DISCONNECTED);
 		}
 	});
 
 	const handleConnect = () => {
 		let ipCallbackReceived = false;
+		disconnectCount = 0;
 
 		// clear any existing reconnect timeout
 		if (peerConnection.reconnectTimeout) {
@@ -105,15 +106,30 @@ export default (peerConnection: PeerConnection) => {
 
 		if (!peerConnection.partner) return;
 
+		let cachedToken: string | null = null;
+		try {
+			cachedToken = localStorage.getItem('deskreen_reconnect_token');
+		} catch {
+			// ignore localStorage error in private mode
+		}
+		const urlParams = new URLSearchParams(window.location.search);
+		const reconnectToken =
+			urlParams.get('reconnectToken') || cachedToken || undefined;
+		const isUsb =
+			urlParams.get('transport') === 'usb' ||
+			window.location.hostname === 'localhost' ||
+			window.location.hostname === '127.0.0.1';
+
 		peerConnection.sendEncryptedMessage({
 			type: 'DEVICE_DETAILS',
-			// TODO: add deviceIP in this payload
 			payload: {
 				os: peerConnection.myDeviceDetails.myOS,
 				deviceType: peerConnection.myDeviceDetails.myDeviceType,
 				browser: peerConnection.myDeviceDetails.myBrowser,
 				deviceScreenWidth: window.screen.width,
 				deviceScreenHeight: window.screen.height,
+				reconnectToken,
+				transportType: isUsb ? 'usb' : 'wifi',
 			},
 		});
 

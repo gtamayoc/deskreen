@@ -34,7 +34,10 @@ const fullscreenEventNames = [
 ];
 
 const getPlayerContainer = (): HTMLElement | null => {
-	return document.getElementById(PLAYER_WRAPPER_ID);
+	return (
+		document.getElementById('video-container') ||
+		document.getElementById(PLAYER_WRAPPER_ID)
+	);
 };
 
 const getPlayerVideo = (): IOSVideoElement | null => {

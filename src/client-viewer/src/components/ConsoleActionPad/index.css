@@ -1,5 +1,5 @@
 .console-action-pad-toggle {
-	position: fixed;
+	position: absolute;
 	bottom: max(16px, env(safe-area-inset-bottom, 16px));
 	left: 16px;
 	z-index: 999;
@@ -9,8 +9,35 @@
 	backdrop-filter: blur(8px);
 }
 
-.console-action-pad-drawer {
+.console-action-pad-backdrop {
 	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 999;
+	background: rgba(0, 0, 0, 0.45);
+	backdrop-filter: blur(2px);
+	-webkit-backdrop-filter: blur(2px);
+	touch-action: manipulation;
+	animation: fadeInBackdrop 0.15s ease-out;
+}
+
+@keyframes fadeInBackdrop {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+.console-action-pad-backdrop.is-fullscreen {
+	z-index: 10000;
+}
+
+.console-action-pad-drawer {
+	position: absolute;
 	bottom: 0;
 	left: 0;
 	right: 0;
@@ -28,7 +55,32 @@
 	margin: 0 auto;
 	border-top-left-radius: 16px;
 	border-top-right-radius: 16px;
-	transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+	max-height: min(85vh, 600px);
+	overflow-y: auto;
+	overflow-x: hidden;
+	overscroll-behavior: contain;
+	transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.2s ease;
+}
+
+.console-action-pad-drawer.is-fullscreen {
+	z-index: 10001;
+	background: rgba(13, 17, 23, 0.95);
+	border: 1px solid rgba(255, 255, 255, 0.15);
+	border-bottom: none;
+}
+
+.console-pad-handle-bar {
+	width: 42px;
+	height: 4px;
+	background: rgba(255, 255, 255, 0.35);
+	border-radius: 2px;
+	margin: -2px auto 6px auto;
+	cursor: pointer;
+	touch-action: manipulation;
+}
+
+.console-pad-handle-bar:active {
+	background: rgba(255, 255, 255, 0.7);
 }
 
 .console-pad-header {
@@ -36,6 +88,24 @@
 	justify-content: space-between;
 	align-items: center;
 	padding-bottom: 4px;
+}
+
+.console-pad-header-actions {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.console-pad-autocollapse-btn {
+	font-size: 11px !important;
+	color: #8b949e !important;
+	border-radius: 12px !important;
+	padding: 2px 8px !important;
+}
+
+.console-pad-autocollapse-btn.is-active {
+	color: #3fb950 !important;
+	background: rgba(46, 160, 67, 0.15) !important;
 }
 
 .console-pad-title {
@@ -136,3 +206,44 @@
 	background: #0d1117 !important;
 	color: #f0f6fc !important;
 }
+
+@media (orientation: landscape) and (max-height: 520px) {
+	.console-action-pad-drawer {
+		padding: 6px 12px max(8px, env(safe-area-inset-bottom, 8px));
+		gap: 5px;
+		max-height: 92vh;
+	}
+	.console-pad-header {
+		padding-bottom: 2px;
+	}
+	.console-pad-title {
+		font-size: 11px;
+	}
+	.console-pad-grid {
+		gap: 4px;
+	}
+	.console-pad-btn {
+		min-height: 32px !important;
+		font-size: 12px !important;
+		padding: 0 4px !important;
+	}
+	.console-pad-chip {
+		min-height: 24px !important;
+		font-size: 11px !important;
+	}
+	.console-pad-input input {
+		height: 32px !important;
+		font-size: 12px !important;
+	}
+}
+
+@media (max-width: 420px) {
+	.console-pad-btn {
+		font-size: 12px !important;
+		padding: 0 2px !important;
+	}
+	.console-pad-title span {
+		font-size: 11px;
+	}
+}
+

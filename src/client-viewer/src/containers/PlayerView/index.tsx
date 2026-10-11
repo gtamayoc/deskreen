@@ -8,8 +8,14 @@ import {
 	PLAYER_WRAPPER_ID,
 } from '../../constants/appConstants';
 import { type VideoQualityType } from '../../features/VideoAutoQualityOptimizer/VideoQualityEnum';
-import { togglePlayerFullscreen } from '../../utils/playerFullscreen';
+import {
+	togglePlayerFullscreen,
+	isPlayerFullscreen,
+	exitPlayerFullscreen,
+	subscribeToPlayerFullscreenChange,
+} from '../../utils/playerFullscreen';
 import ConsoleActionPad from '../../components/ConsoleActionPad';
+import FullscreenOverlayHUD from '../../components/FullscreenOverlayHUD';
 import type PeerConnection from '../../features/PeerConnection';
 
 interface PlayerViewProps {
@@ -56,6 +62,17 @@ function PlayerView(props: PlayerViewProps) {
 	const [isDarkMode, setIsDarkMode] = useState(() => {
 		return localStorage.getItem('deskreen_dark_mode') === 'true';
 	});
+	const [isFullscreen, setIsFullscreen] = useState(() => isPlayerFullscreen());
+	const [isAIPadOpen, setIsAIPadOpen] = useState(false);
+
+	useEffect(() => {
+		const unsubscribe = subscribeToPlayerFullscreenChange((fullscreen) => {
+			setIsFullscreen(fullscreen);
+		});
+		return () => {
+			unsubscribe();
+		};
+	}, []);
 
 	useEffect(() => {
 		localStorage.setItem('deskreen_flip_horizontal', String(isFlippedHorizontal));
@@ -335,8 +352,24 @@ function PlayerView(props: PlayerViewProps) {
 					)}
 				</div>
 				<canvas id={COMPARISON_CANVAS_ID} style={{ display: 'none' }}></canvas>
+				{isFullscreen && (
+					<FullscreenOverlayHUD
+						onExitFullscreen={() => {
+							exitPlayerFullscreen();
+						}}
+						isAIPadOpen={isAIPadOpen}
+						onToggleAIPad={() => {
+							setIsAIPadOpen((prev) => !prev);
+						}}
+					/>
+				)}
+				<ConsoleActionPad
+					peer={peer}
+					isOpen={isAIPadOpen}
+					onOpenChange={setIsAIPadOpen}
+					isFullscreen={isFullscreen}
+				/>
 			</div>
-			<ConsoleActionPad peer={peer} />
 		</div>
 	);
 }
