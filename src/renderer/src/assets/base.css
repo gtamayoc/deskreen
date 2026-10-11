@@ -77,8 +77,14 @@
 @import "fontsource-lexend-peta/index.css";
 
 :root {
-	--light-bg-color: rgba(240, 248, 250, 1);
-	--light-btn-no-intent-color: rgb(218, 238, 243);
+	--light-bg-color: #f4f8fa;
+	--card-bg-color: #ffffff;
+	--dialog-bg-color: #ffffff;
+	--text-color: #182026;
+	--text-muted-color: #5c7080;
+	--heading-color: #10161a;
+	--light-btn-no-intent-color: #ebf1f5;
+	--link-color: #106ba3;
 	--custom-scrollbar-webkit-scrollbar-thumb-border-radius: 10px;
 	--custom-scrollbar-webkit-scrollbar-thumb-background-color: #8a9ba8;
 	--custom-scrollbar-webkit-scrollbar_background-color: rgba(0, 0, 0, 0);
@@ -97,6 +103,7 @@ body {
 		serif;
 	overflow: hidden;
 	background-color: var(--light-bg-color);
+	color: var(--text-color);
 }
 
 .bp3-alert-footer > button {
@@ -112,83 +119,128 @@ body {
 }
 
 /* UI colors START */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.bp3-heading {
+	color: var(--heading-color);
+}
+
+.bp3-text-muted,
+.MuiStepLabel-label {
+	color: var(--text-muted-color) !important;
+}
+
+.MuiStepLabel-label.MuiStepLabel-active {
+	color: var(--heading-color) !important;
+}
+
+a.bp3-link,
+a {
+	color: var(--link-color);
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
 .bp3-button:not([class*="bp3-intent-"]) {
 	background-color: var(--light-btn-no-intent-color);
+	color: var(--text-color);
 }
 
 .bp3-dialog {
-	background-color: var(--light-bg-color) !important;
+	background-color: var(--dialog-bg-color) !important;
+	color: var(--text-color) !important;
 }
 
 .bp3-popover .bp3-popover-arrow-fill {
-	fill: var(--light-bg-color);
+	fill: var(--dialog-bg-color);
 }
 
 .bp3-popover .bp3-popover-content {
-	background-color: var(--light-bg-color);
-	color: black;
+	background-color: var(--dialog-bg-color);
+	color: var(--text-color);
 }
 
 .bp3-html-select > select {
 	background-color: var(--light-btn-no-intent-color);
+	color: var(--text-color);
 }
 
 .bp3-drawer {
-	background-color: var(--light-bg-color);
+	background-color: var(--dialog-bg-color);
+	color: var(--text-color);
 }
 
 .bp3-card {
-	background-color: var(--light-bg-color);
+	background-color: var(--card-bg-color);
+	color: var(--text-color);
+}
+
+.bp3-callout {
+	background-color: var(--card-bg-color);
+	color: var(--text-color);
 }
 
 /* Dark Theme styles for Deskreen Desktop */
 body.bp3-dark {
-	--light-bg-color: #202b33;
+	--light-bg-color: #182026;
+	--card-bg-color: #202b33;
+	--dialog-bg-color: #202b33;
+	--text-color: #f5f8fa;
+	--text-muted-color: #8a9ba8;
+	--heading-color: #f5f8fa;
 	--light-btn-no-intent-color: #30404d;
-	background-color: #202b33 !important;
+	--link-color: #48aff0;
+	background-color: #182026 !important;
 	color: #f5f8fa !important;
 }
 
 body.bp3-dark .bp3-button:not([class*="bp3-intent-"]) {
-	background-color: #394b59 !important;
+	background-color: #30404d !important;
 	color: #f5f8fa !important;
 }
 
 body.bp3-dark .bp3-button:not([class*="bp3-intent-"]):hover {
-	background-color: #485f70 !important;
+	background-color: #394b59 !important;
 }
 
 body.bp3-dark .bp3-dialog {
-	background-color: #293742 !important;
+	background-color: #202b33 !important;
 	color: #f5f8fa !important;
 }
 
 body.bp3-dark .bp3-drawer {
-	background-color: #293742 !important;
+	background-color: #202b33 !important;
 	color: #f5f8fa !important;
 }
 
 body.bp3-dark .bp3-card {
-	background-color: #293742 !important;
+	background-color: #202b33 !important;
 	color: #f5f8fa !important;
 }
 
 body.bp3-dark .bp3-popover .bp3-popover-content {
-	background-color: #293742 !important;
+	background-color: #202b33 !important;
 	color: #f5f8fa !important;
 }
 
 body.bp3-dark .bp3-popover .bp3-popover-arrow-fill {
-	fill: #293742 !important;
+	fill: #202b33 !important;
 }
 
 body.bp3-dark .bp3-html-select > select {
-	background-color: #394b59 !important;
+	background-color: #30404d !important;
 	color: #f5f8fa !important;
 }
 
 body.bp3-dark .bp3-callout {
-	background-color: #293742 !important;
+	background-color: #25333d !important;
 	color: #f5f8fa !important;
 }
 
@@ -200,11 +252,6 @@ body.bp3-dark h5,
 body.bp3-dark h6,
 body.bp3-dark .bp3-heading {
 	color: #f5f8fa !important;
-}
-
-body.bp3-dark p,
-body.bp3-dark span:not(.bp3-icon):not([class*="badge"]):not(.device-ip-span) {
-	color: #f5f8fa;
 }
 
 body.bp3-dark .device-ip-badge-wrapper {
@@ -242,12 +289,12 @@ body.bp3-dark .bp3-tab-panel {
 }
 
 body.bp3-dark [class*="overlayInsideFade"] {
-	background-color: #202b33 !important;
+	background-color: #182026 !important;
 	color: #f5f8fa !important;
 }
 
 body.bp3-dark .bp3-input {
-	background-color: #30404d !important;
+	background-color: #25333d !important;
 	color: #f5f8fa !important;
 }
 
@@ -576,33 +623,7 @@ body::-webkit-scrollbar-thumb {
 --custom-scrollbar-webkit-scrollbar-track-border-radius: 10px;
 --custom-scrollbar-webkit-scrollbar-track-background-color: rgba(0,0,0,0); */
 
-h2 {
-	margin: 0;
-	font-size: 2.25rem;
-	font-weight: bold;
-	letter-spacing: -0.025em;
-	color: #fff;
-}
 
-p {
-	font-size: 24px;
-}
-
-li {
-	list-style: none;
-}
-
-a {
-	color: white;
-	opacity: 0.75;
-	text-decoration: none;
-}
-
-a:hover {
-	opacity: 1;
-	text-decoration: none;
-	cursor: pointer;
-}
 
 #new-version-header {
 	background: rgba(0, 255, 54, 0.48);

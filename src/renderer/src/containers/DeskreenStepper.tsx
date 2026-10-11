@@ -1,4 +1,4 @@
-// import SuccessStep from '../components/StepsOfStepper/SuccessStep';
+import SuccessStep from '../components/StepsOfStepper/SuccessStep';
 import React, { useState, useCallback, useEffect, ReactNode } from 'react';
 import { makeStyles, createStyles } from '@material-ui/core/styles';
 import Stepper from '@material-ui/core/Stepper';
@@ -52,6 +52,11 @@ const useStyles = makeStyles(() =>
 function getSteps(t: TFunction): string[] {
 	return [t('connect'), t('select'), t('confirm')];
 }
+
+const getDeviceFingerprint = (device: Device | null): string => {
+	if (!device) return '';
+	return `${device.deviceIP || ''}_${device.deviceOS || ''}_${device.deviceBrowser || ''}`;
+};
 
 interface Props {
 	activeStep: number;
@@ -168,11 +173,6 @@ const DeskreenStepper = ({
 		);
 	};
 
-	const getDeviceFingerprint = (device: Device | null): string => {
-		if (!device) return '';
-		return `${device.deviceIP || ''}_${device.deviceOS || ''}_${device.deviceBrowser || ''}`;
-	};
-
 	const handleConfirmAlert = useCallback(
 		async (trustThisDevice?: boolean) => {
 			setIsAllowDeviceAlertOpen(false);
@@ -188,14 +188,14 @@ const DeskreenStepper = ({
 				}
 			}
 
-			handleNext();
+			setActiveStep(1);
 			await window.electron.ipcRenderer.invoke(
 				IpcEvents.SetDeviceConnectedStatus,
 			);
 		},
 		[
-			handleNext,
 			pendingConnectionDevice,
+			setActiveStep,
 			setIsAllowDeviceAlertOpen,
 			setIsUserAllowedConnection,
 		],
@@ -219,7 +219,7 @@ const DeskreenStepper = ({
 				);
 				if (isTrusted) {
 					setIsUserAllowedConnection(true);
-					handleNext();
+					setActiveStep(1);
 					await window.electron.ipcRenderer.invoke(
 						IpcEvents.SetDeviceConnectedStatus,
 					);
@@ -246,7 +246,7 @@ const DeskreenStepper = ({
 				handlePendingConnectionDevice,
 			);
 		};
-	}, [handleNext, setIsAllowDeviceAlertOpen, setIsUserAllowedConnection, setPendingConnectionDevice, t]);
+	}, [setActiveStep, setIsAllowDeviceAlertOpen, setIsUserAllowedConnection, setPendingConnectionDevice, t]);
 
 	const handleUserClickedDeviceDisconnectButton =
 		useCallback(async (): Promise<void> => {
@@ -260,11 +260,15 @@ const DeskreenStepper = ({
 		}, [handleReset, t]);
 
 	const renderIntermediateOrSuccessStepContent = useCallback(() => {
+		if (activeStep >= steps.length) {
+			return <SuccessStep handleReset={handleReset} />;
+		}
 		return (
 			<div id="intermediate-step-container" style={{ width: '100%' }}>
 				<IntermediateStep
 					activeStep={activeStep}
 					steps={steps}
+					handleNext={handleNext}
 					handleBack={handleBack}
 					handleNextEntireScreen={handleNextEntireScreen}
 					handleNextApplicationWindow={handleNextApplicationWindow}
@@ -279,6 +283,7 @@ const DeskreenStepper = ({
 		activeStep,
 		steps,
 		handleReset,
+		handleNext,
 		handleBack,
 		handleNextEntireScreen,
 		handleNextApplicationWindow,

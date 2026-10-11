@@ -13,7 +13,7 @@
 	border-top: 1px solid rgba(16, 22, 26, 0.15);
 }
 
-.bp4-dark .privacy-control-buttons-container {
+body.bp3-dark .privacy-control-buttons-container {
 	background: #30404d;
 	border-top-color: rgba(255, 255, 255, 0.2);
 }
@@ -63,11 +63,11 @@
 	background-color: #f5f8fa !important;
 }
 
-.bp4-dark .disagree-analytics-button {
+body.bp3-dark .disagree-analytics-button {
 	color: #8a9ba8 !important;
 	border-color: #5c7080 !important;
 }
 
-.bp4-dark .disagree-analytics-button:hover {
+body.bp3-dark .disagree-analytics-button:hover {
 	background-color: #394b59 !important;
 }

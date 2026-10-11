@@ -106,9 +106,11 @@ export const handleRecieveEncryptedMessage = async (
 			};
 			if (peer && peer !== NullSimplePeer && !peer.destroyed) {
 				const signalingState = peer._pc?.signalingState;
-				if (signalingState && signalingState !== 'have-local-offer') {
+				const signalData = message.payload.signalData as { type?: string; candidate?: unknown };
+				const isAnswer = signalData && typeof signalData === 'object' && signalData.type === 'answer';
+				if (isAnswer && signalingState && signalingState !== 'have-local-offer') {
 					console.warn(
-						`Skipping remote answer signal in unexpected signalingState: ${signalingState}`,
+						`Skipping duplicate remote answer signal in unexpected signalingState: ${signalingState}`,
 					);
 					return;
 				}

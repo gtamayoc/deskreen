@@ -5,12 +5,14 @@ import { useTranslation } from 'react-i18next';
 import ScanQRStep from './ScanQRStep';
 import ChooseAppOrScreenStep from './ChooseAppOrScreenStep';
 import ConfirmStep from './ConfirmStep';
+import SuccessStep from './SuccessStep';
 import { Device } from '../../../../common/Device';
 import { IpcEvents } from '../../../../common/IpcEvents.enum';
 
 interface IntermediateStepProps {
 	activeStep: number;
 	steps: string[];
+	handleNext: () => void;
 	handleBack: () => void;
 	handleNextEntireScreen: () => void;
 	handleNextApplicationWindow: () => void;
@@ -26,6 +28,7 @@ function getStepContent(
 	handleNextEntireScreen: () => void,
 	handleNextApplicationWindow: () => void,
 	connectedDevice: Device | null,
+	handleReset: () => void,
 ): React.ReactNode {
 	switch (stepIndex) {
 		case 0:
@@ -48,8 +51,10 @@ function getStepContent(
 			);
 		case 2:
 			return <ConfirmStep device={connectedDevice} />;
+		case 3:
+			return <SuccessStep handleReset={handleReset} />;
 		default:
-			return 'Unknown stepIndex';
+			return <ScanQRStep />;
 	}
 }
 
@@ -65,6 +70,7 @@ export default function IntermediateStep(
 	const {
 		activeStep,
 		steps,
+		handleNext,
 		handleBack,
 		handleNextEntireScreen,
 		handleNextApplicationWindow,
@@ -92,6 +98,7 @@ export default function IntermediateStep(
 				handleNextEntireScreen,
 				handleNextApplicationWindow,
 				connectedDevice,
+				handleReset,
 			)}
 			{(typeof process === 'undefined' || process.env?.NODE_ENV === 'production') &&
 			(typeof process === 'undefined' ||
@@ -115,15 +122,13 @@ export default function IntermediateStep(
 							intent={activeStep === 2 ? 'success' : 'none'}
 							onClick={async () => {
 								if (isConfirmStep(activeStep, steps)) {
-									window.electron.ipcRenderer.invoke(
+									await window.electron.ipcRenderer.invoke(
 										IpcEvents.StartSharingOnWaitingForConnectionSharingSession,
 									);
 									resetPendingConnectionDevice();
 									resetUserAllowedConnection();
+									handleNext();
 								}
-								setTimeout(() => {
-									handleReset();
-								}, 1000);
 							}}
 							style={{
 								display: activeStep === 1 ? 'none' : 'inline',

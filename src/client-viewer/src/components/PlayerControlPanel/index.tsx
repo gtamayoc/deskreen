@@ -477,7 +477,7 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 									style={{
 										width: 'fit-content',
 										marginLeft: 'auto',
-										color: '#5C7080',
+										color: 'var(--text-muted-color, #5C7080)',
 									}}
 								>
 									{t('Privacy Settings')}

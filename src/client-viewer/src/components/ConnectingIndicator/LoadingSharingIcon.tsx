@@ -33,13 +33,13 @@ function LoadingSharingIcon(props: SelectSharingIconProps) {
 					center="xs"
 				>
 					<Col xs={8} md={4}>
-						<PropagateLoader loading size={18} color="#5C7080" />
+						<PropagateLoader loading size={18} color="#2B95D6" />
 					</Col>
 				</Row>
 				<Row center="xs">
 					<Col>
 						{isShownSelectingSharingIcon && (
-							<Icon icon={selectingSharingIconType} size={60} color="#5C7080" />
+							<Icon icon={selectingSharingIconType} size={60} color="#2B95D6" />
 						)}
 					</Col>
 				</Row>

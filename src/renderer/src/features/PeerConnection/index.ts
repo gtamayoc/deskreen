@@ -11,6 +11,8 @@ import DesktopCapturerSourceType from '../../../../common/DesktopCapturerSourceT
 import getAppLanguage from '../../../../common/getAppLanguage';
 import { IpcEvents } from '../../../../common/IpcEvents.enum';
 import getDesktopSourceStreamBySourceID from './getDesktopSourceStreamBySourceID';
+import { replacePeerVideoTrack } from './replacePeerVideoTrack';
+import prepareDataMessageToSendScreenSourceType from './prepareDataMessageToSendScreenSourceType';
 
 import { Device } from '../../../../common/Device';
 import { LocalPeerUser } from '../../../../common/LocalPeerUser';
@@ -170,8 +172,13 @@ export default class PeerConnection {
 				const oldStream = this.localStream;
 
 				// replace the track in the existing peer
-				// replaceTrack will add the new track to the old stream
-				await this.peer.replaceTrack(oldTrack, newVideoTrack, oldStream);
+				await replacePeerVideoTrack(
+					this.peer,
+					oldTrack,
+					newVideoTrack,
+					oldStream,
+					newStream,
+				);
 
 				// stop only the old track (it's already removed from the stream by replaceTrack)
 				oldTrack.stop();
@@ -187,6 +194,21 @@ export default class PeerConnection {
 				// update local stream reference to the new stream
 				// the new stream's track is now being used in the peer connection
 				this.localStream = newStream;
+
+				// Notify client viewer of the updated source type
+				try {
+					const sourceType = this.desktopCapturerSourceID.includes(
+						DesktopCapturerSourceType.SCREEN,
+					)
+						? DesktopCapturerSourceType.SCREEN
+						: DesktopCapturerSourceType.WINDOW;
+					// @ts-ignore
+					this.peer?.send?.(
+						prepareDataMessageToSendScreenSourceType(sourceType),
+					);
+				} catch (notifyError) {
+					console.warn('Failed to notify client viewer of source type change:', notifyError);
+				}
 
 				// update sourceDisplaySize from actual stream to ensure correct resolution
 				// this is critical when switching sources to get the actual stream dimensions

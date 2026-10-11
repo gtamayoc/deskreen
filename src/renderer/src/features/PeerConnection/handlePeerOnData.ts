@@ -2,6 +2,7 @@ import DesktopCapturerSourceType from '../../../../common/DesktopCapturerSourceT
 import getDesktopSourceStreamBySourceID from './getDesktopSourceStreamBySourceID';
 import prepareDataMessageToSendScreenSourceType from './prepareDataMessageToSendScreenSourceType';
 import NullSimplePeer from './NullSimplePeer';
+import { replacePeerVideoTrack } from './replacePeerVideoTrack';
 
 export default async function handlePeerOnData(
 	peerConnection: PeerConnection,
@@ -35,10 +36,12 @@ export default async function handlePeerOnData(
 		const oldTrack = oldStream?.getVideoTracks()[0];
 
 		if (oldTrack && oldStream && peerConnection.peer !== NullSimplePeer) {
-			await peerConnection.peer.replaceTrack(
+			await replacePeerVideoTrack(
+				peerConnection.peer,
 				oldTrack,
 				newVideoTrack,
 				oldStream,
+				newStream,
 			);
 			// stop only the old track (it's already removed from the stream by replaceTrack)
 			oldTrack.stop();

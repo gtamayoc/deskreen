@@ -69,8 +69,8 @@ function ConnectionPropmpts(props: ConnectionPropmptsProps) {
 				left: 0,
 				width: '100%',
 				height: '100vh',
-				boxShadow: '0 0 0 5px #A7B6C2',
 				backgroundColor: LIGHT_UI_BACKGROUND,
+				color: 'var(--text-color, #182026)',
 			}}
 		>
 			<Row

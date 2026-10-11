@@ -163,20 +163,21 @@ export default function ChooseAppOrScreenOverlay(
 							middle="xs"
 							style={{
 								width: '100%',
-								backgroundColor: '#f6f7f9',
+								backgroundColor: 'var(--light-btn-no-intent-color)',
 								borderRadius: '8px',
+								padding: '4px 12px',
 							}}
 						>
 							<Col xs={9}>
 								{isEntireScreenToShareChosen ? (
 									<div>
-										<H3 style={{ marginBottom: '0px' }}>
+										<H3 style={{ marginBottom: '0px', color: 'var(--heading-color)' }}>
 											{t('select-entire-screen-to-share')}
 										</H3>
 									</div>
 								) : (
 									<div>
-										<H3 style={{ marginBottom: '0px' }}>
+										<H3 style={{ marginBottom: '0px', color: 'var(--heading-color)' }}>
 											{t('select-app-window-to-share')}
 										</H3>
 									</div>

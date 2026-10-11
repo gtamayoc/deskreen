@@ -1,6 +1,5 @@
 import { Callout, Card, H3, Text, Tooltip, Position } from '@blueprintjs/core';
 import { useTranslation } from 'react-i18next';
-import { LIGHT_UI_BACKGROUND } from '../../constants/styleConstants';
 
 interface MyDeviceDetailsCardProps {
 	deviceDetails: DeviceDetails;
@@ -16,7 +15,7 @@ function MyDeviceInfoCard(props: MyDeviceDetailsCardProps) {
 		<Card
 			elevation={3}
 			style={{
-				backgroundColor: LIGHT_UI_BACKGROUND,
+				backgroundColor: 'var(--card-bg-color, #ffffff)',
 				marginBottom: '30px',
 			}}
 		>
@@ -30,12 +29,15 @@ function MyDeviceInfoCard(props: MyDeviceDetailsCardProps) {
 					position={Position.TOP}
 				>
 					<div
+						className="device-ip-badge-wrapper"
 						style={{
+							display: 'inline-block',
 							fontWeight: 900,
-							backgroundColor: '#00f99273',
-							paddingLeft: '10px',
-							paddingRight: '10px',
+							paddingLeft: '12px',
+							paddingRight: '12px',
 							borderRadius: '20px',
+							marginTop: '4px',
+							marginBottom: '4px',
 						}}
 					>
 						<Text>{`${t('Device IP')}: ${myIP}`}</Text>

@@ -6,7 +6,7 @@ import { createStyles, makeStyles } from '@material-ui/core/styles';
 const useStyles = makeStyles(() =>
 	createStyles({
 		oneSettingRow: {
-			color: '#5C7080 !important',
+			color: 'var(--text-color, #182026) !important',
 			fontSize: '18px',
 			fontWeight: 900,
 			display: 'flex',
@@ -15,7 +15,7 @@ const useStyles = makeStyles(() =>
 		},
 		settingRowIcon: {
 			margin: '10px',
-			color: '#8A9BA8',
+			color: 'var(--text-muted-color, #8A9BA8)',
 		},
 	}),
 );
