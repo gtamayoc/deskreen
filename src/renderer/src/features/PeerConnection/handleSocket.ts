@@ -16,6 +16,9 @@ export default function handleSocket(peerConnection: PeerConnection): void {
 	peerConnection.socket.on('connect', () => {
 		peerConnection.emitUserEnter();
 	});
+	if (peerConnection.socket.connected) {
+		peerConnection.emitUserEnter();
+	}
 
 	peerConnection.socket.on(
 		'USER_ENTER',

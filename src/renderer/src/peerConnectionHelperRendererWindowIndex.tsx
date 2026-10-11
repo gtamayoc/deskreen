@@ -41,6 +41,10 @@ export function handleIpcRenderer(): void {
 		'create-peer-connection-with-data',
 		async (_, data) => {
 			console.log('create-peer-connection-with-data received:', data);
+			if (peerConnection && peerConnection.roomID === data.roomID) {
+				console.log('peerConnection already initialized for room', data.roomID);
+				return;
+			}
 			// cleanup existing peer connection before creating new one
 			if (peerConnection) {
 				peerConnection.selfDestroy();
@@ -104,6 +108,8 @@ export function handleIpcRenderer(): void {
 			peerConnection.notifyClientWithNewLanguage();
 		}
 	});
+
+	window.electron.ipcRenderer.send('peer-helper-ready');
 }
 
 handleIpcRenderer();

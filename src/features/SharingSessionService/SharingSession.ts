@@ -57,18 +57,17 @@ export default class SharingSession {
 			);
 		};
 
-		if (this.peerConnectionHelperRenderer.webContents.isLoading()) {
-			this.peerConnectionHelperRenderer.webContents.once(
-				'did-finish-load',
-				sendSessionData,
-			);
-		} else {
-			sendSessionData();
-		}
+		this.peerConnectionHelperRenderer.webContents.on(
+			'did-finish-load',
+			sendSessionData,
+		);
 
 		this.peerConnectionHelperRenderer.webContents.on(
 			'ipc-message',
 			(_, channel, data) => {
+				if (channel === 'peer-helper-ready') {
+					sendSessionData();
+				}
 				if (channel === 'peer-connected') {
 					if (this.onDeviceConnectedCallback) {
 						this.onDeviceConnectedCallback(data);
