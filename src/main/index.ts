@@ -152,6 +152,23 @@ export default class DeskreenApp {
 				app.setActivationPolicy('regular');
 			}
 
+			// Grant getUserMedia and desktop-capturer permissions for all renderer windows.
+			// Electron 37 requires an explicit permission handler — without it, calls to
+			// navigator.mediaDevices.getUserMedia({ video: { mandatory: { chromeMediaSource: 'desktop' } } })
+			// are silently denied, producing a black screen on all connected devices.
+			const { session } = await import('electron');
+			session.defaultSession.setPermissionRequestHandler(
+				(_webContents, permission, callback) => {
+					const allowed = [
+						'media',
+						'display-capture',
+						'desktop-capturer',
+						'screen',
+					];
+					callback(allowed.includes(permission));
+				},
+			);
+
 			// start log buffer cleanup to prevent memory bloat
 			startLogBufferCleanup();
 
