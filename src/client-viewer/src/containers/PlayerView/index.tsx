@@ -17,6 +17,7 @@ import {
 import { toggleOrientation } from '../../utils/screenOrientation';
 import ConsoleActionPad from '../../components/ConsoleActionPad';
 import FullscreenOverlayHUD from '../../components/FullscreenOverlayHUD';
+import SourceSwitcherModal from '../../components/SourceSwitcherModal';
 import type PeerConnection from '../../features/PeerConnection';
 
 interface PlayerViewProps {
@@ -75,6 +76,7 @@ function PlayerView(props: PlayerViewProps) {
 	});
 	const [isFullscreen, setIsFullscreen] = useState(() => isPlayerFullscreen());
 	const [isAIPadOpen, setIsAIPadOpen] = useState(false);
+	const [isSourceSwitcherOpen, setIsSourceSwitcherOpen] = useState(false);
 
 	useEffect(() => {
 		if (!isConsoleSharing) {
@@ -340,6 +342,7 @@ function PlayerView(props: PlayerViewProps) {
 				isDarkMode={isDarkMode}
 				onToggleDarkMode={handleToggleDarkMode}
 				onResetVisualSettings={handleResetVisualSettings}
+				onOpenSourceSwitcher={() => setIsSourceSwitcherOpen(true)}
 			/>
 			<div
 				id="video-container"
@@ -404,6 +407,7 @@ function PlayerView(props: PlayerViewProps) {
 						brightness={screenBrightness}
 						onCycleBrightness={handleCycleBrightness}
 						onToggleOrientation={handleToggleOrientation}
+						onOpenSourceSwitcher={() => setIsSourceSwitcherOpen(true)}
 					/>
 				)}
 				{isConsoleSharing && (
@@ -415,6 +419,11 @@ function PlayerView(props: PlayerViewProps) {
 						isVisible={isConsoleSharing}
 					/>
 				)}
+				<SourceSwitcherModal
+					isOpen={isSourceSwitcherOpen}
+					onClose={() => setIsSourceSwitcherOpen(false)}
+					peer={peer}
+				/>
 			</div>
 		</div>
 	);

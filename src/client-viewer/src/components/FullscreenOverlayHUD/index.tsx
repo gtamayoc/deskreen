@@ -12,6 +12,7 @@ interface FullscreenOverlayHUDProps {
 	brightness?: number;
 	onCycleBrightness?: () => void;
 	onToggleOrientation?: () => void;
+	onOpenSourceSwitcher?: () => void;
 }
 
 const STORAGE_KEY_POS = 'deskreen_fullscreen_hud_pos';
@@ -31,6 +32,7 @@ export const FullscreenOverlayHUD: React.FC<FullscreenOverlayHUDProps> = ({
 	brightness = 1.0,
 	onCycleBrightness,
 	onToggleOrientation,
+	onOpenSourceSwitcher,
 }) => {
 	const [position, setPosition] = useState<Position | null>(() => {
 		try {
@@ -182,6 +184,20 @@ export const FullscreenOverlayHUD: React.FC<FullscreenOverlayHUDProps> = ({
 				}}
 				title="Salir de pantalla completa"
 			/>
+
+			{/* Source Switcher Button (Screens & Windows) */}
+			{onOpenSourceSwitcher && (
+				<Button
+					minimal
+					className="fullscreen-hud-btn fullscreen-hud-btn-source"
+					icon={<Icon icon="desktop" />}
+					onClick={(e) => {
+						e.stopPropagation();
+						onOpenSourceSwitcher();
+					}}
+					title="Cambiar pantalla o ventana transmitida"
+				/>
+			)}
 
 			{/* Native Screen Orientation Toggle (Landscape / Portrait) */}
 			{onToggleOrientation && (

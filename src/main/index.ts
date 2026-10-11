@@ -216,7 +216,7 @@ export default class DeskreenApp {
 			process.env.NODE_ENV === 'development' ||
 			process.env.DEBUG_PROD === 'true'
 		) {
-			await installExtensions();
+			void installExtensions();
 		}
 
 		this.mainWindow = new BrowserWindow({
@@ -225,11 +225,10 @@ export default class DeskreenApp {
 			height: 640,
 			minHeight: 460,
 			minWidth: 640,
-			titleBarStyle: 'hiddenInset',
+			titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
 			frame: process.platform === 'darwin' ? false : true,
 			useContentSize: true,
 			title: 'Deskreen CE',
-			// useContentSize: true,
 			autoHideMenuBar: true,
 			...(process.platform === 'linux' ? { icon } : {}),
 			webPreferences: {
@@ -238,23 +237,38 @@ export default class DeskreenApp {
 			},
 		});
 
-		// this.mainWindow.loadURL(`file://${__dirname}/app.html`);
-
-		// @TODO: Use 'ready-to-show' event
-		//        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
-		this.mainWindow.on('ready-to-show', () => {
-			// this.mainWindow.webContents.on('did-finish-load', () => {
-			if (!this.mainWindow) {
-				throw new Error('"mainWindow" is not defined');
-			}
+		const showMainWindow = (): void => {
+			if (!this.mainWindow) return;
 			if (process.env.START_MINIMIZED === 'true') {
 				this.mainWindow.minimize();
-			} else {
+			} else if (!this.mainWindow.isVisible()) {
 				this.mainWindow.show();
 				this.mainWindow.focus();
 			}
-			// });
+		};
+
+		this.mainWindow.once('ready-to-show', () => {
+			showMainWindow();
 		});
+
+		this.mainWindow.webContents.on('did-finish-load', () => {
+			showMainWindow();
+		});
+
+		this.mainWindow.webContents.on(
+			'did-fail-load',
+			(_, errorCode, errorDescription, validatedURL) => {
+				console.error(
+					`[MainWindow] Failed to load ${validatedURL}: ${errorCode} - ${errorDescription}`,
+				);
+				showMainWindow();
+			},
+		);
+
+		// Fallback timeout to ensure the window is always displayed
+		setTimeout(() => {
+			showMainWindow();
+		}, 1200);
 
 		this.mainWindow.webContents.setWindowOpenHandler((details) => {
 			shell.openExternal(details.url);

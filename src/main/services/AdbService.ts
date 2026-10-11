@@ -8,6 +8,7 @@ import type {
 	AdbDeviceInfo,
 } from '../../common/types/adb';
 import { adbDownloaderService } from './AdbDownloaderService';
+import { getDeskreenGlobal } from '../helpers/getDeskreenGlobal';
 
 const execFileAsync = promisify(execFile);
 
@@ -178,6 +179,30 @@ export class AdbService {
 				void this.handleDeviceConnected(info);
 			});
 
+			tracker.on('change', async (deviceUnknown: unknown) => {
+				const device = deviceUnknown as { id: string; type: string };
+				console.log(
+					`[AdbService] Device status changed: ${device.id} (${device.type})`,
+				);
+				if (device.type === 'device') {
+					const info: AdbDeviceInfo = {
+						id: device.id,
+						type: device.type,
+					};
+					try {
+						const properties = await this.client?.getDevice(device.id).getProperties();
+						if (properties) {
+							info.model = properties['ro.product.model'];
+							info.product = properties['ro.product.name'];
+						}
+					} catch {
+						// safe fallback
+					}
+					this.connectedDevices.set(device.id, info);
+					void this.handleDeviceConnected(info);
+				}
+			});
+
 			tracker.on('remove', (deviceUnknown: unknown) => {
 				const device = deviceUnknown as { id: string; type: string };
 				const info = this.connectedDevices.get(device.id) || {
@@ -186,6 +211,14 @@ export class AdbService {
 				};
 				this.connectedDevices.delete(device.id);
 				this.reversedPorts.delete(device.id);
+
+				// Clear launched sessions for this device so reconnecting USB re-launches the browser
+				for (const key of Array.from(this.launchedSessions)) {
+					if (key.startsWith(`${device.id}:`)) {
+						this.launchedSessions.delete(key);
+					}
+				}
+
 				console.log(`[AdbService] Android device disconnected from USB: ${device.id}`);
 
 				if (this.mainWindow && !this.mainWindow.isDestroyed()) {
@@ -205,6 +238,27 @@ export class AdbService {
 		}
 	}
 
+	private resolveCurrentPort(): number {
+		if (this.currentPort > 0) return this.currentPort;
+		return 3131;
+	}
+
+	private resolveCurrentRoomId(): string {
+		if (this.currentRoomId) return this.currentRoomId;
+		try {
+			const deskreenGlobal = getDeskreenGlobal();
+			const waitingRoom =
+				deskreenGlobal.sharingSessionService?.waitingForConnectionSharingSession?.roomID;
+			if (waitingRoom) return waitingRoom;
+			for (const session of deskreenGlobal.sharingSessionService?.sharingSessions?.values() || []) {
+				if (session.roomID) return session.roomID;
+			}
+		} catch {
+			// ignore
+		}
+		return '';
+	}
+
 	private async handleDeviceConnected(info: AdbDeviceInfo): Promise<void> {
 		if (this.mainWindow && !this.mainWindow.isDestroyed()) {
 			this.mainWindow.webContents.send(IpcEvents.AdbDeviceConnected, info);
@@ -212,8 +266,8 @@ export class AdbService {
 
 		if (info.type !== 'device') return;
 
-		const port = this.currentPort;
-		const roomID = this.currentRoomId;
+		const port = this.resolveCurrentPort();
+		const roomID = this.resolveCurrentRoomId();
 
 		if (port > 0) {
 			// Auto setup reverse port
@@ -283,6 +337,24 @@ export class AdbService {
 
 	async launchClientOnDevice(deviceId: string, url: string): Promise<boolean> {
 		try {
+			// Wake up screen if locked/sleeping (224 = KEYCODE_WAKEUP)
+			try {
+				if (this.resolvedAdbPath) {
+					await execFileAsync(this.resolvedAdbPath, [
+						'-s',
+						deviceId,
+						'shell',
+						'input',
+						'keyevent',
+						'224',
+					]);
+				} else if (this.client) {
+					await this.client.getDevice(deviceId).shell('input keyevent 224');
+				}
+			} catch {
+				// Non-fatal if keyevent fails
+			}
+
 			if (this.resolvedAdbPath) {
 				await execFileAsync(this.resolvedAdbPath, [
 					'-s',

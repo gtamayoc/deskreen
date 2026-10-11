@@ -50,4 +50,28 @@ export default async (
 	if (message.type === 'APP_LANGUAGE') {
 		peerConnection.UIHandler.setAppLanguageCallback(message.payload.value);
 	}
+	if (message.type === 'AVAILABLE_SOURCES') {
+		const payloadObj = message.payload as {
+			sources?: Array<{
+				id: string;
+				name: string;
+				type: 'screen' | 'window';
+				appIcon?: string;
+			}>;
+			currentSourceId?: string;
+		};
+		window.dispatchEvent(
+			new CustomEvent('deskreen:available-sources', {
+				detail: payloadObj,
+			}),
+		);
+	}
+	if (message.type === 'SOURCE_SWITCHED') {
+		const payloadObj = message.payload as { sourceId?: string };
+		window.dispatchEvent(
+			new CustomEvent('deskreen:source-switched', {
+				detail: payloadObj,
+			}),
+		);
+	}
 };

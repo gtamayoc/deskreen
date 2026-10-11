@@ -1,0 +1,121 @@
+.source-switcher-dialog {
+	max-width: 90vw !important;
+	width: 520px !important;
+	border-radius: 12px !important;
+	background: #1c2127 !important;
+	color: #f5f8fa !important;
+}
+
+.source-switcher-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 12px;
+	padding-bottom: 8px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.source-switcher-subtitle {
+	font-size: 13px;
+	color: #8a9ba8;
+}
+
+.source-switcher-loading,
+.source-switcher-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 28px 12px;
+	gap: 12px;
+	color: #a7b6c2;
+	font-size: 14px;
+}
+
+.source-switcher-content {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	max-height: 60vh;
+	overflow-y: auto;
+	padding-right: 4px;
+}
+
+.source-section-title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 600;
+	font-size: 14px;
+	color: #48aff0;
+	margin-bottom: 8px;
+}
+
+.source-grid {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.source-card {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 8px;
+	padding: 10px 14px;
+	color: #f5f8fa;
+	cursor: pointer;
+	text-align: left;
+	transition: all 0.2s ease-in-out;
+	width: 100%;
+}
+
+.source-card:hover {
+	background: rgba(255, 255, 255, 0.1);
+	border-color: #137cbd;
+}
+
+.source-card.is-selected {
+	background: rgba(15, 153, 96, 0.15);
+	border-color: #0f9960;
+}
+
+.source-card.is-switching {
+	opacity: 0.7;
+	border-color: #2b95d6;
+}
+
+.source-card-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	flex-shrink: 0;
+	color: #ced9e0;
+}
+
+.source-app-icon {
+	width: 24px;
+	height: 24px;
+	object-fit: contain;
+}
+
+.source-card-info {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex: 1;
+	min-width: 0;
+	gap: 8px;
+}
+
+.source-card-name {
+	font-size: 13px;
+	font-weight: 500;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

@@ -68,6 +68,18 @@ export type RemoteConsoleInputMessageWithPayload = {
 	};
 };
 
+export type GetAvailableSourcesMessageWithPayload = {
+	type: 'GET_AVAILABLE_SOURCES';
+	payload: Record<string, unknown>;
+};
+
+export type SwitchSourceMessageWithPayload = {
+	type: 'SWITCH_SOURCE';
+	payload: {
+		sourceId: string;
+	};
+};
+
 export type ProcessedMessage =
 	| CallAcceptedMessageWithPayload
 	| CallUserMessageWithPayload
@@ -77,7 +89,9 @@ export type ProcessedMessage =
 	| DenyToConnectMessageWithPayload
 	| AllowedToConnectMessageWithPayload
 	| DisconnectByHostMachineUserMessageWithPayload
-	| RemoteConsoleInputMessageWithPayload;
+	| RemoteConsoleInputMessageWithPayload
+	| GetAvailableSourcesMessageWithPayload
+	| SwitchSourceMessageWithPayload;
 
 export async function handleDeviceIPMessage(
 	deviceIP: string,
@@ -139,9 +153,11 @@ export async function handleDeviceIPMessage(
 	};
 	peerConnection.partnerDeviceDetails = device;
 
-	if (isRecognizedReconnect) {
+	if (isRecognizedReconnect || isUsb) {
 		console.log(
-			'Recognized reconnecting device. Auto-approving connection without modal prompt.',
+			isUsb
+				? 'Direct USB connection detected. Auto-approving connection without modal prompt.'
+				: 'Recognized reconnecting device. Auto-approving connection without modal prompt.',
 		);
 		peerConnection.isReconnecting = false;
 		peerConnection.onReconnectingStateChanged(false);
@@ -243,5 +259,54 @@ export const handleRecieveEncryptedMessage = async (
 				payload: cleanPayload,
 			},
 		);
+	}
+	if (message.type === 'GET_AVAILABLE_SOURCES') {
+		try {
+			const sourcesMap = (await window.electron.ipcRenderer.invoke(
+				IpcEvents.GetDesktopCapturerServiceSourcesMap,
+			)) as Record<string, { source?: { name?: string; thumbnail?: string; appIcon?: string } }>;
+
+			const sourcesList = Object.entries(sourcesMap || {}).map(([id, item]) => {
+				const isScreen = id.includes('screen');
+				return {
+					id,
+					name: item.source?.name || (isScreen ? 'Pantalla' : 'Ventana'),
+					type: isScreen ? 'screen' : 'window',
+					appIcon: item.source?.appIcon,
+				};
+			});
+
+			peerConnection.sendEncryptedMessage({
+				type: 'AVAILABLE_SOURCES',
+				payload: {
+					sources: sourcesList,
+					currentSourceId: peerConnection.desktopCapturerSourceID,
+				},
+			});
+		} catch (err) {
+			console.error('Failed to get available sources for client:', err);
+		}
+	}
+	if (message.type === 'SWITCH_SOURCE') {
+		const newSourceId = message.payload.sourceId;
+		if (newSourceId) {
+			console.log(`[Host] Client requested switch source to: ${newSourceId}`);
+			await peerConnection.setDesktopCapturerSourceID(newSourceId);
+			if (peerConnection.sharingSessionID) {
+				await window.electron.ipcRenderer.invoke(
+					IpcEvents.ChangeDesktopCapturerSourceForSession,
+					{
+						sharingSessionId: peerConnection.sharingSessionID,
+						sourceId: newSourceId,
+					},
+				);
+			}
+			peerConnection.sendEncryptedMessage({
+				type: 'SOURCE_SWITCHED',
+				payload: {
+					sourceId: newSourceId,
+				},
+			});
+		}
 	}
 };

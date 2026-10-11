@@ -57,6 +57,7 @@ interface PlayerControlPanelProps {
 	isDarkMode?: boolean;
 	onToggleDarkMode?: () => void;
 	onResetVisualSettings?: () => void;
+	onOpenSourceSwitcher?: () => void;
 	// toaster: undefined | HTMLDivElement;
 }
 
@@ -76,6 +77,7 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 		isDarkMode,
 		onToggleDarkMode,
 		onResetVisualSettings,
+		onOpenSourceSwitcher,
 	} = props;
 
 	const isFullScreenAPIAvailable = screenfull.isEnabled;
@@ -246,6 +248,27 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 										</span>
 									</Button>
 								</Tooltip>
+								{onOpenSourceSwitcher && (
+									<Tooltip
+										content={t('Cambiar Pantalla o Ventana')}
+										position={Position.BOTTOM}
+									>
+										<Button
+											minimal
+											onClick={onOpenSourceSwitcher}
+											style={{
+												color: 'white',
+												outline: 'none',
+												boxShadow: 'none',
+												borderRadius: '0',
+												padding: '0 16px',
+											}}
+											className="settings-button-separator"
+										>
+											<Icon icon="desktop" color="white" />
+										</Button>
+									</Tooltip>
+								)}
 								<Popover
 									content={
 										<>

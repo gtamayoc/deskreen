@@ -212,19 +212,40 @@ const DeskreenStepper = ({
 		): Promise<void> => {
 			setPendingConnectionDevice(device);
 			const fingerprint = `${device.deviceIP || ''}_${device.deviceOS || ''}_${device.deviceBrowser || ''}`;
+			const isUsb =
+				device.transportType === 'usb' ||
+				device.deviceIP?.includes('127.0.0.1') ||
+				device.deviceIP?.includes('localhost') ||
+				device.deviceIP === '::1';
 			try {
 				const isTrusted = await window.electron.ipcRenderer.invoke(
 					IpcEvents.IsDeviceTrusted,
 					fingerprint,
 				);
-				if (isTrusted) {
+				if (isUsb || isTrusted) {
 					setIsUserAllowedConnection(true);
-					setActiveStep(1);
+					// Auto-select primary screen so streaming starts right away without touching PC
+					const defaultScreenId = await window.electron.ipcRenderer.invoke(
+						IpcEvents.RequestDesktopCapturerPortalSource,
+						{ mode: 'screen' },
+					);
+					if (defaultScreenId) {
+						await window.electron.ipcRenderer.invoke(
+							IpcEvents.SetDesktopCapturerSourceId,
+							defaultScreenId,
+						);
+					}
 					await window.electron.ipcRenderer.invoke(
 						IpcEvents.SetDeviceConnectedStatus,
 					);
+					await window.electron.ipcRenderer.invoke(
+						IpcEvents.StartSharingOnWaitingForConnectionSharingSession,
+					);
+					setActiveStep(3);
 					void showMessageFromNewToaster(
-						`${t('connected')}: ${device.deviceBrowser || 'Trusted Device'}`,
+						isUsb
+							? `Conexión USB directa activa: ${device.deviceBrowser || device.deviceOS || 'Android'}`
+							: `${t('connected')}: ${device.deviceBrowser || 'Trusted Device'}`,
 					);
 					return;
 				}

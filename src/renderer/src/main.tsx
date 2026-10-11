@@ -31,15 +31,22 @@ document.addEventListener('DOMContentLoaded', () => {
 	document.body.appendChild(windowTopBar);
 });
 
-i18nInitPromise.then(() => {
-	createRoot(document.getElementById('root')!).render(
-		<StrictMode>
-			<Suspense fallback="loading">
-				<Root />
-			</Suspense>
-		</StrictMode>,
-	);
-});
+i18nInitPromise
+	.catch((err) => {
+		console.warn('i18nInitPromise failed to initialize:', err);
+	})
+	.finally(() => {
+		const rootEl = document.getElementById('root');
+		if (rootEl) {
+			createRoot(rootEl).render(
+				<StrictMode>
+					<Suspense fallback="loading">
+						<Root />
+					</Suspense>
+				</StrictMode>,
+			);
+		}
+	});
 // });
 
 window.onbeforeunload = () => {

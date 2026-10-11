@@ -52,7 +52,7 @@ const useStyles = makeStyles(() =>
 
 const ScanQRStep: React.FC = () => {
 	const { t } = useTranslation();
-	const [clientViewerPort, setClientViewerPort] = useState('80'); // Default port, can be changed later
+	const [clientViewerPort, setClientViewerPort] = useState('3131');
 	const classes = useStyles();
 
 	const [isViewerSlotAvailable, setIsViewerSlotAvailable] = useState(true);
@@ -77,11 +77,13 @@ const ScanQRStep: React.FC = () => {
 			dev: { id: string; model?: string },
 		) => {
 			setUsbDevice(dev);
-			const port = Number(clientViewerPort) || 80;
-			void window.electron.ipcRenderer.invoke(IpcEvents.AdbSetupReverse, {
-				deviceId: dev.id,
-				port,
-			});
+			const port = Number(clientViewerPort);
+			if (port && port >= 1024) {
+				void window.electron.ipcRenderer.invoke(IpcEvents.AdbSetupReverse, {
+					deviceId: dev.id,
+					port,
+				});
+			}
 		};
 
 		const handleAdbDeviceDisconnected = () => {

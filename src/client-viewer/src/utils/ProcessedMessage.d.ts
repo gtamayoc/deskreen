@@ -39,10 +39,32 @@ type AppLanguageMessageWithPayload = {
 	};
 };
 
+type AvailableSourcesMessageWithPayload = {
+	type: 'AVAILABLE_SOURCES';
+	payload: {
+		sources?: Array<{
+			id: string;
+			name: string;
+			type: 'screen' | 'window';
+			appIcon?: string;
+		}>;
+		currentSourceId?: string;
+	};
+};
+
+type SourceSwitchedMessageWithPayload = {
+	type: 'SOURCE_SWITCHED';
+	payload: {
+		sourceId?: string;
+	};
+};
+
 type ProcessedMessage =
 	| CallUserMessageWithPayload
 	| DeviceDetailsMessageWithPayload
 	| DenyToConnectMessageWithPayload
 	| DisconnectByHostMachineUserMessageWithPayload
 	| AllowedToConnectMessageWithPayload
-	| AppLanguageMessageWithPayload;
+	| AppLanguageMessageWithPayload
+	| AvailableSourcesMessageWithPayload
+	| SourceSwitchedMessageWithPayload;

@@ -79,9 +79,19 @@ export const getShuffledArrayOfHello = (): string[] => {
 };
 
 async function initI18NextOptions(): Promise<void> {
-	const appLanguage = await window.electron.ipcRenderer.invoke(
-		IpcEvents.GetAppLanguage,
-	);
+	let appLanguage = 'en';
+	try {
+		if (window.electron?.ipcRenderer) {
+			const fetched = await window.electron.ipcRenderer.invoke(
+				IpcEvents.GetAppLanguage,
+			);
+			if (typeof fetched === 'string' && fetched) {
+				appLanguage = fetched;
+			}
+		}
+	} catch (err) {
+		console.warn('Failed to retrieve app language from IPC:', err);
+	}
 
 	i18n.use(initReactI18next);
 	const i18nextOptions = {

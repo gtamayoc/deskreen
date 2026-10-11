@@ -262,6 +262,20 @@ export default class PeerConnection {
 		peerConnectionReceiveEncryptedMessage(this, payload);
 	}
 
+	getAvailableSources(): void {
+		this.sendEncryptedMessage({
+			type: 'GET_AVAILABLE_SOURCES',
+			payload: {},
+		});
+	}
+
+	switchSource(sourceId: string): void {
+		this.sendEncryptedMessage({
+			type: 'SWITCH_SOURCE',
+			payload: { sourceId },
+		});
+	}
+
 	createUserAndInitSocket() {
 		const socket = this.socket;
 		if (!socket) {
