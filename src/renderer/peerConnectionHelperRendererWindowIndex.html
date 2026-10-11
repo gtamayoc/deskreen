@@ -11,11 +11,11 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src *;"/>
     <script>
       window.global = window;
-      var process = (window.process = globalThis.process = {
+      window.process = {
         env: { NODE_ENV: 'development', RUN_MODE: 'dev' },
         nextTick: function(fn) { setTimeout(fn, 0); },
         browser: true
-      });
+      };
     </script>
     <script src="/assets/simplepeer.min.js"></script>
   </head>

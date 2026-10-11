@@ -145,10 +145,8 @@ export default class Socket implements SocketOPTS {
 				if (userFound) return;
 			}
 
-			const hasExistingOwner = (room.users || []).some((user) => user.isOwner);
 			const isHelperSocket = this.socket.handshake.query?.isHelper === 'true';
-			const isOwnerSocket =
-				isHelperSocket || (!hasExistingOwner && isLocalhostSocket(this.socket));
+			const isOwnerSocket = isHelperSocket;
 			if (!isOwnerSocket) {
 				const connectedViewers = (room.users || []).filter((user) => {
 					return !user.isOwner;
