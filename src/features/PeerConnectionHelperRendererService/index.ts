@@ -52,6 +52,19 @@ export default class RendererWebrtcHelpersService {
 			);
 		}
 
+		helperRendererWindow.webContents.on('console-message', (_, __, message) => {
+			console.log(`[HelperWindow Console] ${message}`);
+		});
+
+		helperRendererWindow.webContents.on(
+			'did-fail-load',
+			(_, errorCode, errorDescription, validatedURL) => {
+				console.error(
+					`[HelperWindow Load Error] ${errorCode} ${errorDescription} on ${validatedURL}`,
+				);
+			},
+		);
+
 		helperRendererWindow.webContents.on('did-finish-load', () => {
 			if (!helperRendererWindow) {
 				throw new Error('"helperRendererWindow" is not defined');
