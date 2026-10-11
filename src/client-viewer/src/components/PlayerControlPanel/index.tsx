@@ -58,6 +58,7 @@ interface PlayerControlPanelProps {
 	onRotate?: () => void;
 	isDarkMode?: boolean;
 	onToggleDarkMode?: () => void;
+	onResetVisualSettings?: () => void;
 	// toaster: undefined | HTMLDivElement;
 }
 
@@ -78,6 +79,7 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 		onRotate,
 		isDarkMode,
 		onToggleDarkMode,
+		onResetVisualSettings,
 	} = props;
 
 	const isFullScreenAPIAvailable = screenfull.isEnabled;
@@ -335,6 +337,34 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 															onClick={onToggleDarkMode}
 														>
 															{isDarkMode ? 'Modo Oscuro (ON)' : 'Modo Oscuro'}
+														</Button>
+													</span>
+												</Tooltip>
+											</Row>
+											<Row
+												style={{
+													justifyContent: 'center',
+													marginBottom: '6px',
+												}}
+											>
+												<Tooltip
+													content={t('Restablecer orientación y espejo a valores predeterminados')}
+													position={Position.TOP}
+												>
+													<span
+														style={{
+															display: 'block',
+															width: '100%',
+															textAlign: 'center',
+														}}
+													>
+														<Button
+															icon="history"
+															minimal
+															style={videoQualityButtonStyle}
+															onClick={onResetVisualSettings}
+														>
+															{t('Restablecer vista')}
 														</Button>
 													</span>
 												</Tooltip>

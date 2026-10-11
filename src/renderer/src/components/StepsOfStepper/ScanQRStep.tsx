@@ -24,12 +24,13 @@ const useStyles = makeStyles(() =>
 		smallQRCode: {
 			height: '100%',
 			border: '1px solid',
-			borderColor: 'rgba(0,0,0,0.0)',
+			borderColor: '#d3dbe2',
 			padding: '10px',
 			borderRadius: '10px',
 			margin: '0 auto',
+			backgroundColor: '#ffffff !important',
 			'&:hover': {
-				backgroundColor: 'rgba(0,0,0,0.12)',
+				backgroundColor: '#f5f8fa !important',
 				border: '1px solid #8A9BA8',
 				cursor: 'zoom-in',
 			},
@@ -229,7 +230,7 @@ const ScanQRStep: React.FC = () => {
 											<QRCodeSVG
 												value={shareUrl}
 												level="H"
-												bgColor="rgba(0,0,0,0.0)"
+												bgColor="#ffffff"
 												fgColor="#000000"
 												imageSettings={{
 													// src: `http://127.0.0.1${portString}/logo192.png`,

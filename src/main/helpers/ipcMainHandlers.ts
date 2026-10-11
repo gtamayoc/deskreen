@@ -15,7 +15,7 @@ import RoomIDService from '../../server/RoomIDService';
 import { signalingServer } from '../../server';
 import { onDeviceConnectedCallback } from '../../server/onDeviceConnectedCallback';
 import SharingSessionStatusEnum from '../../features/SharingSessionService/SharingSessionStatusEnum';
-import getMyLocalIpV4 from './getMyLocalIpV4';
+import getMyLocalIpV4, { getAvailableNetworkInterfaces } from './getMyLocalIpV4';
 import isWifiConnected from './isWifiConnected';
 import { getDeskreenGlobal } from './getDeskreenGlobal';
 import { IpcEvents } from '../../common/IpcEvents.enum';
@@ -579,6 +579,69 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 			return false;
 		}
 	});
+
+	ipcMain.handle(
+		IpcEvents.ChangeDesktopCapturerSourceForSession,
+		(_, { sharingSessionId, sourceId }: { sharingSessionId: string; sourceId: string }) => {
+			const session =
+				getDeskreenGlobal().sharingSessionService.sharingSessions.get(sharingSessionId);
+			if (session) {
+				session.setDesktopCapturerSourceID(sourceId);
+				return true;
+			}
+			return false;
+		},
+	);
+
+	ipcMain.handle(IpcEvents.GetAvailableNetworkInterfaces, () => {
+		return getAvailableNetworkInterfaces();
+	});
+
+	ipcMain.handle(IpcEvents.GetSelectedNetworkInterface, () => {
+		return store.get('selected_network_interface_ip') || 'auto';
+	});
+
+	ipcMain.handle(IpcEvents.SetSelectedNetworkInterface, (_, ip: string) => {
+		store.set('selected_network_interface_ip', ip);
+		return true;
+	});
+
+	ipcMain.handle(IpcEvents.GetCustomServerPort, () => {
+		return store.get('custom_server_port') || '';
+	});
+
+	ipcMain.handle(IpcEvents.SetCustomServerPort, (_, port: string) => {
+		store.set('custom_server_port', port);
+		return true;
+	});
+
+	ipcMain.handle(IpcEvents.GetDeviceAliases, () => {
+		try {
+			const raw = store.get('device_aliases');
+			return raw ? (JSON.parse(raw) as Record<string, string>) : {};
+		} catch {
+			return {};
+		}
+	});
+
+	ipcMain.handle(
+		IpcEvents.SetDeviceAlias,
+		(_, { fingerprint, alias }: { fingerprint: string; alias: string }) => {
+			try {
+				const raw = store.get('device_aliases');
+				const map: Record<string, string> = raw ? (JSON.parse(raw) as Record<string, string>) : {};
+				if (alias && alias.trim()) {
+					map[fingerprint] = alias.trim();
+				} else {
+					delete map[fingerprint];
+				}
+				store.set('device_aliases', JSON.stringify(map));
+				return true;
+			} catch {
+				return false;
+			}
+		},
+	);
 
 	void createWaitingForConnectionSharingSession();
 };

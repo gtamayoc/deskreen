@@ -8,12 +8,14 @@ import {
 	Alert,
 	H4,
 	DrawerSize,
+	InputGroup,
 } from '@blueprintjs/core';
 import { Row, Col } from 'react-flexbox-grid';
 import { createStyles, makeStyles } from '@material-ui/core/styles';
 import CloseOverlayButton from './CloseOverlayButton';
 import DeviceInfoCallout from './DeviceInfoCallout';
 import SharingSourcePreviewCard from './SharingSourcePreviewCard';
+import ChangeSourceModal from './ChangeSourceModal';
 import { Device } from '../../../common/Device';
 import { IpcEvents } from '../../../common/IpcEvents.enum';
 import isProduction from '../../../common/isProduction';
@@ -57,6 +59,33 @@ export default function ConnectedDevicesListDrawer(
 	>([]);
 	const [devicesDisplayed, setDevicesDisplayed] = useState(new Map());
 	const [trustedList, setTrustedList] = useState<string[]>([]);
+	const [selectedDeviceForChangeSource, setSelectedDeviceForChangeSource] =
+		useState<DeviceWithDesktopCapturerSourceId | null>(null);
+	const [aliases, setAliases] = useState<Record<string, string>>({});
+
+	const refreshAliases = useCallback(async () => {
+		try {
+			const res = await window.electron.ipcRenderer.invoke(
+				IpcEvents.GetDeviceAliases,
+			);
+			if (res && typeof res === 'object') {
+				setAliases(res);
+			}
+		} catch (e) {
+			console.error(e);
+		}
+	}, []);
+
+	const handleSaveAlias = useCallback(
+		async (fingerprint: string, alias: string) => {
+			await window.electron.ipcRenderer.invoke(IpcEvents.SetDeviceAlias, {
+				fingerprint,
+				alias,
+			});
+			void refreshAliases();
+		},
+		[refreshAliases],
+	);
 
 	const refreshTrustedList = useCallback(async () => {
 		try {
@@ -74,8 +103,9 @@ export default function ConnectedDevicesListDrawer(
 	useEffect(() => {
 		if (props.isOpen) {
 			void refreshTrustedList();
+			void refreshAliases();
 		}
-	}, [props.isOpen, refreshTrustedList]);
+	}, [props.isOpen, refreshTrustedList, refreshAliases]);
 
 	const handleToggleTrust = useCallback(
 		async (device: Device) => {
@@ -253,16 +283,45 @@ export default function ConnectedDevicesListDrawer(
 					<Col xs={12}>
 						<div className={classes.zoomFullWidth}>
 							{connectedDevices.map((device) => {
+								const fingerprint = `${device.deviceIP || ''}_${device.deviceOS || ''}_${device.deviceBrowser || ''}`;
+								const alias = aliases[fingerprint] || '';
+								const isTrusted = trustedList.includes(fingerprint);
+
 								return (
-									<div key={device.id}>
+									<div key={device.id} style={{ marginBottom: '16px' }}>
 										<Card className="connected-device-card">
+											<Row between="xs" middle="xs" style={{ marginBottom: '12px' }}>
+												<Col xs={12} md={7}>
+													<InputGroup
+														leftIcon="tag"
+														placeholder="Asignar alias (ej. Mi iPad)"
+														defaultValue={alias}
+														onBlur={(e) => handleSaveAlias(fingerprint, e.currentTarget.value)}
+														onKeyDown={(e) => {
+															if (e.key === 'Enter') {
+																handleSaveAlias(fingerprint, e.currentTarget.value);
+															}
+														}}
+														round
+														small
+														style={{ maxWidth: '280px' }}
+													/>
+												</Col>
+												<Col xs={12} md={5}>
+													{alias !== '' && (
+														<Text className="bp3-text-muted" style={{ fontWeight: 600 }}>
+															{`Alias: ${alias}`}
+														</Text>
+													)}
+												</Col>
+											</Row>
 											<Row middle="xs">
 												<Col xs={6}>
 													<DeviceInfoCallout
 														deviceType={device.deviceType}
 														deviceOS={device.deviceOS}
 														deviceIP={device.deviceIP}
-														deviceBrowser={device.deviceBrowser}
+														deviceBrowser={alias || device.deviceBrowser}
 														deviceRoomId={device.deviceRoomId}
 													/>
 												</Col>
@@ -272,24 +331,26 @@ export default function ConnectedDevicesListDrawer(
 													/>
 												</Col>
 											</Row>
-											<Row center="xs" style={{ gap: '12px', marginTop: '12px' }}>
-												{(() => {
-													const fingerprint = `${device.deviceIP || ''}_${device.deviceOS || ''}_${device.deviceBrowser || ''}`;
-													const isTrusted = trustedList.includes(fingerprint);
-													return (
-														<Button
-															intent={isTrusted ? 'warning' : 'primary'}
-															minimal={!isTrusted}
-															onClick={() => handleToggleTrust(device)}
-															icon={isTrusted ? 'star' : 'star-empty'}
-															style={{ borderRadius: '100px' }}
-														>
-															{isTrusted
-																? 'Dispositivo Recordado'
-																: 'Recordar Dispositivo'}
-														</Button>
-													);
-												})()}
+											<Row center="xs" style={{ gap: '12px', marginTop: '14px' }}>
+												<Button
+													intent="primary"
+													icon="exchange"
+													onClick={() => setSelectedDeviceForChangeSource(device)}
+													style={{ borderRadius: '100px' }}
+												>
+													Cambiar Fuente
+												</Button>
+												<Button
+													intent={isTrusted ? 'warning' : 'primary'}
+													minimal={!isTrusted}
+													onClick={() => handleToggleTrust(device)}
+													icon={isTrusted ? 'star' : 'star-empty'}
+													style={{ borderRadius: '100px' }}
+												>
+													{isTrusted
+														? 'Dispositivo Recordado'
+														: 'Recordar Dispositivo'}
+												</Button>
 												<Button
 													id={`disconnect-device-${device.deviceIP}`}
 													intent="danger"
@@ -312,6 +373,19 @@ export default function ConnectedDevicesListDrawer(
 					</Col>
 				</Row>
 			</Drawer>
+			<ChangeSourceModal
+				isOpen={selectedDeviceForChangeSource !== null}
+				sharingSessionId={selectedDeviceForChangeSource?.sharingSessionID || ''}
+				deviceName={
+					selectedDeviceForChangeSource
+						? aliases[`${selectedDeviceForChangeSource.deviceIP || ''}_${selectedDeviceForChangeSource.deviceOS || ''}_${selectedDeviceForChangeSource.deviceBrowser || ''}`] ||
+							selectedDeviceForChangeSource.deviceBrowser
+						: ''
+				}
+				onClose={() => {
+					setSelectedDeviceForChangeSource(null);
+				}}
+			/>
 			<Alert
 				isOpen={isAlertDisconectAllOpen}
 				onClose={() => {

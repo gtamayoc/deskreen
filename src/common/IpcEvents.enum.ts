@@ -37,4 +37,12 @@ export enum IpcEvents {
 	AddTrustedDevice = 'add-trusted-device',
 	RemoveTrustedDevice = 'remove-trusted-device',
 	IsDeviceTrusted = 'is-device-trusted',
+	ChangeDesktopCapturerSourceForSession = 'change-desktop-capturer-source-for-session',
+	GetAvailableNetworkInterfaces = 'get-available-network-interfaces',
+	GetSelectedNetworkInterface = 'get-selected-network-interface',
+	SetSelectedNetworkInterface = 'set-selected-network-interface',
+	GetCustomServerPort = 'get-custom-server-port',
+	SetCustomServerPort = 'set-custom-server-port',
+	GetDeviceAliases = 'get-device-aliases',
+	SetDeviceAlias = 'set-device-alias',
 }

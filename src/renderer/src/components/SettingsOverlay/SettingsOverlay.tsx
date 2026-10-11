@@ -9,6 +9,8 @@ import {
 	Text,
 	TabsExpander,
 	Callout,
+	HTMLSelect,
+	InputGroup,
 } from '@blueprintjs/core';
 import { Col, Row } from 'react-flexbox-grid';
 import { createStyles, makeStyles } from '@material-ui/core/styles';
@@ -80,6 +82,62 @@ export default function SettingsOverlay(
 	const [currentVersion, setCurrentVersion] = useState('');
 
 	const { t } = useTranslation();
+
+	const [networkInterfaces, setNetworkInterfaces] = useState<
+		Array<{ name: string; address: string; isWifi: boolean }>
+	>([]);
+	const [selectedInterface, setSelectedInterface] = useState('auto');
+	const [customPortInput, setCustomPortInput] = useState('');
+
+	useEffect(() => {
+		if (isSettingsOpen) {
+			window.electron.ipcRenderer
+				.invoke(IpcEvents.GetAvailableNetworkInterfaces)
+				.then((interfaces) => {
+					if (Array.isArray(interfaces)) {
+						setNetworkInterfaces(interfaces);
+					}
+				})
+				.catch((err) => console.error(err));
+
+			window.electron.ipcRenderer
+				.invoke(IpcEvents.GetSelectedNetworkInterface)
+				.then((ip) => {
+					if (typeof ip === 'string') {
+						setSelectedInterface(ip);
+					}
+				})
+				.catch((err) => console.error(err));
+
+			window.electron.ipcRenderer
+				.invoke(IpcEvents.GetCustomServerPort)
+				.then((port) => {
+					if (typeof port === 'string') {
+						setCustomPortInput(port);
+					}
+				})
+				.catch((err) => console.error(err));
+		}
+	}, [isSettingsOpen]);
+
+	const handleInterfaceChange = useCallback(
+		async (event: React.ChangeEvent<HTMLSelectElement>) => {
+			const newIp = event.target.value;
+			setSelectedInterface(newIp);
+			await window.electron.ipcRenderer.invoke(
+				IpcEvents.SetSelectedNetworkInterface,
+				newIp,
+			);
+		},
+		[],
+	);
+
+	const handleSavePort = useCallback(async () => {
+		await window.electron.ipcRenderer.invoke(
+			IpcEvents.SetCustomServerPort,
+			customPortInput.trim(),
+		);
+	}, [customPortInput]);
 
 	const classes = useStyles() as SettingsOverlayClassMap;
 
@@ -179,6 +237,47 @@ export default function SettingsOverlay(
 						icon="translate"
 						label={t('language')}
 						input={<LanguageSelector />}
+					/>
+				</div>
+				<div style={{ marginTop: '24px' }}>
+					<SettingRowLabelAndInput
+						icon="globe"
+						label="Adaptador de Red (IP)"
+						input={
+							<HTMLSelect
+								value={selectedInterface}
+								onChange={handleInterfaceChange}
+								style={{ minWidth: '220px' }}
+							>
+								<option value="auto">Automático (Recomendado)</option>
+								{networkInterfaces.map((item) => (
+									<option key={item.address} value={item.address}>
+										{`${item.name} (${item.address})${item.isWifi ? ' [Wi-Fi]' : ''}`}
+									</option>
+								))}
+							</HTMLSelect>
+						}
+					/>
+				</div>
+				<div style={{ marginTop: '24px' }}>
+					<SettingRowLabelAndInput
+						icon="numerical"
+						label="Puerto del Servidor"
+						input={
+							<InputGroup
+								placeholder={clientViewerPort || '3131'}
+								value={customPortInput}
+								onChange={(e) => setCustomPortInput(e.target.value)}
+								onBlur={handleSavePort}
+								onKeyDown={(e) => {
+									if (e.key === 'Enter') {
+										void handleSavePort();
+									}
+								}}
+								small
+								style={{ width: '120px' }}
+							/>
+						}
 					/>
 				</div>
 

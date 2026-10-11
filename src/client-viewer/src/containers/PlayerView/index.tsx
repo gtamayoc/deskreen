@@ -43,11 +43,23 @@ function PlayerView(props: PlayerViewProps) {
 		streamUrl,
 	} = props;
 
-	const [isFlippedHorizontal, setIsFlippedHorizontal] = useState(false);
-	const [rotation, setRotation] = useState(0);
+	const [isFlippedHorizontal, setIsFlippedHorizontal] = useState(() => {
+		return localStorage.getItem('deskreen_flip_horizontal') === 'true';
+	});
+	const [rotation, setRotation] = useState(() => {
+		return Number(localStorage.getItem('deskreen_rotation')) || 0;
+	});
 	const [isDarkMode, setIsDarkMode] = useState(() => {
 		return localStorage.getItem('deskreen_dark_mode') === 'true';
 	});
+
+	useEffect(() => {
+		localStorage.setItem('deskreen_flip_horizontal', String(isFlippedHorizontal));
+	}, [isFlippedHorizontal]);
+
+	useEffect(() => {
+		localStorage.setItem('deskreen_rotation', String(rotation));
+	}, [rotation]);
 
 	useEffect(() => {
 		if (isDarkMode) {
@@ -68,6 +80,13 @@ function PlayerView(props: PlayerViewProps) {
 
 	const handleToggleDarkMode = useCallback(() => {
 		setIsDarkMode((prev) => !prev);
+	}, []);
+
+	const handleResetVisualSettings = useCallback(() => {
+		setIsFlippedHorizontal(false);
+		setRotation(0);
+		localStorage.setItem('deskreen_flip_horizontal', 'false');
+		localStorage.setItem('deskreen_rotation', '0');
 	}, []);
 
 	const playerTransform = [
@@ -263,6 +282,7 @@ function PlayerView(props: PlayerViewProps) {
 				onRotate={handleRotate}
 				isDarkMode={isDarkMode}
 				onToggleDarkMode={handleToggleDarkMode}
+				onResetVisualSettings={handleResetVisualSettings}
 			/>
 			<div
 				id="video-container"

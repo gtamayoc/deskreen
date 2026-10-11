@@ -44,6 +44,7 @@ const DeviceInfoCallout: React.FC<DeviceInfoCalloutProps> = (props) => {
 						</Text>
 						<Tooltip content={getContentOfTooltip(t)} position={Position.TOP}>
 							<div
+								className="device-ip-badge-wrapper"
 								style={{
 									fontWeight: 900,
 									backgroundColor: '#00f99273',

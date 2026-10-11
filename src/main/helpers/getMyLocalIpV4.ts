@@ -189,7 +189,50 @@ export function getActiveNetworkInterface(): { interfaceName: string; ipAddress:
   return wifiResult || localResult || virtualResult;
 }
 
+import { store } from "../../common/deskreen-electron-store";
+
+export interface AvailableNetworkInterface {
+  name: string;
+  address: string;
+  mac: string;
+  isWifi: boolean;
+  isVirtual: boolean;
+}
+
+export function getAvailableNetworkInterfaces(): AvailableNetworkInterface[] {
+  const networkInterfaces = os.networkInterfaces();
+  const result: AvailableNetworkInterface[] = [];
+  Object.entries(networkInterfaces).forEach(([name, networks]) => {
+    if (!networks) return;
+    networks.forEach((network) => {
+      if (!network.internal && network.family === "IPv4") {
+        result.push({
+          name,
+          address: network.address,
+          mac: network.mac,
+          isWifi: isWifiInterface(name),
+          isVirtual: isVirtualInterface(name, network.mac),
+        });
+      }
+    });
+  });
+  return result;
+}
+
 export default function getMyLocalIpV4(): string | undefined {
+  try {
+    const savedIp = store.get("selected_network_interface_ip");
+    if (savedIp && savedIp !== "auto") {
+      const interfaces = getAvailableNetworkInterfaces();
+      const found = interfaces.find((item) => item.address === savedIp);
+      if (found) {
+        return found.address;
+      }
+    }
+  } catch (e) {
+    console.warn("Error reading selected_network_interface_ip from store:", e);
+  }
+
   // Get network interfaces
   const networkInterfaces = os.networkInterfaces();
   let localIp: string | undefined;

@@ -88,3 +88,50 @@ code {
 .rounded-pill-button {
 	border-radius: 9999px;
 }
+
+body.bp3-dark {
+	background-color: #182026 !important;
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark .bp3-card {
+	background-color: #202b33 !important;
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark .bp3-popover .bp3-popover-content {
+	background-color: #202b33 !important;
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark .bp3-popover .bp3-popover-arrow-fill {
+	fill: #202b33 !important;
+}
+
+body.bp3-dark .bp3-button:not([class*="bp3-intent-"]) {
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark .bp3-dialog {
+	background-color: #202b33 !important;
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark .bp3-dialog-header {
+	background-color: #293742 !important;
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark .bp3-heading,
+body.bp3-dark h1,
+body.bp3-dark h2,
+body.bp3-dark h3,
+body.bp3-dark h4,
+body.bp3-dark h5,
+body.bp3-dark h6 {
+	color: #f5f8fa !important;
+}
+
+body.bp3-dark .bp3-divider {
+	border-color: rgba(255, 255, 255, 0.15) !important;
+}

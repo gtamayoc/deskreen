@@ -207,6 +207,15 @@ body.bp3-dark span:not(.bp3-icon):not([class*="badge"]):not(.device-ip-span) {
 	color: #f5f8fa;
 }
 
+body.bp3-dark .device-ip-badge-wrapper {
+	background-color: #0d3824 !important;
+}
+
+body.bp3-dark .device-ip-badge-wrapper .bp3-text-large,
+body.bp3-dark .device-ip-badge-wrapper .device-ip-span {
+	color: #00f992 !important;
+}
+
 body.bp3-dark .bp3-text-muted,
 body.bp3-dark .MuiStepLabel-label {
 	color: #8a9ba8 !important;

@@ -89,7 +89,7 @@
 				"useNamespaceKeyword": "error"
 			}
 		},
-		"includes": ["**", "!**/node_modules", "!**/dist", "!**/out"]
+		"includes": ["**", "!**/node_modules", "!**/dist", "!**/out", "!**/public/assets/**"]
 	},
 	"javascript": {
 		"formatter": { "quoteStyle": "single" },

@@ -111,6 +111,7 @@ import { initGlobals } from './helpers/initGlobals';
 import { ElectronStoreKeys } from '../common/ElectronStoreKeys.enum';
 import { getDeskreenGlobal } from './helpers/getDeskreenGlobal';
 import { startLogBufferCleanup } from './utils/LoggerWithFilePrefix';
+import { mdnsResponderService } from './services/mDNSResponderService';
 
 const resolvePreloadScriptPath = (entry: 'index' | 'helperRenderer'): string => {
 	const baseDir = join(__dirname, '../preload');
@@ -335,6 +336,7 @@ export default class DeskreenApp {
 		const cliLocalIp = this.parseCliLocalIp();
 		initGlobals(join(__dirname, '..'), cliLocalIp);
 		signalingServer.start();
+		mdnsResponderService.start();
 
 		this.initElectronAppObject();
 	}

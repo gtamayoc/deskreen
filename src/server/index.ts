@@ -23,6 +23,7 @@ import getStore from './store';
 import { getDeskreenGlobal } from '../main/helpers/getDeskreenGlobal';
 import getMyLocalIpV4 from '../main/helpers/getMyLocalIpV4';
 import { getClientViewerDistPath } from './getClientViewerDistPath';
+import { store } from '../common/deskreen-electron-store';
 
 const { hostname, primaryPort, backupPort } = config;
 
@@ -104,7 +105,12 @@ class DeskreenSignalingServer {
 	constructor() {
 		const localIp = getMyLocalIpV4();
 		this.hostname = localIp || String(hostname);
-		this.primaryPort = parseInt(primaryPort as unknown as string, 10);
+		const customPortStr = store.get('custom_server_port');
+		const customPort = customPortStr ? parseInt(customPortStr, 10) : Number.NaN;
+		this.primaryPort =
+			!Number.isNaN(customPort) && customPort >= 1024 && customPort <= 65535
+				? customPort
+				: parseInt(primaryPort as unknown as string, 10);
 		this.backupPort = parseInt(backupPort as unknown as string, 10);
 
 		this.port = this.primaryPort;
