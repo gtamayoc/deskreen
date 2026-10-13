@@ -59,7 +59,9 @@
 	overflow-y: auto;
 	overflow-x: hidden;
 	overscroll-behavior: contain;
-	transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), bottom 0.2s ease;
+	transition:
+		transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+		bottom 0.2s ease;
 }
 
 .console-action-pad-drawer.is-fullscreen {
@@ -246,4 +248,3 @@
 		font-size: 11px;
 	}
 }
-

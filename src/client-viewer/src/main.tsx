@@ -19,10 +19,14 @@ const prefersDark =
 	window.matchMedia('(prefers-color-scheme: dark)').matches;
 if (savedTheme === 'true' || (savedTheme !== 'false' && prefersDark)) {
 	document.documentElement.classList.add('bp3-dark');
+	document.documentElement.classList.add('bp6-dark');
 	document.body.classList.add('bp3-dark');
+	document.body.classList.add('bp6-dark');
 } else {
 	document.documentElement.classList.remove('bp3-dark');
+	document.documentElement.classList.remove('bp6-dark');
 	document.body.classList.remove('bp3-dark');
+	document.body.classList.remove('bp6-dark');
 }
 import './config/i18n';
 import App from './App.tsx';

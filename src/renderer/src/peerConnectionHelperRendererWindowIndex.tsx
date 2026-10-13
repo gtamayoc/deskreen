@@ -81,16 +81,13 @@ export function handleIpcRenderer(): void {
 		},
 	);
 
-	window.electron.ipcRenderer.on(
-		'set-desktop-capturer-source-id',
-		(_, id) => {
-			// guard: skip empty source IDs (race condition on first init)
-			if (!id) return;
-			if (peerConnection && peerConnection.desktopCapturerSourceID !== id) {
-				peerConnection.setDesktopCapturerSourceID(id);
-			}
-		},
-	);
+	window.electron.ipcRenderer.on('set-desktop-capturer-source-id', (_, id) => {
+		// guard: skip empty source IDs (race condition on first init)
+		if (!id) return;
+		if (peerConnection && peerConnection.desktopCapturerSourceID !== id) {
+			peerConnection.setDesktopCapturerSourceID(id);
+		}
+	});
 
 	window.electron.ipcRenderer.on('call-peer', () => {
 		if (peerConnection) {

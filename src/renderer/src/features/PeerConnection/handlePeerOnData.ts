@@ -1,18 +1,54 @@
 import DesktopCapturerSourceType from '../../../../common/DesktopCapturerSourceType';
+import { IpcEvents } from '../../../../common/IpcEvents.enum';
 import getDesktopSourceStreamBySourceID from './getDesktopSourceStreamBySourceID';
 import prepareDataMessageToSendScreenSourceType from './prepareDataMessageToSendScreenSourceType';
 import NullSimplePeer from './NullSimplePeer';
 import { replacePeerVideoTrack } from './replacePeerVideoTrack';
 
+interface PeerDataMessage {
+	type?: string;
+	payload?: {
+		value?: number;
+		[key: string]: unknown;
+	};
+}
+
 export default async function handlePeerOnData(
 	peerConnection: PeerConnection,
 	data: string,
 ): Promise<void> {
-	let dataJSON: { type?: string; payload?: { value?: number } };
+	let dataJSON: PeerDataMessage;
 	try {
-		dataJSON = JSON.parse(data);
+		dataJSON = JSON.parse(data) as PeerDataMessage;
 	} catch (err) {
 		console.warn('Failed to parse peer data message:', err);
+		return;
+	}
+
+	if (
+		dataJSON.type === 'deskreen-remote-input' ||
+		dataJSON.type === 'remote_pointer_input' ||
+		dataJSON.type === 'remote_input'
+	) {
+		const partnerDetails = peerConnection.partnerDeviceDetails;
+		const deviceFingerprint = partnerDetails
+			? `${partnerDetails.deviceIP}_${partnerDetails.deviceOS}_${partnerDetails.deviceBrowser}`
+			: undefined;
+
+		if (typeof window !== 'undefined' && window.electron?.ipcRenderer) {
+			try {
+				await window.electron.ipcRenderer.invoke(
+					IpcEvents.InjectRemoteConsoleInput,
+					{
+						sessionId: peerConnection.sharingSessionID,
+						deviceFingerprint,
+						payload: dataJSON.payload,
+					},
+				);
+			} catch (err) {
+				console.warn('[handlePeerOnData] Failed to inject remote input:', err);
+			}
+		}
 		return;
 	}
 
@@ -67,7 +103,7 @@ export default async function handlePeerOnData(
 			: DesktopCapturerSourceType.WINDOW;
 
 		try {
-			if (!peerConnection.sourceName && peerConnection.desktopCapturerSourceID) {
+			if (peerConnection.desktopCapturerSourceID) {
 				await peerConnection.setSourceMetadataByDesktopCapturerSourceID();
 			}
 			if (peerConnection.peer && peerConnection.peer !== NullSimplePeer) {

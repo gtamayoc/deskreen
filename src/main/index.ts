@@ -113,7 +113,9 @@ import { getDeskreenGlobal } from './helpers/getDeskreenGlobal';
 import { startLogBufferCleanup } from './utils/LoggerWithFilePrefix';
 import { mdnsResponderService } from './services/mDNSResponderService';
 
-const resolvePreloadScriptPath = (entry: 'index' | 'helperRenderer'): string => {
+const resolvePreloadScriptPath = (
+	entry: 'index' | 'helperRenderer',
+): string => {
 	const baseDir = join(__dirname, '../preload');
 	const candidates = [`${entry}.js`, `${entry}.mjs`, `${entry}.cjs`];
 	for (const fileName of candidates) {

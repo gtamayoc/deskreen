@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Dialog, Button, ButtonGroup, Spinner, H3, Text } from '@blueprintjs/core';
+import {
+	Dialog,
+	Button,
+	ButtonGroup,
+	Spinner,
+	H3,
+	Text,
+} from '@blueprintjs/core';
 import { Row, Col } from 'react-flexbox-grid';
 import { useTranslation } from 'react-i18next';
 import { IpcEvents } from '../../../common/IpcEvents.enum';
@@ -109,7 +116,9 @@ export const ChangeSourceModal: React.FC<ChangeSourceModalProps> = ({
 		>
 			<div style={headerStyle}>
 				<div>
-					<H3 style={{ margin: 0 }}>{t('choose-entire-screen-or-app-window-you-want-to-share')}</H3>
+					<H3 style={{ margin: 0 }}>
+						{t('choose-entire-screen-or-app-window-you-want-to-share')}
+					</H3>
 					<Text className="bp3-text-muted">
 						{deviceName ? `Para: ${deviceName}` : ''}
 					</Text>

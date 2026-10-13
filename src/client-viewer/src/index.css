@@ -96,6 +96,7 @@ code {
 	--light-btn-no-intent-color: #ebf1f5;
 	--link-color: #106ba3;
 	--border-subtle: rgba(16, 22, 26, 0.15);
+	color-scheme: light;
 }
 
 body {
@@ -103,16 +104,19 @@ body {
 	color: var(--text-color);
 }
 
+.bp6-card,
 .bp3-card {
 	background-color: var(--card-bg-color);
 	color: var(--text-color);
 }
 
+.bp6-dialog,
 .bp3-dialog {
 	background-color: var(--dialog-bg-color);
 	color: var(--text-color);
 }
 
+.bp6-callout,
 .bp3-callout {
 	background-color: var(--card-bg-color);
 	color: var(--text-color);
@@ -138,7 +142,10 @@ body {
 	display: inline-flex !important;
 	align-items: center !important;
 	justify-content: center !important;
-	transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease !important;
+	transition:
+		background-color 0.2s ease,
+		box-shadow 0.2s ease,
+		transform 0.1s ease !important;
 }
 
 .rounded-pill-button:hover {
@@ -168,74 +175,114 @@ body {
 	color: #ffffff !important;
 }
 
+:root.bp6-dark,
+:root.bp3-dark,
+html.bp6-dark,
+html.bp3-dark,
+.bp6-dark,
+.bp3-dark,
+body.bp6-dark,
 body.bp3-dark {
-	--light-bg-color: #182026;
-	--app-bg-color: var(--light-bg-color);
-	--card-bg-color: #202b33;
-	--dialog-bg-color: #202b33;
+	--light-bg-color: #11161b;
+	--app-bg-color: #11161b;
+	--card-bg-color: #1c242c;
+	--dialog-bg-color: #1c242c;
 	--text-color: #f5f8fa;
 	--text-muted-color: #8a9ba8;
 	--heading-color: #f5f8fa;
 	--light-btn-no-intent-color: #30404d;
 	--link-color: #48aff0;
 	--border-subtle: rgba(255, 255, 255, 0.15);
-	background-color: #182026 !important;
-	color: #f5f8fa !important;
+	color-scheme: dark;
 }
 
-body.bp3-dark .bp3-card {
+html.bp6-dark,
+html.bp3-dark,
+body.bp6-dark,
+body.bp3-dark {
+	background-color: #11161b !important;
+	color: #f5f8fa !important;
+	color-scheme: dark;
+}
+
+body.bp6-dark .bp6-card,
+body.bp3-dark .bp3-card,
+.bp6-dark .bp6-card,
+.bp3-dark .bp3-card {
+	background-color: #1c242c !important;
+	color: #f5f8fa !important;
+	border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+body.bp6-dark .bp6-callout,
+body.bp3-dark .bp3-callout,
+.bp6-dark .bp6-callout,
+.bp3-dark .bp3-callout {
 	background-color: #202b33 !important;
 	color: #f5f8fa !important;
 }
 
-body.bp3-dark .bp3-callout {
-	background-color: #25333d !important;
-	color: #f5f8fa !important;
-}
-
+body.bp6-dark .device-ip-badge-wrapper,
 body.bp3-dark .device-ip-badge-wrapper {
 	background-color: #0d3824 !important;
 	color: #00f992 !important;
 }
 
+body.bp6-dark .device-ip-badge-wrapper *,
 body.bp3-dark .device-ip-badge-wrapper * {
 	color: #00f992 !important;
 }
 
+body.bp6-dark .bp6-popover .bp6-popover-content,
 body.bp3-dark .bp3-popover .bp3-popover-content {
 	background-color: #202b33 !important;
 	color: #f5f8fa !important;
 }
 
+body.bp6-dark .bp6-popover .bp6-popover-arrow-fill,
 body.bp3-dark .bp3-popover .bp3-popover-arrow-fill {
 	fill: #202b33 !important;
 }
 
 /* Target standard buttons without intent, preserving minimal and disabled buttons */
-body.bp3-dark .bp3-button:not([class*="bp3-intent-"]):not(.bp3-minimal):not(.bp3-disabled) {
+body.bp6-dark
+.bp6-button:not([class*="bp6-intent-"]):not(.bp6-minimal):not(.bp6-disabled),
+body.bp3-dark
+	.bp3-button:not([class*="bp3-intent-"]):not(.bp3-minimal):not(.bp3-disabled) {
 	background-color: #30404d !important;
 	color: #f5f8fa !important;
 }
 
-body.bp3-dark .bp3-button:not([class*="bp3-intent-"]):not(.bp3-minimal):not(.bp3-disabled):hover {
+body.bp6-dark
+	.bp6-button:not([class*="bp6-intent-"]):not(.bp6-minimal):not(
+		.bp6-disabled
+	):hover,
+body.bp3-dark
+	.bp3-button:not([class*="bp3-intent-"]):not(.bp3-minimal):not(
+		.bp3-disabled
+	):hover {
 	background-color: #394b59 !important;
 }
 
 /* Minimal buttons in dark mode remain clean */
+body.bp6-dark .bp6-button.bp6-minimal,
 body.bp3-dark .bp3-button.bp3-minimal {
 	background: transparent !important;
 	color: #f5f8fa !important;
 }
 
+body.bp6-dark .bp6-button.bp6-minimal:hover,
 body.bp3-dark .bp3-button.bp3-minimal:hover {
 	background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
+body.bp6-dark .bp6-button.bp6-minimal.bp6-active,
 body.bp3-dark .bp3-button.bp3-minimal.bp3-active {
 	background-color: rgba(255, 255, 255, 0.2) !important;
 }
 
 /* Disabled buttons in dark mode */
+body.bp6-dark .bp6-button.bp6-disabled,
 body.bp3-dark .bp3-button.bp3-disabled {
 	opacity: 0.5 !important;
 	color: #8a9ba8 !important;
@@ -244,43 +291,75 @@ body.bp3-dark .bp3-button.bp3-disabled {
 }
 
 /* Dark mode warning button */
+body.bp6-dark .bp6-button.bp6-intent-warning,
 body.bp3-dark .bp3-button.bp3-intent-warning,
-body.bp3-dark .rounded-pill-button.bp3-intent-warning {
+body.bp6-dark .rounded-pill-button.bp6-intent-warning,
+body.bp3-dark .rounded-pill-button.bp3-intent-warning,
+body.bp6-dark .rounded-pill-button[class*="intent-warning"],
+body.bp3-dark .rounded-pill-button[class*="intent-warning"] {
 	background-color: #ec9a3c !important;
 	color: #10161a !important; /* High contrast amber with dark text: 6.8:1 */
 }
 
+body.bp6-dark .bp6-button.bp6-intent-warning:hover,
 body.bp3-dark .bp3-button.bp3-intent-warning:hover,
-body.bp3-dark .rounded-pill-button.bp3-intent-warning:hover {
+body.bp6-dark .rounded-pill-button.bp6-intent-warning:hover,
+body.bp3-dark .rounded-pill-button.bp3-intent-warning:hover,
+body.bp6-dark .rounded-pill-button[class*="intent-warning"]:hover,
+body.bp3-dark .rounded-pill-button[class*="intent-warning"]:hover {
 	background-color: #d9822b !important;
 	color: #10161a !important;
 }
 
-body.bp3-dark .bp3-dialog {
-	background-color: #202b33 !important;
+body.bp6-dark .bp6-dialog,
+body.bp3-dark .bp3-dialog,
+.bp6-dark .bp6-dialog,
+.bp3-dark .bp3-dialog,
+.bp6-dark.bp6-dialog,
+.bp3-dark.bp3-dialog {
+	background-color: #1c242c !important;
+	color: #f5f8fa !important;
+	border: 1px solid rgba(255, 255, 255, 0.12) !important;
+}
+
+body.bp6-dark .bp6-dialog-header,
+body.bp3-dark .bp3-dialog-header,
+.bp6-dark .bp6-dialog-header,
+.bp3-dark .bp3-dialog-header {
+	background-color: #242f38 !important;
 	color: #f5f8fa !important;
 }
 
-body.bp3-dark .bp3-dialog-header {
-	background-color: #293742 !important;
-	color: #f5f8fa !important;
-}
-
+body.bp6-dark .bp6-heading,
 body.bp3-dark .bp3-heading,
+.bp6-dark .bp6-heading,
+.bp3-dark .bp3-heading,
+body.bp6-dark h1,
 body.bp3-dark h1,
+body.bp6-dark h2,
 body.bp3-dark h2,
+body.bp6-dark h3,
 body.bp3-dark h3,
+body.bp6-dark h4,
 body.bp3-dark h4,
+body.bp6-dark h5,
 body.bp3-dark h5,
+body.bp6-dark h6,
 body.bp3-dark h6 {
 	color: #f5f8fa !important;
 }
 
-body.bp3-dark .bp3-divider {
+body.bp6-dark .bp6-divider,
+body.bp3-dark .bp3-divider,
+.bp6-dark .bp6-divider,
+.bp3-dark .bp3-divider {
 	border-color: rgba(255, 255, 255, 0.15) !important;
 }
 
-body.bp3-dark .bp3-text-muted {
+body.bp6-dark .bp6-text-muted,
+body.bp3-dark .bp3-text-muted,
+.bp6-dark .bp6-text-muted,
+.bp3-dark .bp3-text-muted {
 	color: #8a9ba8 !important;
 }
 
@@ -298,4 +377,3 @@ body.bp3-dark .bp3-text-muted {
 		outline: 2px solid Highlight !important;
 	}
 }
-

@@ -11,9 +11,9 @@ interface ScreenRecordingPermissionModalProps {
 const MACOS_SCREEN_RECORDING_SETTINGS_URL =
 	'x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture';
 
-const ScreenRecordingPermissionModal: React.FC<ScreenRecordingPermissionModalProps> = ({
-	isOpen,
-}) => {
+const ScreenRecordingPermissionModal: React.FC<
+	ScreenRecordingPermissionModalProps
+> = ({ isOpen }) => {
 	const { t } = useTranslation();
 
 	const handleOpenSettings = useCallback(() => {
@@ -34,7 +34,7 @@ const ScreenRecordingPermissionModal: React.FC<ScreenRecordingPermissionModalPro
 				/* non-dismissible modal */
 			}}
 			title={t('screen-recording-permission-required')}
-			icon='warning-sign'
+			icon="warning-sign"
 			isCloseButtonShown={false}
 			canEscapeKeyClose={false}
 			canOutsideClickClose={false}
@@ -43,7 +43,14 @@ const ScreenRecordingPermissionModal: React.FC<ScreenRecordingPermissionModalPro
 			usePortal={true}
 			style={{ zIndex: 10002, borderRadius: '8px' }}
 		>
-			<div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+			<div
+				style={{
+					padding: '20px',
+					display: 'flex',
+					flexDirection: 'column',
+					gap: '16px',
+				}}
+			>
 				<Text>{t('screen-recording-permission-message')}</Text>
 				<Callout intent={Intent.WARNING}>
 					{t('screen-recording-permission-restart-reminder')}

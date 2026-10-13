@@ -32,7 +32,7 @@
           var saved = localStorage.getItem('deskreen_dark_mode');
           var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
           if (saved === 'true' || (saved !== 'false' && prefersDark)) {
-            document.documentElement.classList.add('bp3-dark');
+            document.documentElement.classList.add('bp6-dark', 'bp3-dark');
           }
         } catch (_err) {
           // Storage access restricted or private mode
@@ -42,8 +42,8 @@
   </head>
   <body>
     <script>
-      if (document.documentElement.classList.contains('bp3-dark')) {
-        document.body.classList.add('bp3-dark');
+      if (document.documentElement.classList.contains('bp6-dark') || document.documentElement.classList.contains('bp3-dark')) {
+        document.body.classList.add('bp6-dark', 'bp3-dark');
       }
     </script>
     <noscript>You need to enable JavaScript to run this app.</noscript>

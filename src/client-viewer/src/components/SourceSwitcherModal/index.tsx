@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Dialog, Button, Classes, Icon, Spinner, Tag } from '@blueprintjs/core';
 import type PeerConnection from '../../features/PeerConnection';
+import { useTheme } from '../../providers/ThemeProvider';
 import './index.css';
 
 export interface SourceItem {
@@ -21,6 +22,7 @@ export const SourceSwitcherModal: React.FC<SourceSwitcherModalProps> = ({
 	onClose,
 	peer,
 }) => {
+	const { isDarkMode } = useTheme();
 	const [sources, setSources] = useState<SourceItem[]>([]);
 	const [currentSourceId, setCurrentSourceId] = useState<string>('');
 	const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -66,12 +68,21 @@ export const SourceSwitcherModal: React.FC<SourceSwitcherModalProps> = ({
 			onClose();
 		};
 
-		window.addEventListener('deskreen:available-sources', handleAvailableSources);
+		window.addEventListener(
+			'deskreen:available-sources',
+			handleAvailableSources,
+		);
 		window.addEventListener('deskreen:source-switched', handleSourceSwitched);
 
 		return () => {
-			window.removeEventListener('deskreen:available-sources', handleAvailableSources);
-			window.removeEventListener('deskreen:source-switched', handleSourceSwitched);
+			window.removeEventListener(
+				'deskreen:available-sources',
+				handleAvailableSources,
+			);
+			window.removeEventListener(
+				'deskreen:source-switched',
+				handleSourceSwitched,
+			);
 		};
 	}, [isOpen, fetchSources, onClose]);
 
@@ -89,13 +100,16 @@ export const SourceSwitcherModal: React.FC<SourceSwitcherModalProps> = ({
 	const screenSources = sources.filter((s) => s.type === 'screen');
 	const windowSources = sources.filter((s) => s.type === 'window');
 
+	const darkClass = isDarkMode ? `${Classes.DARK} bp3-dark` : '';
+
 	return (
 		<Dialog
 			isOpen={isOpen}
 			onClose={onClose}
 			title="Cambiar Vista / Pantalla"
 			icon="desktop"
-			className="source-switcher-dialog"
+			portalClassName={darkClass}
+			className={`source-switcher-dialog ${darkClass}`.trim()}
 		>
 			<div className={Classes.DIALOG_BODY}>
 				<div className="source-switcher-header">
@@ -212,14 +226,22 @@ export const SourceSwitcherModal: React.FC<SourceSwitcherModalProps> = ({
 							</div>
 						)}
 
-						{screenSources.length === 0 && windowSources.length === 0 && !isLoading && (
-							<div className="source-switcher-empty">
-								<span>No se encontraron pantallas o ventanas disponibles.</span>
-								<Button intent="primary" onClick={fetchSources} style={{ marginTop: '8px' }}>
-									Reintentar
-								</Button>
-							</div>
-						)}
+						{screenSources.length === 0 &&
+							windowSources.length === 0 &&
+							!isLoading && (
+								<div className="source-switcher-empty">
+									<span>
+										No se encontraron pantallas o ventanas disponibles.
+									</span>
+									<Button
+										intent="primary"
+										onClick={fetchSources}
+										style={{ marginTop: '8px' }}
+									>
+										Reintentar
+									</Button>
+								</div>
+							)}
 					</div>
 				)}
 			</div>

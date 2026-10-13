@@ -12,6 +12,8 @@ export interface AdbDeviceInfo {
 	type: string;
 	model?: string;
 	product?: string;
+	inGracePeriod?: boolean;
+	gracePeriodExpired?: boolean;
 }
 
 export interface DeviceSessionIdentity {

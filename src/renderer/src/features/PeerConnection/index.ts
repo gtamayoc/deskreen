@@ -55,6 +55,7 @@ export default class PeerConnection {
 	beforeunloadHandler: (() => void) | null = null;
 	isReconnecting = false;
 	reconnectToken = '';
+	reconnectDestroyTimeout: NodeJS.Timeout | null = null;
 	onReconnectingStateChanged: (isReconnecting: boolean) => void = () => {
 		// noop until listener registered
 	};
@@ -251,7 +252,6 @@ export default class PeerConnection {
 					};
 					if (
 						peer?.connected &&
-						peer?._channel?.readyState === 'open' &&
 						typeof peer?.send === 'function'
 					) {
 						peer.send(
@@ -368,7 +368,44 @@ export default class PeerConnection {
 	}
 
 	selfDestroy(): void {
+		this.cancelReconnectTimeout();
 		handleSelfDestroy(this);
+	}
+
+	handlePeerCloseOrExit(): void {
+		if (this.isSocketRoomLocked) {
+			this.toggleLockRoom(false);
+		}
+		this.isReconnecting = true;
+		this.onReconnectingStateChanged(true);
+		if (this.peer !== NullSimplePeer) {
+			try {
+				this.peer.removeAllListeners();
+				this.peer.destroy();
+			} catch (err) {
+				console.error('Error destroying peer on close/exit:', err);
+			}
+			this.peer = NullSimplePeer;
+		}
+		this.isCallStarted = false;
+		this.signalsDataToCallUser = [];
+
+		if (this.reconnectDestroyTimeout) {
+			clearTimeout(this.reconnectDestroyTimeout);
+		}
+		// Allow 60 seconds for the client to reload or reconnect before destroying session
+		this.reconnectDestroyTimeout = setTimeout(() => {
+			if (this.isReconnecting) {
+				this.selfDestroy();
+			}
+		}, 60000);
+	}
+
+	cancelReconnectTimeout(): void {
+		if (this.reconnectDestroyTimeout) {
+			clearTimeout(this.reconnectDestroyTimeout);
+			this.reconnectDestroyTimeout = null;
+		}
 	}
 
 	emitUserEnter(): void {

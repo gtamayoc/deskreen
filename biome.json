@@ -1,7 +1,9 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.3.6/schema.json",
 	"vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-	"files": { "includes": ["**", "!!**/dist", "!!**/out", "!!**/public/assets/**"] },
+	"files": {
+		"includes": ["**", "!!**/dist", "!!**/out", "!!**/public/assets/**"]
+	},
 	"formatter": { "enabled": true, "indentStyle": "tab" },
 	"linter": {
 		"enabled": true,
@@ -89,7 +91,13 @@
 				"useNamespaceKeyword": "error"
 			}
 		},
-		"includes": ["**", "!**/node_modules", "!**/dist", "!**/out", "!**/public/assets/**"]
+		"includes": [
+			"**",
+			"!**/node_modules",
+			"!**/dist",
+			"!**/out",
+			"!**/public/assets/**"
+		]
 	},
 	"javascript": {
 		"formatter": { "quoteStyle": "single" },

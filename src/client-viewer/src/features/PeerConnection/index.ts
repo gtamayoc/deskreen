@@ -9,6 +9,7 @@ import {
 	prepare as prepareMessage,
 	type ProcessedPayload,
 } from '../../utils/message';
+import config from '../../api/config';
 import setSdpMediaBitrate from './setSdpMediaBitrate';
 import VideoAutoQualityOptimizer from '../VideoAutoQualityOptimizer';
 import {
@@ -61,6 +62,13 @@ export default class PeerConnection {
 	videoAutoQualityOptimizer: VideoAutoQualityOptimizer;
 
 	isStreamStarted: boolean = false;
+	isReconnecting: boolean = false;
+	isUsingFallbackHost: boolean = false;
+	isDestroyed: boolean = false;
+	fallbackHost: string = '';
+	usbProbeTimer: NodeJS.Timeout | null = null;
+	probeAbortController: AbortController | null = null;
+	visibilityChangeHandler: (() => void) | null = null;
 
 	UIHandler: PeerConnectionUIHandler;
 
@@ -84,6 +92,23 @@ export default class PeerConnection {
 		this.videoAutoQualityOptimizer = videoAutoQualityOptimizer;
 		this.UIHandler = UIHandler;
 		this.roomId = roomId;
+
+		let initialFallback = '';
+		try {
+			const urlParams = new URLSearchParams(window.location.search);
+			initialFallback =
+				urlParams.get('fallbackHost') ||
+				urlParams.get('hostLanIp') ||
+				localStorage.getItem('deskreen_fallback_host') ||
+				'';
+			if (initialFallback) {
+				localStorage.setItem('deskreen_fallback_host', initialFallback);
+			}
+		} catch {
+			// ignore storage errors
+		}
+		this.fallbackHost = initialFallback;
+
 		this.socket = connectSocket(this.roomId);
 		this.uaParser = new UAParser();
 		this.createUserAndInitSocket();
@@ -94,6 +119,36 @@ export default class PeerConnection {
 		}
 
 		this.connectionCheckInterval = startSocketConnectedCheckingLoop(this);
+
+		this.visibilityChangeHandler = () => {
+			if (this.isDestroyed) return;
+			if (
+				typeof document !== 'undefined' &&
+				document.visibilityState === 'visible'
+			) {
+				// Mobile browser tab regained foreground visibility after background timer throttling
+				if (this.isUsingFallbackHost) {
+					void this.probeUsbOnce();
+				}
+				if (this.socket && !this.socket.connected && !this.isReconnecting) {
+					try {
+						this.socket.connect();
+					} catch {
+						// ignore
+					}
+				}
+			}
+		};
+
+		if (typeof document !== 'undefined') {
+			document.addEventListener(
+				'visibilitychange',
+				this.visibilityChangeHandler,
+			);
+		}
+		if (typeof window !== 'undefined') {
+			window.addEventListener('focus', this.visibilityChangeHandler);
+		}
 	}
 
 	setVideoQuality(videoQuality: VideoQualityType) {
@@ -136,6 +191,28 @@ export default class PeerConnection {
 	}
 
 	destroy() {
+		this.isDestroyed = true;
+
+		// remove visibility/focus listeners
+		if (this.visibilityChangeHandler) {
+			if (typeof document !== 'undefined') {
+				document.removeEventListener(
+					'visibilitychange',
+					this.visibilityChangeHandler,
+				);
+			}
+			if (typeof window !== 'undefined') {
+				window.removeEventListener('focus', this.visibilityChangeHandler);
+			}
+			this.visibilityChangeHandler = null;
+		}
+
+		// cancel any in-flight USB probe immediately
+		if (this.probeAbortController) {
+			this.probeAbortController.abort();
+			this.probeAbortController = null;
+		}
+
 		// remove window event listener
 		if (this.beforeunloadHandler) {
 			window.removeEventListener('beforeunload', this.beforeunloadHandler);
@@ -161,6 +238,10 @@ export default class PeerConnection {
 			clearTimeout(this.setMyDeviceDetailsTimeout);
 			this.setMyDeviceDetailsTimeout = null;
 		}
+		if (this.usbProbeTimer) {
+			clearInterval(this.usbProbeTimer);
+			this.usbProbeTimer = null;
+		}
 
 		// stop stream if started
 		if (this.isStreamStarted) {
@@ -182,10 +263,119 @@ export default class PeerConnection {
 		if (this.socket) {
 			this.socket.removeAllListeners();
 			this.socket.disconnect();
+			this.socket = null;
 		}
 	}
 
+	getFallbackHost(): string {
+		if (this.fallbackHost) return this.fallbackHost;
+		try {
+			return localStorage.getItem('deskreen_fallback_host') || '';
+		} catch {
+			return '';
+		}
+	}
+
+	switchToFallbackHost(host: string): void {
+		if (this.isDestroyed || this.isUsingFallbackHost || !host) return;
+		console.log(
+			`[PeerConnection] Switching to Wi-Fi fallback transport: ${host}`,
+		);
+		this.isUsingFallbackHost = true;
+		this.isReconnecting = true;
+		config.setHost(host);
+		this.reconnectSocket();
+		this.startUsbProbeLoop();
+	}
+
+	switchToUsbHost(): void {
+		if (this.isDestroyed || !this.isUsingFallbackHost) return;
+		console.log(
+			'[PeerConnection] USB connection re-established! Prioritizing USB transport over Wi-Fi.',
+		);
+		this.isUsingFallbackHost = false;
+		this.isReconnecting = true;
+		if (this.probeAbortController) {
+			this.probeAbortController.abort();
+			this.probeAbortController = null;
+		}
+		if (this.usbProbeTimer) {
+			clearInterval(this.usbProbeTimer);
+			this.usbProbeTimer = null;
+		}
+		config.setHost('localhost');
+		this.reconnectSocket();
+	}
+
+	startUsbProbeLoop(): void {
+		if (this.isDestroyed) return;
+		if (this.usbProbeTimer) {
+			clearInterval(this.usbProbeTimer);
+			this.usbProbeTimer = null;
+		}
+		// Probe immediately upon starting probe loop without waiting for the first 3s timer tick
+		void this.probeUsbOnce();
+
+		this.usbProbeTimer = setInterval(() => {
+			void this.probeUsbOnce();
+		}, 3000);
+	}
+
+	async probeUsbOnce(): Promise<void> {
+		if (this.isDestroyed || !this.isUsingFallbackHost) {
+			if (this.usbProbeTimer) {
+				clearInterval(this.usbProbeTimer);
+				this.usbProbeTimer = null;
+			}
+			return;
+		}
+
+		if (this.probeAbortController) {
+			this.probeAbortController.abort();
+			this.probeAbortController = null;
+		}
+
+		const controller = new AbortController();
+		this.probeAbortController = controller;
+		const port = config.port || 3131;
+
+		try {
+			const timeoutId = setTimeout(() => controller.abort(), 1500);
+			const resp = await fetch(`http://localhost:${port}/ping`, {
+				signal: controller.signal,
+				mode: 'cors',
+			});
+			clearTimeout(timeoutId);
+
+			if (this.isDestroyed || !this.isUsingFallbackHost) {
+				return;
+			}
+
+			if (resp.ok) {
+				this.switchToUsbHost();
+			}
+		} catch {
+			// USB not yet re-established or probe aborted
+		} finally {
+			if (this.probeAbortController === controller) {
+				this.probeAbortController = null;
+			}
+		}
+	}
+
+	reconnectSocket(): void {
+		if (this.isDestroyed) return;
+		if (this.socket) {
+			this.socket.removeAllListeners();
+			this.socket.disconnect();
+			this.socket = null;
+		}
+		this.socket = connectSocket(this.roomId);
+		this.createUserAndInitSocket();
+	}
+
 	createPeer() {
+		if (this.isDestroyed) return;
 		// cleanup existing peer before creating new one
 		if (this.peer) {
 			try {
@@ -200,6 +390,7 @@ export default class PeerConnection {
 		// In mock/test environments where WebRTC APIs are absent, SimplePeer cannot be instantiated
 		const peer = new SimplePeer({
 			initiator: false,
+			channelName: 'deskreen-remote-input',
 			config: { iceServers: [] },
 			sdpTransform: (sdp) => {
 				let newSDP = sdp;
@@ -214,9 +405,12 @@ export default class PeerConnection {
 
 		this.peer = peer;
 		this.peer.on('error', (e) => {
-			console.error('error in simple peer happened!');
-			console.error(e);
-			setAndShowErrorDialogMessage(this, ErrorMessage.WEBRTC_ERROR);
+			console.error('error in simple peer happened!', e);
+			if (!this.isReconnecting && !this.isStreamStarted) {
+				setAndShowErrorDialogMessage(this, ErrorMessage.WEBRTC_ERROR);
+			} else {
+				this.isReconnecting = true;
+			}
 		});
 		peerConnectionHandlePeer(this);
 	}
@@ -276,7 +470,54 @@ export default class PeerConnection {
 		});
 	}
 
+	sendRemoteInput(payload: {
+		action: 'pointer' | 'key' | 'text' | 'macro';
+		pointer?: {
+			type: 'tap' | 'click' | 'move' | 'down' | 'up' | 'dblclick' | 'contextmenu';
+			x: number;
+			y: number;
+			button?: 'left' | 'right' | 'middle';
+		};
+		key?: string;
+		text?: string;
+		macro?: string;
+		autoEnter?: boolean;
+		sessionId?: string;
+		targetTabName?: string;
+		targetWindowTitle?: string;
+		[key: string]: unknown;
+	}): void {
+		const dataJSON = JSON.stringify({
+			type: 'deskreen-remote-input',
+			payload,
+		});
+		if (this.peer && !this.peer.destroyed) {
+			try {
+				this.peer.send(dataJSON);
+				return;
+			} catch (err) {
+				console.warn(
+					'[PeerConnection] Failed to send remote input over RTCDataChannel:',
+					err,
+				);
+			}
+		}
+		// Fallback over socket signaling if data channel is not yet open
+		try {
+			this.sendEncryptedMessage({
+				type: 'REMOTE_CONSOLE_INPUT',
+				payload,
+			});
+		} catch (err) {
+			console.warn(
+				'[PeerConnection] Failed to send fallback remote input over socket:',
+				err,
+			);
+		}
+	}
+
 	createUserAndInitSocket() {
+		if (this.isDestroyed) return;
 		const socket = this.socket;
 		if (!socket) {
 			throw new PeerConnectionSocketNotDefined();
@@ -286,6 +527,11 @@ export default class PeerConnection {
 
 		this.user = this.createUser();
 		peerConnectionHandleSocket(this);
+
+		if (this.beforeunloadHandler) {
+			window.removeEventListener('beforeunload', this.beforeunloadHandler);
+			this.beforeunloadHandler = null;
+		}
 
 		this.beforeunloadHandler = () => {
 			socket.emit('USER_DISCONNECT');

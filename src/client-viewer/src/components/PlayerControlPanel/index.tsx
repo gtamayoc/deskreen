@@ -58,6 +58,8 @@ interface PlayerControlPanelProps {
 	onToggleDarkMode?: () => void;
 	onResetVisualSettings?: () => void;
 	onOpenSourceSwitcher?: () => void;
+	videoRotation?: number;
+	onToggleOrientation?: () => void;
 	// toaster: undefined | HTMLDivElement;
 }
 
@@ -78,6 +80,8 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 		onToggleDarkMode,
 		onResetVisualSettings,
 		onOpenSourceSwitcher,
+		videoRotation = 0,
+		onToggleOrientation,
 	} = props;
 
 	const isFullScreenAPIAvailable = screenfull.isEnabled;
@@ -179,7 +183,7 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 				onAccept={handlePrivacyAccept}
 				onOptOut={handlePrivacyOptOut}
 			/>
-			<Card elevation={4}>
+			<Card elevation={4} className="player-control-panel-card">
 				<Row between="xs" middle="xs">
 					<Col xs={12} md={7}>
 						<Row center="xs" start="md" style={{ height: '42px' }}>
@@ -190,14 +194,25 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 									height: '42px',
 								}}
 							>
-								<Tooltip content={isPlaying ? t('Click to Pause Video') : t('Click to Play Video')} position={Position.BOTTOM}>
+								<Tooltip
+									content={
+										isPlaying
+											? t('Click to Pause Video')
+											: t('Click to Play Video')
+									}
+									position={Position.BOTTOM}
+								>
 									<Button
 										minimal
 										onClick={handlePlayPauseClick}
 										style={{
 											color: 'white',
-											backgroundColor: !isPlaying ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
-											boxShadow: !isPlaying ? '0 0 20px rgba(19, 124, 189, 0.8), 0 0 40px rgba(19, 124, 189, 0.6)' : 'none',
+											backgroundColor: !isPlaying
+												? 'rgba(255, 255, 255, 0.2)'
+												: 'transparent',
+											boxShadow: !isPlaying
+												? '0 0 20px rgba(19, 124, 189, 0.8), 0 0 40px rgba(19, 124, 189, 0.6)'
+												: 'none',
 											transition: 'all 0.3s ease-in-out',
 											border: 'none',
 											outline: 'none',
@@ -208,11 +223,24 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 											minWidth: '120px',
 											maxWidth: '120px',
 										}}
-										className={!isPlaying ? 'play-pause-button play-pause-button-glow' : 'play-pause-button'}
+										className={
+											!isPlaying
+												? 'play-pause-button play-pause-button-glow'
+												: 'play-pause-button'
+										}
 									>
-										<span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+										<span
+											style={{
+												display: 'flex',
+												alignItems: 'center',
+												gap: '6px',
+											}}
+										>
 											<Icon icon={isPlaying ? 'pause' : 'play'} color="white" />
-											<Text className="bp3-text-large play-pause-text" style={{ color: 'white' }}>
+											<Text
+												className="bp3-text-large play-pause-text"
+												style={{ color: 'white' }}
+											>
 												{isPlaying ? t('Pause') : t('Play')}
 											</Text>
 										</span>
@@ -251,7 +279,9 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 												}}
 											>
 												<Tooltip
-													content={t('Modo Teleprompter (Voltear horizontalmente)')}
+													content={t(
+														'Modo Teleprompter (Voltear horizontalmente)',
+													)}
 													position={Position.TOP}
 												>
 													<span
@@ -268,7 +298,9 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 															style={videoQualityButtonStyle}
 															onClick={onToggleFlip}
 														>
-															{isFlippedHorizontal ? `${t('Flip')} (ON)` : t('Flip')}
+															{isFlippedHorizontal
+																? `${t('Flip')} (ON)`
+																: t('Flip')}
 														</Button>
 													</span>
 												</Tooltip>
@@ -303,6 +335,41 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 													</span>
 												</Tooltip>
 											</Row>
+											{onToggleOrientation && (
+												<Row
+													style={{
+														justifyContent: 'center',
+														marginBottom: '6px',
+													}}
+												>
+													<Tooltip
+														content={t('Girar Pantalla (Rotar orientación)')}
+														position={Position.TOP}
+													>
+														<span
+															style={{
+																display: 'block',
+																width: '100%',
+																textAlign: 'center',
+															}}
+														>
+															<Button
+																icon="mobile-phone"
+																minimal
+																active={Boolean(
+																	videoRotation && videoRotation > 0,
+																)}
+																style={videoQualityButtonStyle}
+																onClick={onToggleOrientation}
+															>
+																{videoRotation && videoRotation > 0
+																	? `${t('Girar Pantalla')} (${videoRotation}°)`
+																	: t('Girar Pantalla')}
+															</Button>
+														</span>
+													</Tooltip>
+												</Row>
+											)}
 											<Row
 												style={{
 													justifyContent: 'center',
@@ -310,7 +377,9 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 												}}
 											>
 												<Tooltip
-													content={t('Restablecer orientación y espejo a valores predeterminados')}
+													content={t(
+														'Restablecer orientación y espejo a valores predeterminados',
+													)}
 													position={Position.TOP}
 												>
 													<span
@@ -385,6 +454,42 @@ function PlayerControlPanel(props: PlayerControlPanelProps) {
 										</Button>
 									</Tooltip>
 								</Popover>
+								{onToggleOrientation && (
+									<Tooltip
+										content={t('Girar Pantalla (Rotar orientación)')}
+										position={Position.BOTTOM}
+									>
+										<Button
+											minimal
+											onClick={onToggleOrientation}
+											style={{
+												color: 'white',
+												outline: 'none',
+												boxShadow: 'none',
+												borderRadius: '0',
+												padding: '0 16px',
+											}}
+											className="settings-button-separator"
+											title={t('Girar Pantalla')}
+											aria-label={t('Girar Pantalla')}
+										>
+											<span
+												style={{
+													display: 'flex',
+													alignItems: 'center',
+													gap: '4px',
+												}}
+											>
+												<Icon icon="mobile-phone" color="white" />
+												{videoRotation && videoRotation > 0 ? (
+													<span className="rotation-degree-badge">
+														{videoRotation}°
+													</span>
+												) : null}
+											</span>
+										</Button>
+									</Tooltip>
+								)}
 								<Tooltip
 									content={t('Click to Enter Full Screen Mode')}
 									position={Position.BOTTOM}

@@ -1,3 +1,323 @@
 .error-dialog-backdrop {
-	backdrop-filter: blur(2px);
+	backdrop-filter: blur(4px);
+	-webkit-backdrop-filter: blur(4px);
+	background-color: rgba(16, 22, 26, 0.6) !important;
+	transition: background-color 0.25s ease;
+}
+
+body.bp6-dark .error-dialog-backdrop,
+body.bp3-dark .error-dialog-backdrop,
+.bp6-dark .error-dialog-backdrop,
+.bp3-dark .error-dialog-backdrop {
+	background-color: rgba(0, 0, 0, 0.78) !important;
+}
+
+.error-dialog {
+	width: 90% !important;
+	max-width: 580px !important;
+	margin: auto !important;
+	border-radius: 16px !important;
+	overflow: hidden !important;
+	box-shadow: 0 16px 40px rgba(16, 22, 26, 0.25) !important;
+	background: var(--dialog-bg-color, #ffffff) !important;
+	color: var(--text-color, #182026) !important;
+	border: 1px solid rgba(16, 22, 26, 0.1) !important;
+	transition:
+		background-color 0.25s ease,
+		color 0.25s ease,
+		border-color 0.25s ease;
+}
+
+.error-dialog.bp6-dark,
+.error-dialog.bp3-dark,
+.bp6-dark .error-dialog,
+.bp3-dark .error-dialog,
+body.bp6-dark .error-dialog,
+body.bp3-dark .error-dialog {
+	background: #1c242c !important;
+	color: #f5f8fa !important;
+	border: 1px solid rgba(255, 255, 255, 0.14) !important;
+	box-shadow: 0 24px 50px rgba(0, 0, 0, 0.75) !important;
+}
+
+.error-dialog-container {
+	padding: 20px 24px;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+/* Top bar with badge and theme toggle */
+.error-dialog-topbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.error-dialog-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	border-radius: 20px;
+	background-color: rgba(219, 55, 55, 0.12);
+	color: #db3737;
+	font-weight: 600;
+	font-size: 13px;
+}
+
+.error-dialog-badge-icon {
+	color: #db3737 !important;
+}
+
+.error-dialog.bp6-dark .error-dialog-badge,
+.error-dialog.bp3-dark .error-dialog-badge,
+.bp6-dark .error-dialog-badge,
+.bp3-dark .error-dialog-badge {
+	background-color: rgba(255, 115, 115, 0.18);
+	color: #ff8585;
+}
+
+.error-dialog.bp6-dark .error-dialog-badge-icon,
+.error-dialog.bp3-dark .error-dialog-badge-icon,
+.bp6-dark .error-dialog-badge-icon,
+.bp3-dark .error-dialog-badge-icon {
+	color: #ff8585 !important;
+}
+
+.error-dialog-theme-toggle {
+	border-radius: 50% !important;
+	padding: 8px !important;
+	min-width: 36px !important;
+	min-height: 36px !important;
+	color: inherit !important;
+}
+
+/* Hero section */
+.error-dialog-hero {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	padding: 8px 0;
+}
+
+.error-dialog-hero-icon-wrapper {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 56px;
+	height: 56px;
+	border-radius: 50%;
+	background-color: rgba(219, 55, 55, 0.1);
+	flex-shrink: 0;
+}
+
+.error-dialog-hero-icon {
+	color: #db3737 !important;
+}
+
+.error-dialog.bp6-dark .error-dialog-hero-icon-wrapper,
+.error-dialog.bp3-dark .error-dialog-hero-icon-wrapper,
+.bp6-dark .error-dialog-hero-icon-wrapper,
+.bp3-dark .error-dialog-hero-icon-wrapper {
+	background-color: rgba(255, 115, 115, 0.16);
+}
+
+.error-dialog.bp6-dark .error-dialog-hero-icon,
+.error-dialog.bp3-dark .error-dialog-hero-icon,
+.bp6-dark .error-dialog-hero-icon,
+.bp3-dark .error-dialog-hero-icon {
+	color: #ff8585 !important;
+}
+
+.error-dialog-hero-text {
+	flex: 1;
+	min-width: 0;
+}
+
+.error-dialog-title {
+	margin: 0 !important;
+	font-size: 22px !important;
+	line-height: 1.3 !important;
+	font-weight: 700 !important;
+	color: #db3737 !important;
+}
+
+.error-dialog.bp6-dark .error-dialog-title,
+.error-dialog.bp3-dark .error-dialog-title,
+.bp6-dark .error-dialog-title,
+.bp3-dark .error-dialog-title {
+	color: #ff8585 !important;
+}
+
+.error-dialog-divider {
+	margin: 4px 0 !important;
+	border-color: rgba(16, 22, 26, 0.1) !important;
+}
+
+.error-dialog.bp6-dark .error-dialog-divider,
+.error-dialog.bp3-dark .error-dialog-divider,
+.bp6-dark .error-dialog-divider,
+.bp3-dark .error-dialog-divider {
+	border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Body */
+.error-dialog-body {
+	margin: 0 !important;
+	padding: 8px 0 !important;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.error-dialog-message-card {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	padding: 12px 14px;
+	border-radius: 10px;
+	background: #fdf3f3;
+	border: 1px solid #f9d3d3;
+	color: #182026;
+	box-sizing: border-box;
+}
+
+.error-dialog.bp6-dark .error-dialog-message-card,
+.error-dialog.bp3-dark .error-dialog-message-card,
+.bp6-dark .error-dialog-message-card,
+.bp3-dark .error-dialog-message-card {
+	background: rgba(255, 115, 115, 0.08);
+	border: 1px solid rgba(255, 115, 115, 0.22);
+	color: #f5f8fa;
+}
+
+.error-dialog-message-icon {
+	color: #db3737 !important;
+	margin-top: 2px;
+	flex-shrink: 0;
+}
+
+.error-dialog.bp6-dark .error-dialog-message-icon,
+.error-dialog.bp3-dark .error-dialog-message-icon,
+.bp6-dark .error-dialog-message-icon,
+.bp3-dark .error-dialog-message-icon {
+	color: #ff8585 !important;
+}
+
+.error-dialog-message-content {
+	flex: 1;
+	font-size: 14px;
+	line-height: 1.4;
+}
+
+.error-dialog-message-label {
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	font-weight: 600;
+	color: #8f3939;
+	margin-bottom: 2px;
+}
+
+.error-dialog.bp6-dark .error-dialog-message-label,
+.error-dialog.bp3-dark .error-dialog-message-label,
+.bp6-dark .error-dialog-message-label,
+.bp3-dark .error-dialog-message-label {
+	color: #ffb3b3;
+}
+
+.error-dialog-message-text {
+	font-size: 15px;
+	font-weight: 600;
+}
+
+.error-dialog-advice {
+	margin: 0 !important;
+	font-size: 14px;
+	line-height: 1.5;
+	color: var(--text-muted-color, #5c7080);
+}
+
+.error-dialog.bp6-dark .error-dialog-advice,
+.error-dialog.bp3-dark .error-dialog-advice,
+.bp6-dark .error-dialog-advice,
+.bp3-dark .error-dialog-advice {
+	color: #abb3bf !important;
+}
+
+/* Actions footer */
+.error-dialog-actions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 10px;
+	padding-top: 4px;
+}
+
+.error-dialog-retry-btn {
+	padding: 8px 20px !important;
+	font-weight: 600 !important;
+}
+
+.error-dialog-dismiss-btn {
+	color: var(--text-muted-color, #5c7080) !important;
+}
+
+.error-dialog.bp6-dark .error-dialog-dismiss-btn,
+.error-dialog.bp3-dark .error-dialog-dismiss-btn,
+.bp6-dark .error-dialog-dismiss-btn,
+.bp3-dark .error-dialog-dismiss-btn {
+	color: #abb3bf !important;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 575px) {
+	.error-dialog {
+		width: 94% !important;
+		border-radius: 14px !important;
+	}
+
+	.error-dialog-container {
+		padding: 16px;
+		gap: 10px;
+	}
+
+	.error-dialog-hero {
+		flex-direction: column;
+		text-align: center;
+		gap: 10px;
+	}
+
+	.error-dialog-hero-icon-wrapper {
+		width: 48px;
+		height: 48px;
+	}
+
+	.error-dialog-title {
+		font-size: 19px !important;
+	}
+
+	.error-dialog-message-card {
+		padding: 10px 12px;
+	}
+
+	.error-dialog-advice {
+		text-align: center;
+		font-size: 13px;
+	}
+
+	.error-dialog-actions {
+		flex-direction: column-reverse;
+		width: 100%;
+		gap: 8px;
+	}
+
+	.error-dialog-retry-btn,
+	.error-dialog-dismiss-btn {
+		width: 100% !important;
+		justify-content: center !important;
+	}
 }

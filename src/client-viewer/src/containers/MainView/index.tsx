@@ -77,7 +77,24 @@ function MainView() {
 		}
 
 		if (extractedRoomId !== '') {
+			try {
+				localStorage.setItem('deskreen_last_room_id', extractedRoomId);
+			} catch {
+				// ignore localStorage errors
+			}
 			setConnectionRoomId(extractedRoomId);
+			return;
+		}
+
+		let savedRoomId = '';
+		try {
+			savedRoomId = localStorage.getItem('deskreen_last_room_id') || '';
+		} catch {
+			// ignore
+		}
+
+		if (savedRoomId !== '') {
+			setConnectionRoomId(savedRoomId);
 			return;
 		}
 

@@ -79,6 +79,38 @@ function VideoJSPlayer(props: VideoJSPlayerProps) {
 				el.srcObject = stream;
 				el.style.objectFit = 'contain';
 				el.style.backgroundColor = 'black';
+
+				const handleTrackChange = () => {
+					if (playing) {
+						const p = el.play();
+						if (p && typeof p.catch === 'function') {
+							p.catch(() => {
+								// ignore autoplay rejection on track change
+							});
+						}
+					}
+				};
+
+				const attachedTracks = new Set<MediaStreamTrack>();
+				const registerTrack = (track: MediaStreamTrack) => {
+					if (!attachedTracks.has(track)) {
+						attachedTracks.add(track);
+						track.addEventListener('unmute', handleTrackChange);
+					}
+				};
+
+				stream.getVideoTracks().forEach(registerTrack);
+
+				const handleAddTrack = (e: MediaStreamTrackEvent) => {
+					handleTrackChange();
+					if (e.track) {
+						registerTrack(e.track);
+					}
+				};
+
+				stream.addEventListener('addtrack', handleAddTrack);
+				stream.addEventListener('removetrack', handleTrackChange);
+
 				if (playing) {
 					// attempt play after attaching
 					const p = el.play();
@@ -88,6 +120,15 @@ function VideoJSPlayer(props: VideoJSPlayerProps) {
 						});
 					}
 				}
+
+				return () => {
+					attachedTracks.forEach((track) => {
+						track.removeEventListener('unmute', handleTrackChange);
+					});
+					attachedTracks.clear();
+					stream.removeEventListener('addtrack', handleAddTrack);
+					stream.removeEventListener('removetrack', handleTrackChange);
+				};
 			} else {
 				// @ts-ignore
 				el.srcObject = null;
@@ -108,6 +149,50 @@ function VideoJSPlayer(props: VideoJSPlayerProps) {
 		} else {
 			player.pause && player.pause();
 		}
+	}, [playing]);
+
+	useEffect(() => {
+		const handleVisibilityChange = () => {
+			if (
+				typeof document !== 'undefined' &&
+				document.visibilityState === 'visible' &&
+				playing
+			) {
+				const el = videoElRef.current;
+				if (el && el.paused) {
+					const p = el.play();
+					if (p && typeof p.catch === 'function') {
+						p.catch(() => {
+							// ignore autoplay error on visibility restore
+						});
+					}
+				}
+				if (playerRef.current && typeof playerRef.current.play === 'function') {
+					try {
+						const res = playerRef.current.play();
+						if (res && typeof (res as Promise<void>).catch === 'function') {
+							(res as Promise<void>).catch(() => {
+								// ignore autoplay rejection
+							});
+						}
+					} catch {
+						// ignore
+					}
+				}
+			}
+		};
+
+		if (typeof document !== 'undefined') {
+			document.addEventListener('visibilitychange', handleVisibilityChange);
+		}
+		return () => {
+			if (typeof document !== 'undefined') {
+				document.removeEventListener(
+					'visibilitychange',
+					handleVisibilityChange,
+				);
+			}
+		};
 	}, [playing]);
 
 	return null;

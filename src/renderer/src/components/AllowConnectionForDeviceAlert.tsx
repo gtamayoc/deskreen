@@ -45,7 +45,9 @@ const AllowConnectionForDeviceAlert: React.FC<
 				transportType={device?.transportType}
 				isReconnecting={device?.isReconnecting}
 			/>
-			<div style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
+			<div
+				style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}
+			>
 				<Checkbox
 					checked={trustThisDevice}
 					onChange={(e) => setTrustThisDevice(e.currentTarget.checked)}

@@ -1,6 +1,7 @@
 import NullSimplePeer from '../features/PeerConnection/NullSimplePeer';
 import { process as processMessage } from './message';
 import { IpcEvents } from '../../../common/IpcEvents.enum';
+import DesktopCapturerSourceType from '../../../common/DesktopCapturerSourceType';
 
 export type CallAcceptedMessageWithPayload = {
 	type: 'CALL_ACCEPTED';
@@ -60,11 +61,34 @@ export type DisconnectByHostMachineUserMessageWithPayload = {
 export type RemoteConsoleInputMessageWithPayload = {
 	type: 'REMOTE_CONSOLE_INPUT';
 	payload: {
-		action: 'key' | 'text' | 'macro';
+		action?: 'key' | 'text' | 'macro' | 'pointer';
 		key?: string;
 		text?: string;
 		macro?: string;
 		autoEnter?: boolean;
+		pointer?: {
+			type: 'tap' | 'click' | 'move' | 'down' | 'up' | 'dblclick' | 'contextmenu';
+			x: number;
+			y: number;
+			button?: 'left' | 'right' | 'middle';
+		};
+	};
+};
+
+export type RemotePointerInputMessageWithPayload = {
+	type: 'REMOTE_POINTER_INPUT' | 'deskreen-remote-input';
+	payload: {
+		action?: 'key' | 'text' | 'macro' | 'pointer';
+		key?: string;
+		text?: string;
+		macro?: string;
+		autoEnter?: boolean;
+		pointer?: {
+			type: 'tap' | 'click' | 'move' | 'down' | 'up' | 'dblclick' | 'contextmenu';
+			x: number;
+			y: number;
+			button?: 'left' | 'right' | 'middle';
+		};
 	};
 };
 
@@ -90,6 +114,7 @@ export type ProcessedMessage =
 	| AllowedToConnectMessageWithPayload
 	| DisconnectByHostMachineUserMessageWithPayload
 	| RemoteConsoleInputMessageWithPayload
+	| RemotePointerInputMessageWithPayload
 	| GetAvailableSourcesMessageWithPayload
 	| SwitchSourceMessageWithPayload;
 
@@ -134,9 +159,24 @@ export async function handleDeviceIPMessage(
 		isRecognizedReconnect = true;
 	}
 
+	if (!isRecognizedReconnect) {
+		const fingerprint = `${deviceIP}_${message.payload.os || ''}_${message.payload.browser || ''}`;
+		try {
+			const isTrusted = await window.electron.ipcRenderer.invoke(
+				IpcEvents.IsDeviceTrusted,
+				fingerprint,
+			);
+			if (isTrusted) {
+				isRecognizedReconnect = true;
+			}
+		} catch {
+			// ignore
+		}
+	}
+
 	const device = {
 		id:
-			isRecognizedReconnect && peerConnection.partnerDeviceDetails.id
+			isRecognizedReconnect && peerConnection.partnerDeviceDetails?.id
 				? peerConnection.partnerDeviceDetails.id
 				: Math.random().toString(),
 		deviceIP,
@@ -157,6 +197,7 @@ export async function handleDeviceIPMessage(
 		console.log(
 			'Recognized reconnecting device. Auto-approving connection without modal prompt.',
 		);
+		peerConnection.cancelReconnectTimeout();
 		peerConnection.isReconnecting = false;
 		peerConnection.onReconnectingStateChanged(false);
 		await peerConnection.sendUserAllowedToConnect();
@@ -187,9 +228,19 @@ export const handleRecieveEncryptedMessage = async (
 			};
 			if (peer && peer !== NullSimplePeer && !peer.destroyed) {
 				const signalingState = peer._pc?.signalingState;
-				const signalData = message.payload.signalData as { type?: string; candidate?: unknown };
-				const isAnswer = signalData && typeof signalData === 'object' && signalData.type === 'answer';
-				if (isAnswer && signalingState && signalingState !== 'have-local-offer') {
+				const signalData = message.payload.signalData as {
+					type?: string;
+					candidate?: unknown;
+				};
+				const isAnswer =
+					signalData &&
+					typeof signalData === 'object' &&
+					signalData.type === 'answer';
+				if (
+					isAnswer &&
+					signalingState &&
+					signalingState !== 'have-local-offer'
+				) {
 					console.warn(
 						`Skipping duplicate remote answer signal in unexpected signalingState: ${signalingState}`,
 					);
@@ -244,7 +295,11 @@ export const handleRecieveEncryptedMessage = async (
 			},
 		});
 	}
-	if (message.type === 'REMOTE_CONSOLE_INPUT') {
+	if (
+		message.type === 'REMOTE_CONSOLE_INPUT' ||
+		message.type === 'REMOTE_POINTER_INPUT' ||
+		message.type === 'deskreen-remote-input'
+	) {
 		const partnerDetails = peerConnection.partnerDeviceDetails;
 		const deviceFingerprint = partnerDetails
 			? `${partnerDetails.deviceIP}_${partnerDetails.deviceOS}_${partnerDetails.deviceBrowser}`
@@ -283,7 +338,10 @@ export const handleRecieveEncryptedMessage = async (
 		try {
 			const sourcesMap = (await window.electron.ipcRenderer.invoke(
 				IpcEvents.GetDesktopCapturerServiceSourcesMap,
-			)) as Record<string, { source?: { name?: string; thumbnail?: string; appIcon?: string } }>;
+			)) as Record<
+				string,
+				{ source?: { name?: string; thumbnail?: string; appIcon?: string } }
+			>;
 
 			const sourcesList = Object.entries(sourcesMap || {}).map(([id, item]) => {
 				const isScreen = id.includes('screen');
@@ -320,10 +378,16 @@ export const handleRecieveEncryptedMessage = async (
 					},
 				);
 			}
+			const isScreen = newSourceId.includes(DesktopCapturerSourceType.SCREEN);
 			peerConnection.sendEncryptedMessage({
 				type: 'SOURCE_SWITCHED',
 				payload: {
 					sourceId: newSourceId,
+					isConsole: peerConnection.isConsoleSource,
+					sourceName: peerConnection.sourceName,
+					sourceType: isScreen
+						? DesktopCapturerSourceType.SCREEN
+						: DesktopCapturerSourceType.WINDOW,
 				},
 			});
 		}

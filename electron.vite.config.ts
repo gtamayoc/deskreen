@@ -85,9 +85,7 @@ export default defineConfig({
 			'process.env.NODE_ENV': JSON.stringify(
 				process.env.NODE_ENV || 'development',
 			),
-			'process.env.RUN_MODE': JSON.stringify(
-				process.env.RUN_MODE || 'dev',
-			),
+			'process.env.RUN_MODE': JSON.stringify(process.env.RUN_MODE || 'dev'),
 			global: 'globalThis',
 		},
 		build: {

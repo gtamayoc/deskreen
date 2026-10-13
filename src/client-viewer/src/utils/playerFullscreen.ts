@@ -58,8 +58,17 @@ const requestStandardFullscreen = (element: HTMLElement | null): boolean => {
 		target.mozRequestFullScreen ||
 		target.msRequestFullscreen;
 	if (typeof request !== 'function') return false;
-	request.call(target);
-	return true;
+	try {
+		const res = request.call(target);
+		if (res && typeof (res as Promise<void>).catch === 'function') {
+			(res as Promise<void>).catch(() => {
+				// ignore fullscreen request rejection
+			});
+		}
+		return true;
+	} catch {
+		return false;
+	}
 };
 
 const exitStandardFullscreen = (): boolean => {
@@ -70,8 +79,17 @@ const exitStandardFullscreen = (): boolean => {
 		doc.mozCancelFullScreen ||
 		doc.msExitFullscreen;
 	if (typeof exit !== 'function') return false;
-	exit.call(doc);
-	return true;
+	try {
+		const res = exit.call(doc);
+		if (res && typeof (res as Promise<void>).catch === 'function') {
+			(res as Promise<void>).catch(() => {
+				// ignore fullscreen exit rejection
+			});
+		}
+		return true;
+	} catch {
+		return false;
+	}
 };
 
 export const isPlayerFullscreen = (): boolean => {
@@ -95,8 +113,17 @@ export const isPlayerFullscreen = (): boolean => {
 export const enterPlayerFullscreen = (): boolean => {
 	const container = getPlayerContainer();
 	if (container && screenfull.isEnabled) {
-		screenfull.request(container);
-		return true;
+		try {
+			const res = screenfull.request(container);
+			if (res && typeof (res as Promise<void>).catch === 'function') {
+				(res as Promise<void>).catch(() => {
+					// ignore fullscreen request rejection
+				});
+			}
+			return true;
+		} catch {
+			// fallback
+		}
 	}
 	if (requestStandardFullscreen(container)) return true;
 	const video = getPlayerVideo();

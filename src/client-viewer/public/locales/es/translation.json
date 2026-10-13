@@ -22,6 +22,8 @@
 	"Video stream is paused": "La transmisión de video está en pausa",
 	"Video stream is playing": "La transmisión de video está en reproducción",
 	"Video stream paused after exiting fullscreen. Please click Play to continue.": "La transmisión de video se pausó después de salir de pantalla completa. Por favor, haz clic en Reproducir para continuar.",
+	"Resume Fullscreen": "Reanudar Pantalla Completa",
+	"Dismiss": "Cerrar",
 	"Pause": "Pausa",
 	"Play": "Reproducir",
 	"Video Settings": "Configuraciones de video",

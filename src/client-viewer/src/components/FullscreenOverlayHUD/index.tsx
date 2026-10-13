@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button, Icon, Intent } from '@blueprintjs/core';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './index.css';
 
 interface FullscreenOverlayHUDProps {
@@ -18,6 +18,7 @@ interface FullscreenOverlayHUDProps {
 }
 
 const STORAGE_KEY_POS = 'deskreen_fullscreen_hud_pos';
+export const AUTO_COLLAPSE_TIMEOUT_MS = 10000;
 
 interface Position {
 	x: number;
@@ -54,40 +55,64 @@ export const FullscreenOverlayHUD: React.FC<FullscreenOverlayHUDProps> = ({
 	});
 
 	const [isDimmed, setIsDimmed] = useState(false);
+	const [isCollapsed, setIsCollapsed] = useState(false);
 	const [isDragging, setIsDragging] = useState(false);
-	const dragStartRef = useRef<{ startX: number; startY: number; initX: number; initY: number } | null>(null);
+	const dragStartRef = useRef<{
+		startX: number;
+		startY: number;
+		initX: number;
+		initY: number;
+	} | null>(null);
 	const hudRef = useRef<HTMLDivElement>(null);
 	const dimTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-	const resetDimTimer = useCallback(() => {
+	const resetInactivityTimer = useCallback(() => {
+		// Zero perceptible latency: synchronous restoration
+		setIsCollapsed(false);
 		setIsDimmed(false);
+
 		if (dimTimerRef.current) {
 			clearTimeout(dimTimerRef.current);
+			dimTimerRef.current = null;
 		}
-		if (!isAIPadOpen) {
+
+		// Inactivity auto-collapse is suspended while interacting with AI Pad drawer or while dragging
+		if (!isAIPadOpen && !isDragging) {
 			dimTimerRef.current = setTimeout(() => {
+				setIsCollapsed(true);
 				setIsDimmed(true);
-			}, 3000);
+			}, AUTO_COLLAPSE_TIMEOUT_MS);
 		}
-	}, [isAIPadOpen]);
+	}, [isAIPadOpen, isDragging]);
 
 	useEffect(() => {
-		resetDimTimer();
-		const handleActivity = () => resetDimTimer();
+		resetInactivityTimer();
+		const handleActivity = () => resetInactivityTimer();
 
-		window.addEventListener('mousemove', handleActivity, { passive: true });
-		window.addEventListener('touchstart', handleActivity, { passive: true });
-		window.addEventListener('pointermove', handleActivity, { passive: true });
+		const events = [
+			'pointerdown',
+			'pointermove',
+			'touchstart',
+			'mousemove',
+			'click',
+			'keydown',
+		];
+		events.forEach((evt) => {
+			window.addEventListener(evt, handleActivity, {
+				passive: true,
+				capture: true,
+			});
+		});
 
 		return () => {
 			if (dimTimerRef.current) {
 				clearTimeout(dimTimerRef.current);
 			}
-			window.removeEventListener('mousemove', handleActivity);
-			window.removeEventListener('touchstart', handleActivity);
-			window.removeEventListener('pointermove', handleActivity);
+			events.forEach((evt) => {
+				window.removeEventListener(evt, handleActivity, { capture: true });
+			});
 		};
-	}, [resetDimTimer]);
+	}, [resetInactivityTimer]);
 
 	useEffect(() => {
 		const clampPositionToViewport = () => {
@@ -99,7 +124,10 @@ export const FullscreenOverlayHUD: React.FC<FullscreenOverlayHUDProps> = ({
 			const hudWidth = hudEl?.offsetWidth || 220;
 			const hudHeight = hudEl?.offsetHeight || 48;
 
-			const maxX = Math.max(0, parentWidth - hudWidth);
+			// Anticipate expanded HUD width (minimum 360px) when uncollapsed to avoid edge clipping during CSS transition
+			const effectiveWidth = !isCollapsed ? Math.max(hudWidth, 360) : hudWidth;
+
+			const maxX = Math.max(0, parentWidth - effectiveWidth);
 			const maxY = Math.max(0, parentHeight - hudHeight);
 			const boundMaxX = Math.max(8, maxX - 8);
 			const boundMaxY = Math.max(8, maxY - 8);
@@ -125,7 +153,7 @@ export const FullscreenOverlayHUD: React.FC<FullscreenOverlayHUDProps> = ({
 		return () => {
 			window.removeEventListener('resize', clampPositionToViewport);
 		};
-	}, [position]);
+	}, [position, isCollapsed]);
 
 	// Dragging logic for repositioning HUD
 	const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -144,6 +172,7 @@ export const FullscreenOverlayHUD: React.FC<FullscreenOverlayHUDProps> = ({
 		};
 		setIsDragging(true);
 		setIsDimmed(false);
+		setIsCollapsed(false);
 		hudEl.setPointerCapture(e.pointerId);
 	};
 
@@ -165,8 +194,14 @@ export const FullscreenOverlayHUD: React.FC<FullscreenOverlayHUDProps> = ({
 		const boundMaxX = Math.max(8, maxX - 8);
 		const boundMaxY = Math.max(8, maxY - 8);
 
-		const nextX = Math.min(Math.max(8, dragStartRef.current.initX + deltaX), boundMaxX);
-		const nextY = Math.min(Math.max(8, dragStartRef.current.initY + deltaY), boundMaxY);
+		const nextX = Math.min(
+			Math.max(8, dragStartRef.current.initX + deltaX),
+			boundMaxX,
+		);
+		const nextY = Math.min(
+			Math.max(8, dragStartRef.current.initY + deltaY),
+			boundMaxY,
+		);
 
 		const newPos = { x: nextX, y: nextY };
 		setPosition(newPos);
@@ -190,7 +225,7 @@ export const FullscreenOverlayHUD: React.FC<FullscreenOverlayHUDProps> = ({
 				}
 			}
 			dragStartRef.current = null;
-			resetDimTimer();
+			resetInactivityTimer();
 		}
 	};
 
@@ -200,128 +235,154 @@ export const FullscreenOverlayHUD: React.FC<FullscreenOverlayHUDProps> = ({
 				top: `${position.y}px`,
 				right: 'auto',
 				bottom: 'auto',
-		  }
+			}
 		: {};
 
 	return (
 		<div
 			ref={hudRef}
-			className={`fullscreen-overlay-hud ${isDimmed && !isAIPadOpen && !isDragging ? 'hud-dimmed' : ''}`}
+			className={`fullscreen-overlay-hud ${isCollapsed && !isAIPadOpen && !isDragging ? 'is-collapsed' : ''} ${isDimmed && !isAIPadOpen && !isDragging ? 'hud-dimmed' : ''}`}
 			style={style}
 			onPointerDown={handlePointerDown}
 			onPointerMove={handlePointerMove}
 			onPointerUp={handlePointerUp}
 			onPointerCancel={handlePointerUp}
-			title="Arrastra para mover o usa los controles"
+			title={
+				isCollapsed
+					? 'Tocar para mostrar controles'
+					: 'Arrastra para mover o usa los controles'
+			}
 		>
-			<div className="fullscreen-hud-drag-handle" title="Arrastrar posición">
+			<div
+				className="fullscreen-hud-drag-handle"
+				title={
+					isCollapsed
+						? 'Tocar para desplegar controles / Arrastrar'
+						: 'Arrastrar posición'
+				}
+				onClick={(e) => {
+					if (isCollapsed) {
+						e.stopPropagation();
+						setIsCollapsed(false);
+						resetInactivityTimer();
+					}
+				}}
+			>
 				<Icon icon="drag-handle-vertical" />
 			</div>
 
-			{/* Exit Fullscreen / Back Button */}
-			<Button
-				minimal
-				className="fullscreen-hud-btn fullscreen-hud-btn-exit"
-				icon={<Icon icon="minimize" />}
-				onClick={(e) => {
-					e.stopPropagation();
-					onExitFullscreen();
-				}}
-				title="Salir de pantalla completa"
-			/>
-
-			{/* Source Switcher Button (Screens & Windows) */}
-			{onOpenSourceSwitcher && (
+			<div
+				className={`fullscreen-hud-actions ${isCollapsed ? 'is-actions-collapsed' : ''}`}
+			>
+				{/* Exit Fullscreen / Back Button */}
 				<Button
 					minimal
-					className="fullscreen-hud-btn fullscreen-hud-btn-source"
-					icon={<Icon icon="desktop" />}
+					className="fullscreen-hud-btn fullscreen-hud-btn-exit"
+					icon={<Icon icon="minimize" />}
 					onClick={(e) => {
 						e.stopPropagation();
-						onOpenSourceSwitcher();
+						onExitFullscreen();
 					}}
-					title="Cambiar pantalla o ventana transmitida"
+					title="Salir de pantalla completa"
 				/>
-			)}
 
-			{/* Native Screen Orientation Toggle (Landscape / Portrait) */}
-			{onToggleOrientation && (
-				<Button
-					minimal
-					className="fullscreen-hud-btn fullscreen-hud-btn-rotate"
-					icon={<Icon icon="mobile-phone" />}
-					onClick={(e) => {
-						e.stopPropagation();
-						onToggleOrientation();
-					}}
-					title="Rotar orientación de pantalla (Horizontal/Vertical)"
-				/>
-			)}
+				{/* Source Switcher Button (Screens & Windows) */}
+				{onOpenSourceSwitcher && (
+					<Button
+						minimal
+						className="fullscreen-hud-btn fullscreen-hud-btn-source"
+						icon={<Icon icon="desktop" />}
+						onClick={(e) => {
+							e.stopPropagation();
+							onOpenSourceSwitcher();
+						}}
+						title="Cambiar pantalla o ventana transmitida"
+					/>
+				)}
 
-			{/* Screen Dimmer / Brightness Cycle (100% -> 75% -> 50% -> 30%) */}
-			{onCycleBrightness && (
-				<Button
-					minimal
-					className={`fullscreen-hud-btn fullscreen-hud-btn-brightness ${brightness < 1.0 ? 'is-dimmed-active' : ''}`}
-					icon={<Icon icon={brightness <= 0.5 ? 'moon' : 'flash'} />}
-					onClick={(e) => {
-						e.stopPropagation();
-						onCycleBrightness();
-					}}
-					title={`Iluminación/Brillo: ${Math.round(brightness * 100)}% (Tocar para cambiar)`}
-				>
-					<span className="fullscreen-hud-brightness-badge">
-						{Math.round(brightness * 100)}%
-					</span>
-				</Button>
-			)}
+				{/* Native Screen Orientation Toggle (Landscape / Portrait) */}
+				{onToggleOrientation && (
+					<Button
+						minimal
+						className="fullscreen-hud-btn fullscreen-hud-btn-rotate"
+						icon={<Icon icon="mobile-phone" />}
+						onClick={(e) => {
+							e.stopPropagation();
+							onToggleOrientation();
+						}}
+						title="Rotar orientación de pantalla (Horizontal/Vertical)"
+					/>
+				)}
 
-			{/* Contrast Theme Toggle */}
-			{onToggleDarkMode && (
-				<Button
-					minimal
-					className={`fullscreen-hud-btn fullscreen-hud-btn-theme ${isDarkMode ? 'is-dark-active' : ''}`}
-					icon={<Icon icon="contrast" />}
-					onClick={(e) => {
-						e.stopPropagation();
-						onToggleDarkMode();
-					}}
-					title={isDarkMode ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
-					aria-label={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-				/>
-			)}
+				{/* Screen Dimmer / Brightness Cycle (100% -> 75% -> 50% -> 30%) */}
+				{onCycleBrightness && (
+					<Button
+						minimal
+						className={`fullscreen-hud-btn fullscreen-hud-btn-brightness ${brightness < 1.0 ? 'is-dimmed-active' : ''}`}
+						icon={<Icon icon={brightness <= 0.5 ? 'moon' : 'flash'} />}
+						onClick={(e) => {
+							e.stopPropagation();
+							onCycleBrightness();
+						}}
+						title={`Iluminación/Brillo: ${Math.round(brightness * 100)}% (Tocar para cambiar)`}
+					>
+						<span className="fullscreen-hud-brightness-badge">
+							{Math.round(brightness * 100)}%
+						</span>
+					</Button>
+				)}
 
-			{/* Native Video Play / Pause */}
-			{onTogglePlayPause && (
-				<Button
-					minimal
-					className={`fullscreen-hud-btn fullscreen-hud-btn-playpause ${!isPlaying ? 'is-paused' : ''}`}
-					icon={<Icon icon={isPlaying ? 'pause' : 'play'} />}
-					onClick={(e) => {
-						e.stopPropagation();
-						onTogglePlayPause();
-					}}
-					title={isPlaying ? 'Pausar video' : 'Reanudar video'}
-				/>
-			)}
+				{/* Contrast Theme Toggle */}
+				{onToggleDarkMode && (
+					<Button
+						minimal
+						className={`fullscreen-hud-btn fullscreen-hud-btn-theme ${isDarkMode ? 'is-dark-active' : ''}`}
+						icon={<Icon icon="contrast" />}
+						onClick={(e) => {
+							e.stopPropagation();
+							onToggleDarkMode();
+						}}
+						title={
+							isDarkMode ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'
+						}
+						aria-label={
+							isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'
+						}
+					/>
+				)}
 
-			{/* AI Console Companion Trigger Button */}
-			{showAIPad && (
-				<Button
-					minimal={!isAIPadOpen}
-					intent={isAIPadOpen ? Intent.PRIMARY : Intent.NONE}
-					className={`fullscreen-hud-btn fullscreen-hud-btn-ai ${isAIPadOpen ? 'is-active' : ''}`}
-					icon={<Icon icon="console" />}
-					onClick={(e) => {
-						e.stopPropagation();
-						onToggleAIPad();
-					}}
-					title={isAIPadOpen ? 'Ocultar consola IA' : 'Abrir consola IA'}
-				>
-					<span className="fullscreen-hud-ai-label">IA</span>
-					{isAIPadOpen && <span className="fullscreen-hud-active-dot" />}
-				</Button>
-			)}
+				{/* Native Video Play / Pause */}
+				{onTogglePlayPause && (
+					<Button
+						minimal
+						className={`fullscreen-hud-btn fullscreen-hud-btn-playpause ${!isPlaying ? 'is-paused' : ''}`}
+						icon={<Icon icon={isPlaying ? 'pause' : 'play'} />}
+						onClick={(e) => {
+							e.stopPropagation();
+							onTogglePlayPause();
+						}}
+						title={isPlaying ? 'Pausar video' : 'Reanudar video'}
+					/>
+				)}
+
+				{/* AI Console Companion Trigger Button */}
+				{showAIPad && (
+					<Button
+						minimal={!isAIPadOpen}
+						intent={isAIPadOpen ? Intent.PRIMARY : Intent.NONE}
+						className={`fullscreen-hud-btn fullscreen-hud-btn-ai ${isAIPadOpen ? 'is-active' : ''}`}
+						icon={<Icon icon="console" />}
+						onClick={(e) => {
+							e.stopPropagation();
+							onToggleAIPad();
+						}}
+						title={isAIPadOpen ? 'Ocultar consola IA' : 'Abrir consola IA'}
+					>
+						<span className="fullscreen-hud-ai-label">IA</span>
+						{isAIPadOpen && <span className="fullscreen-hud-active-dot" />}
+					</Button>
+				)}
+			</div>
 		</div>
 	);
 };

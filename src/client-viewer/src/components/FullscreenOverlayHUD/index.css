@@ -17,16 +17,79 @@
 	touch-action: none;
 	max-width: calc(100vw - 16px);
 	box-sizing: border-box;
-	overflow-x: auto;
+	overflow: hidden;
 	scrollbar-width: none;
-	transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+	transition:
+		width 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+		padding 0.2s ease,
+		gap 0.2s ease,
+		opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+		box-shadow 0.2s ease;
 }
 
 .fullscreen-overlay-hud::-webkit-scrollbar {
 	display: none;
 }
 
-.fullscreen-overlay-hud.hud-dimmed {
+/* Collapsed State: Only Drag Handle Dots Visible */
+.fullscreen-overlay-hud.is-collapsed {
+	padding: 4px 6px;
+	gap: 0;
+	width: auto;
+	min-width: 38px;
+	min-height: 40px;
+	justify-content: center;
+	border-radius: 20px;
+	opacity: 0.65;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+	cursor: pointer;
+}
+
+.fullscreen-overlay-hud.is-collapsed:hover,
+.fullscreen-overlay-hud.is-collapsed:active {
+	opacity: 1 !important;
+	background: rgba(15, 23, 42, 0.95);
+	border-color: rgba(56, 139, 253, 0.5);
+	box-shadow: 0 0 12px rgba(56, 139, 253, 0.4);
+}
+
+.fullscreen-overlay-hud.is-collapsed .fullscreen-hud-drag-handle {
+	color: rgba(255, 255, 255, 0.85);
+	cursor: pointer;
+	min-width: 28px;
+	min-height: 32px;
+}
+
+/* Actions Wrapper */
+.fullscreen-hud-actions {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	max-width: 650px;
+	opacity: 1;
+	overflow: hidden;
+	pointer-events: auto;
+	transition:
+		max-width 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+		opacity 0.18s ease,
+		transform 0.18s ease;
+	transform-origin: left center;
+}
+
+/* Collapsed actions: fully collapsed width and non-interactive */
+.fullscreen-overlay-hud.is-collapsed .fullscreen-hud-actions,
+.fullscreen-hud-actions.is-actions-collapsed {
+	max-width: 0 !important;
+	opacity: 0 !important;
+	transform: scaleX(0.8);
+	pointer-events: none !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	gap: 0 !important;
+	overflow: hidden !important;
+}
+
+.fullscreen-overlay-hud.hud-dimmed:not(.is-collapsed) {
 	opacity: 0.22;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
@@ -64,7 +127,10 @@
 	position: relative;
 	background: rgba(255, 255, 255, 0.08) !important;
 	border: 1px solid rgba(255, 255, 255, 0.1) !important;
-	transition: background-color 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
+	transition:
+		background-color 0.2s ease,
+		transform 0.15s ease,
+		border-color 0.2s ease;
 }
 
 .fullscreen-hud-btn:hover {

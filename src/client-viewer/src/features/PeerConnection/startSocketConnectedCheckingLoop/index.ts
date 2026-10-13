@@ -7,6 +7,13 @@ export default (peerConnection: PeerConnection): NodeJS.Timeout => {
 	let pingTimeout: NodeJS.Timeout | null = null;
 
 	const checkConnection = () => {
+		if (peerConnection.isDestroyed) {
+			if (pingTimeout) {
+				clearTimeout(pingTimeout);
+				pingTimeout = null;
+			}
+			return;
+		}
 		const socket = peerConnection.socket;
 		if (!socket) {
 			disconnectedStreak++;
@@ -23,6 +30,7 @@ export default (peerConnection: PeerConnection): NodeJS.Timeout => {
 				}
 
 				const timeout = setTimeout(() => {
+					if (peerConnection.isDestroyed) return;
 					// ping timeout - server didn't respond
 					disconnectedStreak++;
 					handleDisconnection();
@@ -35,6 +43,7 @@ export default (peerConnection: PeerConnection): NodeJS.Timeout => {
 						clearTimeout(pingTimeout);
 						pingTimeout = null;
 					}
+					if (peerConnection.isDestroyed) return;
 
 					if (response === 'PONG') {
 						disconnectedStreak = 0;
@@ -56,6 +65,7 @@ export default (peerConnection: PeerConnection): NodeJS.Timeout => {
 	};
 
 	const handleDisconnection = () => {
+		if (peerConnection.isDestroyed) return;
 		// Attempt automatic socket reconnection
 		if (peerConnection.socket && !peerConnection.socket.connected) {
 			try {

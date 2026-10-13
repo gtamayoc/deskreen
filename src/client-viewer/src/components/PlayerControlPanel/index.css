@@ -33,7 +33,9 @@
 }
 
 .play-pause-button-glow {
-	box-shadow: 0 0 20px rgba(19, 124, 189, 0.8), 0 0 40px rgba(19, 124, 189, 0.6) !important;
+	box-shadow:
+		0 0 20px rgba(19, 124, 189, 0.8),
+		0 0 40px rgba(19, 124, 189, 0.6) !important;
 }
 
 .play-pause-button .bp3-button-text {
@@ -61,7 +63,7 @@
 }
 
 .settings-button-separator::before {
-	content: '' !important;
+	content: "" !important;
 	position: absolute !important;
 	left: 0 !important;
 	top: 25% !important;
@@ -73,7 +75,7 @@
 }
 
 .settings-button-separator::after {
-	content: '' !important;
+	content: "" !important;
 	position: absolute !important;
 	right: 0 !important;
 	top: 25% !important;
@@ -123,4 +125,45 @@
 .bp3-button-group .bp3-button:last-child:active {
 	border-top-right-radius: 20px !important;
 	border-bottom-right-radius: 20px !important;
+}
+
+/* Header card styling for desktop and mobile */
+.player-control-panel-card {
+	background-color: var(--card-bg-color, #ffffff) !important;
+	color: var(--text-color, #182026) !important;
+	border-radius: 0 0 12px 12px !important;
+	border: 1px solid var(--border-subtle, rgba(16, 22, 26, 0.15)) !important;
+	padding: 10px 16px !important;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+	transition:
+		background-color 0.25s ease,
+		color 0.25s ease,
+		border-color 0.25s ease !important;
+}
+
+body.bp3-dark .player-control-panel-card,
+.bp3-dark .player-control-panel-card {
+	background-color: #1c242c !important;
+	color: #f5f8fa !important;
+	border-color: rgba(255, 255, 255, 0.12) !important;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+@media (max-width: 768px) {
+	.player-control-panel-card {
+		padding: 6px 10px !important;
+		border-radius: 0 !important;
+		border-left: none !important;
+		border-right: none !important;
+		border-top: none !important;
+	}
+}
+
+.rotation-degree-badge {
+	font-size: 10px;
+	font-weight: 700;
+	background-color: rgba(255, 255, 255, 0.3);
+	border-radius: 4px;
+	padding: 1px 3px;
+	line-height: 1;
 }

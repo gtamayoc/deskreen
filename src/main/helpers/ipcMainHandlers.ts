@@ -1,41 +1,43 @@
 import {
+	app,
+	BrowserWindow,
+	clipboard,
 	Display,
 	ipcMain,
-	BrowserWindow,
-	screen,
-	clipboard,
-	shell,
-	app,
 	powerSaveBlocker,
+	screen,
+	shell,
 } from 'electron';
-import i18n from '../configs/i18next.config';
+import DesktopCapturerSourceType from '../../common/DesktopCapturerSourceType';
+import { store } from '../../common/deskreen-electron-store';
+import { ElectronStoreKeys } from '../../common/ElectronStoreKeys.enum';
+import { IpcEvents } from '../../common/IpcEvents.enum';
+import type { DeviceSessionIdentity } from '../../common/types/adb';
 import { ConnectedDevicesService } from '../../features/ConnectedDevicesService';
 import SharingSession from '../../features/SharingSessionService/SharingSession';
-import RoomIDService from '../../server/RoomIDService';
+import SharingSessionStatusEnum from '../../features/SharingSessionService/SharingSessionStatusEnum';
 import { signalingServer } from '../../server';
 import { onDeviceConnectedCallback } from '../../server/onDeviceConnectedCallback';
-import SharingSessionStatusEnum from '../../features/SharingSessionService/SharingSessionStatusEnum';
-import getMyLocalIpV4, { getAvailableNetworkInterfaces } from './getMyLocalIpV4';
-import isWifiConnected from './isWifiConnected';
-import { getDeskreenGlobal } from './getDeskreenGlobal';
-import { IpcEvents } from '../../common/IpcEvents.enum';
-import { ElectronStoreKeys } from '../../common/ElectronStoreKeys.enum';
-import { store } from '../../common/deskreen-electron-store';
-import DesktopCapturerSourceType from '../../common/DesktopCapturerSourceType';
+import RoomIDService from '../../server/RoomIDService';
+import i18n from '../configs/i18next.config';
+import { adbDownloaderService } from '../services/AdbDownloaderService';
+import { adbService } from '../services/AdbService';
+import { deviceIdentityService } from '../services/DeviceIdentityService';
+import { nativeWindowInspectionService } from '../services/NativeWindowInspectionService';
+import { networkDiscoveryService } from '../services/NetworkDiscoveryService';
+import {
+	type RemoteInputPayload,
+	remoteInputInjectionService,
+} from '../services/RemoteInputInjectionService';
+import { sourcePreferenceService } from '../services/SourcePreferenceService';
+import { virtualDisplayService } from '../services/virtualDisplay/VirtualDisplayService';
 import isLinuxWaylandSession from '../utils/isLinuxWaylandSession';
 import { checkScreenRecordingPermission } from './checkScreenRecordingPermission';
-import {
-	remoteInputInjectionService,
-	type RemoteInputPayload,
-} from '../services/RemoteInputInjectionService';
-import { virtualDisplayService } from '../services/virtualDisplay/VirtualDisplayService';
-import { adbService } from '../services/AdbService';
-import { adbDownloaderService } from '../services/AdbDownloaderService';
-import { deviceIdentityService } from '../services/DeviceIdentityService';
-import type { DeviceSessionIdentity } from '../../common/types/adb';
-import { isTerminalOrConsoleTitle } from '../../common/terminalDetection';
-import { sourcePreferenceService } from '../services/SourcePreferenceService';
-
+import { getDeskreenGlobal } from './getDeskreenGlobal';
+import getMyLocalIpV4, {
+	getAvailableNetworkInterfaces,
+} from './getMyLocalIpV4';
+import isWifiConnected from './isWifiConnected';
 
 export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 	ipcMain.on('client-changed-language', async (_, newLangCode) => {
@@ -305,6 +307,11 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 				getDeskreenGlobal().connectedDevicesService.disconnectDeviceByID(
 					sharingSession.deviceID,
 				);
+				if (sharingSession.roomID) {
+					getDeskreenGlobal().roomIDService.unmarkRoomIDAsTaken(
+						sharingSession.roomID,
+					);
+				}
 			}
 			sharingSession?.disconnectByHostMachineUser();
 			sharingSession?.destroy();
@@ -406,8 +413,7 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 
 	async function startSharingOnWaitingForConnectionSharingSession(): Promise<void> {
 		const deskreenGlobal = getDeskreenGlobal();
-		const { connectedDevicesService, sharingSessionService, roomIDService } =
-			deskreenGlobal;
+		const { connectedDevicesService, sharingSessionService } = deskreenGlobal;
 		if (!connectedDevicesService.isSlotAvailable()) {
 			const waitingSession =
 				sharingSessionService.waitingForConnectionSharingSession;
@@ -423,20 +429,35 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 			return;
 		}
 
-		const sharingSession =
+		let sharingSession =
 			sharingSessionService.waitingForConnectionSharingSession;
-		if (sharingSession !== null) {
-			roomIDService.unmarkRoomIDAsTaken(sharingSession.roomID);
+		if (
+			(!sharingSession ||
+				(pendingDevice.sharingSessionID &&
+					sharingSession.id !== pendingDevice.sharingSessionID)) &&
+			pendingDevice.sharingSessionID
+		) {
+			const candidate = sharingSessionService.sharingSessions.get(
+				pendingDevice.sharingSessionID,
+			);
+			if (candidate) {
+				sharingSession = candidate;
+			}
 		}
 
 		try {
 			connectedDevicesService.addDevice(pendingDevice);
 		} catch (error) {
-			console.error('failed to occupy single viewer slot', error);
+			console.error('failed to occupy viewer slot', error);
 			if (sharingSession !== null) {
 				sharingSession.setStatus(SharingSessionStatusEnum.ERROR);
 				sharingSession.denyConnectionForPartner();
-				sharingSessionService.waitingForConnectionSharingSession = null;
+				if (
+					sharingSessionService.waitingForConnectionSharingSession ===
+					sharingSession
+				) {
+					sharingSessionService.waitingForConnectionSharingSession = null;
+				}
 			}
 			connectedDevicesService.resetPendingConnectionDevice();
 			return;
@@ -450,9 +471,27 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 					sharingSession.setDesktopCapturerSourceID(fallbackSourceId);
 				}
 			}
+			sharingSession.setDeviceID(pendingDevice.id);
 			sharingSession.callPeer();
 			sharingSession.setStatus(SharingSessionStatusEnum.SHARING);
-			sharingSessionService.waitingForConnectionSharingSession = null;
+			if (
+				sharingSessionService.waitingForConnectionSharingSession ===
+				sharingSession
+			) {
+				sharingSessionService.waitingForConnectionSharingSession = null;
+			}
+			if (connectedDevicesService.isSlotAvailable()) {
+				void createWaitingForConnectionSharingSession();
+			}
+		}
+
+		if (mainWindow && !mainWindow.isDestroyed()) {
+			mainWindow.webContents.send(
+				IpcEvents.ViewerConnectionAvailabilityChanged,
+				{
+					isAvailable: connectedDevicesService.isSlotAvailable(),
+				},
+			);
 		}
 
 		connectedDevicesService.resetPendingConnectionDevice();
@@ -538,6 +577,11 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 		}
 		const sharingSession =
 			getDeskreenGlobal().sharingSessionService.sharingSessions.get(id);
+		if (sharingSession?.roomID) {
+			getDeskreenGlobal().roomIDService.unmarkRoomIDAsTaken(
+				sharingSession.roomID,
+			);
+		}
 		sharingSession?.setStatus(SharingSessionStatusEnum.DESTROYED);
 		sharingSession?.destroy();
 		getDeskreenGlobal().sharingSessionService.sharingSessions.delete(id);
@@ -586,17 +630,20 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 		}
 	});
 
-	ipcMain.handle(IpcEvents.RemoveTrustedDevice, (_, deviceFingerprint: string) => {
-		try {
-			const raw = store.get('trusted_devices');
-			let list: string[] = raw ? (JSON.parse(raw) as string[]) : [];
-			list = list.filter((id) => id !== deviceFingerprint);
-			store.set('trusted_devices', JSON.stringify(list));
-			return true;
-		} catch {
-			return false;
-		}
-	});
+	ipcMain.handle(
+		IpcEvents.RemoveTrustedDevice,
+		(_, deviceFingerprint: string) => {
+			try {
+				const raw = store.get('trusted_devices');
+				let list: string[] = raw ? (JSON.parse(raw) as string[]) : [];
+				list = list.filter((id) => id !== deviceFingerprint);
+				store.set('trusted_devices', JSON.stringify(list));
+				return true;
+			} catch {
+				return false;
+			}
+		},
+	);
 
 	ipcMain.handle(IpcEvents.IsDeviceTrusted, (_, deviceFingerprint: string) => {
 		try {
@@ -666,7 +713,9 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 		(_, { fingerprint, alias }: { fingerprint: string; alias: string }) => {
 			try {
 				const raw = store.get('device_aliases');
-				const map: Record<string, string> = raw ? (JSON.parse(raw) as Record<string, string>) : {};
+				const map: Record<string, string> = raw
+					? (JSON.parse(raw) as Record<string, string>)
+					: {};
 				if (alias && alias.trim()) {
 					map[fingerprint] = alias.trim();
 				} else {
@@ -694,15 +743,51 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 				payload: RemoteInputPayload;
 			},
 		) => {
+			let finalFingerprint = deviceFingerprint;
+
+			let session = sessionId
+				? getDeskreenGlobal().sharingSessionService.sharingSessions.get(
+						sessionId,
+					)
+				: undefined;
+
+			if (!session && finalFingerprint) {
+				const devices =
+					getDeskreenGlobal().connectedDevicesService.getDevices();
+				const matched = devices.find((d) => {
+					const fp = `${d.deviceIP || ''}_${d.deviceOS || ''}_${d.deviceBrowser || ''}`;
+					return fp === finalFingerprint;
+				});
+				if (matched?.sharingSessionID) {
+					session =
+						getDeskreenGlobal().sharingSessionService.sharingSessions.get(
+							matched.sharingSessionID,
+						);
+				}
+			}
+
+			if (!finalFingerprint && session) {
+				const devices =
+					getDeskreenGlobal().connectedDevicesService.getDevices();
+				const matched = devices.find((d) => d.sharingSessionID === session?.id);
+				if (matched) {
+					finalFingerprint = `${matched.deviceIP || ''}_${matched.deviceOS || ''}_${matched.deviceBrowser || ''}`;
+				}
+			}
+
+			if (!session) {
+				return false;
+			}
+
 			try {
 				const rawBlocked = store.get('remote_control_blocked_devices');
 				const blockedMap: Record<string, boolean> = rawBlocked
 					? (JSON.parse(rawBlocked) as Record<string, boolean>)
 					: {};
-				if (deviceFingerprint && blockedMap[deviceFingerprint] === true) {
+				if (finalFingerprint && blockedMap[finalFingerprint] === true) {
 					console.warn(
 						'[RemoteInput] Blocked input from unpermitted device:',
-						deviceFingerprint,
+						finalFingerprint,
 					);
 					return false;
 				}
@@ -710,21 +795,32 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 				// ignore parse error
 			}
 
-			if (sessionId) {
-				const session =
-					getDeskreenGlobal().sharingSessionService.sharingSessions.get(
-						sessionId,
+			let targetWindowHandle: number | undefined;
+			let targetProcessId: number | undefined;
+
+			if (session?.desktopCapturerSourceID) {
+				const sourceId = session.desktopCapturerSourceID;
+				const sourceInfo =
+					getDeskreenGlobal().desktopCapturerSourcesService.sources.get(
+						sourceId,
 					);
-				if (session?.desktopCapturerSourceID) {
-					const sourceInfo =
-						getDeskreenGlobal().desktopCapturerSourcesService.sources.get(
-							session.desktopCapturerSourceID,
-						);
-					if (sourceInfo?.source?.name) {
-						payload.targetWindowTitle = sourceInfo.source.name;
-					}
+				if (sourceInfo?.source?.name && !payload.targetWindowTitle) {
+					payload.targetWindowTitle = sourceInfo.source.name;
 				}
+
+				const details =
+					nativeWindowInspectionService.getWindowProcessIdAndHandle(sourceId);
+				targetWindowHandle = details.hwnd;
+				targetProcessId = details.processId;
 			}
+
+			if (targetWindowHandle !== undefined) {
+				payload.targetWindowHandle = targetWindowHandle;
+			}
+			if (targetProcessId !== undefined) {
+				payload.targetProcessId = targetProcessId;
+			}
+			payload.sessionId = sessionId;
 
 			return remoteInputInjectionService.injectInput(payload);
 		},
@@ -749,10 +845,7 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 		IpcEvents.SetDeviceRemoteControlAllowed,
 		(
 			_,
-			{
-				fingerprint,
-				allowed,
-			}: { fingerprint: string; allowed: boolean },
+			{ fingerprint, allowed }: { fingerprint: string; allowed: boolean },
 		) => {
 			try {
 				const rawBlocked = store.get('remote_control_blocked_devices');
@@ -764,10 +857,7 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 				} else {
 					blockedMap[fingerprint] = true;
 				}
-				store.set(
-					'remote_control_blocked_devices',
-					JSON.stringify(blockedMap),
-				);
+				store.set('remote_control_blocked_devices', JSON.stringify(blockedMap));
 				return true;
 			} catch {
 				return false;
@@ -786,7 +876,9 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 	ipcMain.handle(
 		IpcEvents.MoveWindowToVirtualDisplay,
 		async (_, windowTitle: string) => {
-			return await virtualDisplayService.moveWindowToVirtualDisplay(windowTitle);
+			return await virtualDisplayService.moveWindowToVirtualDisplay(
+				windowTitle,
+			);
 		},
 	);
 
@@ -799,6 +891,9 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 
 	adbService.setMainWindow(mainWindow);
 	void adbService.init();
+
+	networkDiscoveryService.setMainWindow(mainWindow);
+	networkDiscoveryService.start();
 
 	ipcMain.handle(IpcEvents.AdbCheckAvailability, async () => {
 		return await adbService.checkAvailability();
@@ -830,6 +925,249 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 		await adbDownloaderService.downloadAndInstall();
 		return await adbService.init();
 	});
+
+	ipcMain.handle(IpcEvents.NetworkGetDiscoveredDevices, () => {
+		return networkDiscoveryService.getDiscoveredDevices();
+	});
+
+	ipcMain.handle(IpcEvents.NetworkScanNow, async () => {
+		return await networkDiscoveryService.scanNow();
+	});
+
+	async function handleDispatchUrlToDevice(payload: {
+		deviceId: string;
+		ip: string;
+		platform: string;
+		customRoomId?: string;
+		adbPort?: number;
+	}): Promise<{
+		success: boolean;
+		url: string;
+		error?: string;
+		adbStatus?: 'launched' | 'connected' | 'failed' | 'not_applicable';
+		adbPort?: number;
+		adbLaunched?: boolean;
+		adbError?: string;
+	}> {
+		try {
+			const {
+				deviceId,
+				ip,
+				platform,
+				customRoomId,
+				adbPort: explicitAdbPort,
+			} = payload;
+			const targetDeviceId = deviceId || ip;
+			const roomId =
+				customRoomId ||
+				(await adbService.resolveRoomIdForDevice(targetDeviceId));
+
+			if (!roomId) {
+				return {
+					success: false,
+					url: '',
+					error: 'Failed to allocate room ID for device session',
+					adbStatus: platform === 'android' ? 'failed' : 'not_applicable',
+					adbError: 'Failed to allocate room ID for device session',
+				};
+			}
+
+			const port = signalingServer.port || 3131;
+			const lanIp = getMyLocalIpV4() || '127.0.0.1';
+
+			if (platform === 'android') {
+				const wifiUrl = `http://${lanIp}:${port}/${roomId}?transport=wifi`;
+
+				// Dynamic port cascade: payload.adbPort -> port in deviceId/ip -> discovery cache -> 5555 fallback
+				let dynamicPort: number | undefined;
+				if (typeof explicitAdbPort === 'number' && explicitAdbPort > 0) {
+					dynamicPort = explicitAdbPort;
+				}
+
+				if (!dynamicPort && targetDeviceId.includes(':')) {
+					const parsed = parseInt(targetDeviceId.split(':')[1], 10);
+					if (!Number.isNaN(parsed) && parsed > 0) {
+						dynamicPort = parsed;
+					}
+				}
+
+				if (!dynamicPort && ip.includes(':')) {
+					const parsed = parseInt(ip.split(':')[1], 10);
+					if (!Number.isNaN(parsed) && parsed > 0) {
+						dynamicPort = parsed;
+					}
+				}
+
+				if (!dynamicPort) {
+					const cached = networkDiscoveryService
+						.getDiscoveredDevices()
+						.find((d) => d.ip === ip || d.id === targetDeviceId);
+					if (
+						cached &&
+						typeof cached.adbPort === 'number' &&
+						cached.adbPort > 0
+					) {
+						dynamicPort = cached.adbPort;
+					}
+				}
+
+				const selectedPort = dynamicPort || 5555;
+				let connectRes = await adbService.connectWifiDevice(ip, selectedPort);
+				let effectivePort = selectedPort;
+
+				// Fallback to 5555 if dynamic port connection fails
+				if (!connectRes.success && selectedPort !== 5555) {
+					const fallbackRes = await adbService.connectWifiDevice(ip, 5555);
+					if (fallbackRes.success) {
+						connectRes = fallbackRes;
+						effectivePort = 5555;
+					}
+				}
+
+				const adbEndpoint =
+					connectRes.deviceId ||
+					(targetDeviceId.includes(':')
+						? targetDeviceId
+						: `${ip}:${effectivePort}`);
+
+				if (connectRes.success) {
+					const launched = await adbService.launchClientOnDevice(
+						adbEndpoint,
+						wifiUrl,
+					);
+					return {
+						success: launched,
+						url: wifiUrl,
+						error: launched ? undefined : 'ADB intent launch failed',
+						adbStatus: launched ? 'launched' : 'connected',
+						adbPort: effectivePort,
+						adbLaunched: launched,
+						adbError: launched ? undefined : 'ADB intent launch failed',
+					};
+				}
+
+				return {
+					success: true,
+					url: wifiUrl,
+					error: connectRes.error,
+					adbStatus: 'failed',
+					adbPort: selectedPort,
+					adbLaunched: false,
+					adbError: connectRes.error,
+				};
+			}
+
+			const browserUrl = `http://${lanIp}:${port}/${roomId}`;
+			return {
+				success: true,
+				url: browserUrl,
+				adbStatus: 'not_applicable',
+			};
+		} catch (err) {
+			const errMsg = err instanceof Error ? err.message : String(err);
+			return {
+				success: false,
+				url: '',
+				error: errMsg,
+				adbStatus: payload.platform === 'android' ? 'failed' : 'not_applicable',
+				adbError: errMsg,
+			};
+		}
+	}
+
+	async function handleDispatchUrlToMultipleDevices(payload: {
+		devices: Array<{
+			deviceId: string;
+			ip: string;
+			platform: string;
+			adbPort?: number;
+		}>;
+	}): Promise<{
+		results: Array<{
+			deviceId: string;
+			success: boolean;
+			url?: string;
+			error?: string;
+			adbStatus?: 'launched' | 'connected' | 'failed' | 'not_applicable';
+			adbPort?: number;
+			adbLaunched?: boolean;
+			adbError?: string;
+		}>;
+	}> {
+		const { devices } = payload;
+		if (!devices || devices.length === 0) {
+			return { results: [] };
+		}
+
+		const dispatchPromises = devices.map(async (device) => {
+			const targetDeviceId = device.deviceId || device.ip;
+			const roomId = await adbService.resolveRoomIdForDevice(targetDeviceId);
+			const res = await handleDispatchUrlToDevice({
+				...device,
+				customRoomId: roomId,
+			});
+			return {
+				deviceId: targetDeviceId,
+				success: res.success,
+				url: res.url,
+				error: res.error,
+				adbStatus: res.adbStatus,
+				adbPort: res.adbPort,
+				adbLaunched: res.adbLaunched,
+				adbError: res.adbError,
+			};
+		});
+
+		const settled = await Promise.allSettled(dispatchPromises);
+		const results = settled.map((outcome, idx) => {
+			if (outcome.status === 'fulfilled') {
+				return outcome.value;
+			}
+			return {
+				deviceId: devices[idx].deviceId || devices[idx].ip,
+				success: false,
+				error:
+					outcome.reason instanceof Error
+						? outcome.reason.message
+						: String(outcome.reason),
+			};
+		});
+
+		return { results };
+	}
+
+	ipcMain.handle(
+		IpcEvents.DispatchUrlToDevice,
+		async (
+			_,
+			payload: {
+				deviceId: string;
+				ip: string;
+				platform: string;
+				customRoomId?: string;
+				adbPort?: number;
+			},
+		) => {
+			return await handleDispatchUrlToDevice(payload);
+		},
+	);
+
+	ipcMain.handle(
+		IpcEvents.DispatchUrlToMultipleDevices,
+		async (
+			_,
+			payload: {
+				devices: Array<{
+					deviceId: string;
+					ip: string;
+					platform: string;
+					adbPort?: number;
+				}>;
+			},
+		) => {
+			return await handleDispatchUrlToMultipleDevices(payload);
+		},
+	);
 
 	ipcMain.handle(
 		IpcEvents.RegisterDeviceSessionToken,
@@ -869,8 +1207,7 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 			if (!sourceId) {
 				return { id: '', name: '', type: 'screen', isConsole: false };
 			}
-			const sourcesService =
-				getDeskreenGlobal().desktopCapturerSourcesService;
+			const sourcesService = getDeskreenGlobal().desktopCapturerSourcesService;
 			let sourceWithType = sourcesService.sources.get(sourceId);
 			if (!sourceWithType) {
 				try {
@@ -885,13 +1222,20 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 			const type = isScreen
 				? DesktopCapturerSourceType.SCREEN
 				: DesktopCapturerSourceType.WINDOW;
-			const isConsole = !isScreen && isTerminalOrConsoleTitle(name);
+			const isConsole =
+				!isScreen &&
+				(await nativeWindowInspectionService.isTerminalWindow(sourceId, name));
+
+			const details =
+				nativeWindowInspectionService.getWindowProcessIdAndHandle(sourceId);
 
 			return {
 				id: sourceId,
 				name,
 				type,
 				isConsole,
+				processId: details.processId,
+				hwnd: details.hwnd,
 			};
 		},
 	);

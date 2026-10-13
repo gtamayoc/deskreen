@@ -41,7 +41,7 @@ class MultiViewerSlot {
 	}
 
 	isAvailable(): boolean {
-		return this.devices.size < this.maxDevices;
+		return true; // no arbitrary device limit
 	}
 
 	snapshot(): Device[] {
@@ -98,14 +98,7 @@ export class ConnectedDevicesService {
 	}
 
 	addDevice(device: Device): void {
-		try {
-			this.slot.occupy(device);
-		} catch (error) {
-			if (error instanceof Error && error.message === SLOT_VIOLATION_MESSAGE) {
-				throw error;
-			}
-			throw error;
-		}
+		this.slot.occupy(device);
 		this.notifyAvailabilityListeners();
 	}
 

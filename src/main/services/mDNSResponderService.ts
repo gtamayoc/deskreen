@@ -32,9 +32,14 @@ export class MDNSResponderService {
 				try {
 					this.socket?.addMembership(MDNS_MULTICAST_IP);
 					this.isRunning = true;
-					console.log(`[mDNS Service] Listening on ${MDNS_MULTICAST_IP}:${MDNS_PORT} for ${TARGET_HOST}`);
+					console.log(
+						`[mDNS Service] Listening on ${MDNS_MULTICAST_IP}:${MDNS_PORT} for ${TARGET_HOST}`,
+					);
 				} catch (membershipErr) {
-					console.warn('[mDNS Service] Could not add multicast membership:', membershipErr);
+					console.warn(
+						'[mDNS Service] Could not add multicast membership:',
+						membershipErr,
+					);
 				}
 			});
 		} catch (error) {
@@ -75,27 +80,52 @@ export class MDNSResponderService {
 		// Flags: 0x8400 (Response, Authoritative Answer)
 		// Questions: 0, Answers: 1, Authority: 0, Additional: 0
 		const header = Buffer.from([
-			txId[0], txId[1],
-			0x84, 0x00,
-			0x00, 0x00,
-			0x00, 0x01,
-			0x00, 0x00,
-			0x00, 0x00,
+			txId[0],
+			txId[1],
+			0x84,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
+			0x01,
+			0x00,
+			0x00,
+			0x00,
+			0x00,
 		]);
 
 		// Name: \x08deskreen\x05local\x00
 		const name = Buffer.from([
-			0x08, 0x64, 0x65, 0x73, 0x6b, 0x72, 0x65, 0x65, 0x6e, // 8deskreen
-			0x05, 0x6c, 0x6f, 0x63, 0x61, 0x6c,                   // 5local
-			0x00,                                                 // end of name
+			0x08,
+			0x64,
+			0x65,
+			0x73,
+			0x6b,
+			0x72,
+			0x65,
+			0x65,
+			0x6e, // 8deskreen
+			0x05,
+			0x6c,
+			0x6f,
+			0x63,
+			0x61,
+			0x6c, // 5local
+			0x00, // end of name
 		]);
 
 		// Type: A (1), Class: IN (1) with cache-flush bit (0x8001), TTL: 120s (0x00000078), Data length: 4 (0x0004)
 		const answerMeta = Buffer.from([
-			0x00, 0x01,             // Type A
-			0x80, 0x01,             // Class IN, cache flush
-			0x00, 0x00, 0x00, 0x78, // TTL 120s
-			0x00, 0x04,             // Data len 4
+			0x00,
+			0x01, // Type A
+			0x80,
+			0x01, // Class IN, cache flush
+			0x00,
+			0x00,
+			0x00,
+			0x78, // TTL 120s
+			0x00,
+			0x04, // Data len 4
 		]);
 
 		const ipData = Buffer.from(ipParts);
@@ -103,11 +133,18 @@ export class MDNSResponderService {
 		const responsePacket = Buffer.concat([header, name, answerMeta, ipData]);
 
 		// Send back to querier or multicast
-		this.socket?.send(responsePacket, 0, responsePacket.length, rinfo.port, rinfo.address, (err) => {
-			if (err) {
-				console.warn('[mDNS Service] Send error:', err.message);
-			}
-		});
+		this.socket?.send(
+			responsePacket,
+			0,
+			responsePacket.length,
+			rinfo.port,
+			rinfo.address,
+			(err) => {
+				if (err) {
+					console.warn('[mDNS Service] Send error:', err.message);
+				}
+			},
+		);
 	}
 }
 

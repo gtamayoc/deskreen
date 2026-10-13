@@ -38,11 +38,27 @@ export default (peerConnection: PeerConnection) => {
 
 	socket.on('disconnect', () => {
 		disconnectCount++;
+		peerConnection.isReconnecting = true;
 		console.warn(
 			`[Socket] Disconnected from server (count: ${disconnectCount}). Attempting auto-reconnect...`,
 		);
+
+		// If connected via USB (localhost) and a Wi-Fi fallback host is available,
+		// switch to the fallback host after 2 failed attempts to prevent total session failure
+		if (disconnectCount >= 2 && !peerConnection.isUsingFallbackHost) {
+			const fallback = peerConnection.getFallbackHost();
+			if (fallback) {
+				console.log(
+					`[Socket] USB disconnected. Activating Wi-Fi fallback transport: ${fallback}`,
+				);
+				peerConnection.switchToFallbackHost(fallback);
+				return;
+			}
+		}
+
 		// Wait for sustained failure (e.g. > 15 attempts / > 60 seconds) before showing fatal error
 		if (disconnectCount > 15 && isAllowed) {
+			peerConnection.isReconnecting = false;
 			if (peerConnection.isStreamStarted) {
 				peerConnection.stopStream();
 			}
@@ -53,6 +69,14 @@ export default (peerConnection: PeerConnection) => {
 	const handleConnect = () => {
 		let ipCallbackReceived = false;
 		disconnectCount = 0;
+
+		// Clear any transient error dialog on successful connection or reconnection
+		try {
+			peerConnection.UIHandler.setIsErrorDialogOpen(false);
+			peerConnection.UIHandler.errorDialogMessage = ErrorMessage.UNKNOWN_ERROR;
+		} catch {
+			// ignore
+		}
 
 		// clear any existing reconnect timeout
 		if (peerConnection.reconnectTimeout) {

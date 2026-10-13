@@ -1,64 +1,29 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { SettingsContext } from '@renderer/contexts/SettingsContext';
 import {
 	Button,
 	Callout,
 	Text,
 	Tooltip,
 	Position,
-	Dialog,
 	Classes,
-	H3,
+	Icon,
 } from '@blueprintjs/core';
-import { QRCodeSVG } from 'qrcode.react';
-import { makeStyles, createStyles } from '@material-ui/core';
 import { Row, Col } from 'react-flexbox-grid';
-import isProduction from '../../../../common/isProduction';
 import config from '../../../../common/config';
 import { IpcEvents } from '../../../../common/IpcEvents.enum';
 import { useTranslation } from 'react-i18next';
-import Logo192 from '../../assets/logo192.png';
 
 const { hostname } = config;
 
-const useStyles = makeStyles(() =>
-	createStyles({
-		smallQRCode: {
-			height: '100%',
-			border: '1px solid',
-			borderColor: '#d3dbe2',
-			padding: '10px',
-			borderRadius: '10px',
-			margin: '0 auto',
-			backgroundColor: '#ffffff !important',
-			'&:hover': {
-				backgroundColor: '#f5f8fa !important',
-				border: '1px solid #8A9BA8',
-				cursor: 'zoom-in',
-			},
-		},
-		dialogQRWrapper: {
-			backgroundColor: 'white',
-			padding: '20px',
-			borderRadius: '10px',
-		},
-		bigQRCodeDialogRoot: {
-			'&:hover': {
-				cursor: 'zoom-out',
-			},
-			paddingBottom: '0px',
-		},
-	}),
-);
-
 const ScanQRStep: React.FC = () => {
 	const { t } = useTranslation();
+	const { isDarkMode } = useContext(SettingsContext);
 	const [clientViewerPort, setClientViewerPort] = useState('3131');
-	const classes = useStyles();
 
 	const [isViewerSlotAvailable, setIsViewerSlotAvailable] = useState(true);
 	const [roomID, setRoomID] = useState('');
 	const [LOCAL_LAN_IP, setLocalLanIP] = useState('');
-	const [isQRCodeMagnified, setIsQRCodeMagnified] = useState(false);
 	const [usbDevice, setUsbDevice] = useState<{
 		id: string;
 		model?: string;
@@ -180,42 +145,44 @@ const ScanQRStep: React.FC = () => {
 
 	useEffect(() => {
 		let cancelled = false;
+		window.electron.ipcRenderer
+			.invoke(IpcEvents.GetViewerConnectionAvailability)
+			.then((isAvailable: boolean) => {
+				if (!cancelled) setIsViewerSlotAvailable(isAvailable);
+			})
+			.catch((err) => {
+				console.error('Failed to check viewer availability:', err);
+			});
 
 		const handleAvailabilityChange = (
 			_: unknown,
-			payload: { isAvailable: boolean },
+			isAvailable: boolean,
 		): void => {
-			if (cancelled) return;
-			const isAvailable = Boolean(payload?.isAvailable);
-			setIsViewerSlotAvailable(isAvailable);
-			if (!isAvailable) {
-				setRoomID('');
-				setIsQRCodeMagnified(false);
+			if (!cancelled) {
+				setIsViewerSlotAvailable(isAvailable);
 			}
 		};
-
-		window.electron.ipcRenderer
-			.invoke(IpcEvents.GetViewerConnectionAvailability)
-			.then((availability) => {
-				if (cancelled) return;
-				const isAvailable = Boolean(availability);
-				setIsViewerSlotAvailable(isAvailable);
-				if (!isAvailable) {
-					setRoomID('');
-					setIsQRCodeMagnified(false);
-				}
-			})
-			.catch((error) => {
-				console.error('Failed to get viewer slot availability:', error);
-			});
 
 		window.electron.ipcRenderer.on(
 			IpcEvents.ViewerConnectionAvailabilityChanged,
 			handleAvailabilityChange,
 		);
 
+		const syncInterval = setInterval(async () => {
+			if (cancelled) return;
+			try {
+				const avail = await window.electron.ipcRenderer.invoke(
+					IpcEvents.GetViewerConnectionAvailability,
+				);
+				if (!cancelled) setIsViewerSlotAvailable(Boolean(avail));
+			} catch {
+				// ignore
+			}
+		}, 2000);
+
 		return () => {
 			cancelled = true;
+			clearInterval(syncInterval);
 			window.electron.ipcRenderer.removeListener(
 				IpcEvents.ViewerConnectionAvailabilityChanged,
 				handleAvailabilityChange,
@@ -275,160 +242,77 @@ const ScanQRStep: React.FC = () => {
 		if (!isViewerSlotAvailable) return '';
 		if (LOCAL_LAN_IP === '') return '';
 		if (roomPath === '') return '';
-		return `http://${LOCAL_LAN_IP}${portString}${roomPath}`;
-	}, [LOCAL_LAN_IP, portString, roomPath, isViewerSlotAvailable]);
-	const isQrInteractive = shareUrl !== '';
+		const themeQuery = isDarkMode ? '?theme=dark' : '?theme=light';
+		return `http://${LOCAL_LAN_IP}${portString}${roomPath}${themeQuery}`;
+	}, [LOCAL_LAN_IP, portString, roomPath, isViewerSlotAvailable, isDarkMode]);
+	const isConnectionAvailable = shareUrl !== '';
 	const connectionLimitTooltip = t('connection-limit-reached-tooltip');
-	const qrTooltipContent = isQrInteractive
-		? t('click-to-make-bigger')
-		: connectionLimitTooltip;
-	const copyTooltipContent = isQrInteractive
+	const copyTooltipContent = isConnectionAvailable
 		? t('click-to-copy')
 		: connectionLimitTooltip;
 
 	return (
 		<>
-			<div style={{ textAlign: 'center' }}>
-				<Text>
-					<span
-						style={{
-							backgroundColor: '#00f99273',
-							fontWeight: 900,
-							paddingRight: '8px',
-							paddingLeft: '8px',
-							borderRadius: '20px',
-						}}
-					>
-						{t(
-							'make-sure-your-computer-and-screen-viewing-device-are-connected-to-same-wi-fi',
-						)}
-					</span>
-				</Text>
-			</div>
-			<div>
-				<Row>
-					<Col xs={12}>
-						<div style={{ textAlign: 'center' }}>
-							<Text className="bp3-text">
-								{t('scan-the-qr-code-to-connect')}
-							</Text>
-						</div>
-						<div
-							style={{
-								display: 'flex',
-								flexDirection: 'column',
-								alignItems: 'center',
-								justifyContent: 'center',
-								height: '100%',
-								marginBottom: '16px',
-							}}
-						>
-							<Tooltip content={qrTooltipContent} position={Position.LEFT}>
-								<span>
-									{isQrInteractive ? (
-										<Button
-											id="magnify-qr-code-button"
-											className={classes.smallQRCode}
-											onClick={() => {
-												if (!isQrInteractive) return;
-												setIsQRCodeMagnified(true);
-											}}
-											disabled={!isQrInteractive}
-										>
-											<QRCodeSVG
-												value={shareUrl}
-												level="H"
-												bgColor="#ffffff"
-												fgColor="#000000"
-												imageSettings={{
-													// src: `http://127.0.0.1${portString}/logo192.png`,
-													src: Logo192,
-													width: 40,
-													height: 40,
-													excavate: true,
-												}}
-											/>
-										</Button>
-									) : (
-										<div
-											className={classes.smallQRCode}
-											style={{ cursor: 'not-allowed' }}
-										>
-											<img
-												src={Logo192}
-												alt={t('deskreen-logo')}
-												width={64}
-												height={64}
-											/>
-										</div>
-									)}
-								</span>
-							</Tooltip>
-						</div>
-					</Col>
-				</Row>
-			</div>
-			<Row
+			<div
 				style={{
-					marginBottom: '10px',
 					display: 'flex',
-					flexDirection: 'row',
+					flexDirection: 'column',
 					alignItems: 'center',
 					justifyContent: 'center',
-					textAlign: 'center',
+					marginBottom: '16px',
 				}}
 			>
-				<Text className="bp3-text-muted">
-					{isQrInteractive
-						? t(
-								'enter-the-following-address-in-browser-address-bar-on-any-device',
-							)
-						: t('one-viewing-client-is-connected-already')}
-				</Text>
-			</Row>
+				<div
+					style={{
+						display: 'flex',
+						alignItems: 'center',
+						gap: '8px',
+						marginBottom: '12px',
+					}}
+				>
+					<Icon icon="feed" size={28} className={Classes.TEXT_MUTED} />
+					<Text className={Classes.TEXT_MUTED} style={{ fontSize: '14px' }}>
+						{isConnectionAvailable
+							? t(
+									'enter-the-following-address-in-browser-address-bar-on-any-device',
+									'Abre la siguiente dirección en tu navegador:',
+								)
+							: t('one-viewing-client-is-connected-already')}
+					</Text>
+				</div>
 
-			<Row
-				style={{
-					display: 'flex',
-					flexDirection: 'row',
-					justifyContent: 'center',
-				}}
-			>
 				<Tooltip content={copyTooltipContent} position={Position.TOP}>
 					<span>
 						<Button
-							intent={isQrInteractive ? 'primary' : 'none'}
+							intent={isConnectionAvailable ? 'primary' : 'none'}
 							icon="duplicate"
 							style={{ borderRadius: '100px' }}
-							disabled={!isQrInteractive}
+							disabled={!isConnectionAvailable}
 							onClick={() => {
-								if (!isQrInteractive) return;
-								window.electron.ipcRenderer.invoke(
+								if (!isConnectionAvailable) return;
+								void window.electron.ipcRenderer.invoke(
 									IpcEvents.WriteTextToClipboard,
 									shareUrl,
 								);
 							}}
 						>
-							{isQrInteractive ? shareUrl : t('viewing-client-connected-label')}
+							{isConnectionAvailable
+								? shareUrl
+								: t('viewing-client-connected-label')}
 						</Button>
 					</span>
 				</Tooltip>
-			</Row>
-			{isQrInteractive && (
-				<Row
-					style={{
-						display: 'flex',
-						flexDirection: 'row',
-						justifyContent: 'center',
-						marginTop: '6px',
-					}}
-				>
-					<Text className="bp3-text-muted" style={{ fontSize: '12px' }}>
-						{`o escribe en tu navegador: http://deskreen.local${portString}${roomPath}`}
-					</Text>
-				</Row>
-			)}
-			{usbDevice && isQrInteractive && (
+
+				{isConnectionAvailable && (
+					<div style={{ marginTop: '8px', textAlign: 'center' }}>
+						<Text className={Classes.TEXT_MUTED} style={{ fontSize: '12px' }}>
+							{`o escribe en tu navegador: http://${hostname}.local${portString}${roomPath}${isDarkMode ? '?theme=dark' : '?theme=light'}`}
+						</Text>
+					</div>
+				)}
+			</div>
+
+			{usbDevice && isConnectionAvailable && (
 				<Row
 					center="xs"
 					style={{
@@ -448,7 +332,8 @@ const ScanQRStep: React.FC = () => {
 							<Row between="xs" middle="xs">
 								<Col xs={12} md={8}>
 									<Text style={{ fontSize: '12px' }}>
-										Canal USB directo activo (Reverse ADB a 60 FPS sin lag de Wi-Fi).
+										Canal USB directo activo (Reverse ADB a 60 FPS sin lag de
+										Wi-Fi).
 									</Text>
 								</Col>
 								<Col xs={12} md={4} style={{ textAlign: 'right' }}>
@@ -457,7 +342,7 @@ const ScanQRStep: React.FC = () => {
 										icon="mobile-phone"
 										small
 										onClick={async () => {
-											const usbUrl = `http://localhost:${clientViewerPort}${roomPath}?transport=usb`;
+											const usbUrl = `http://localhost:${clientViewerPort}${roomPath}?transport=usb&theme=${isDarkMode ? 'dark' : 'light'}`;
 											await window.electron.ipcRenderer.invoke(
 												IpcEvents.AdbLaunchUrl,
 												{
@@ -475,7 +360,8 @@ const ScanQRStep: React.FC = () => {
 					</Col>
 				</Row>
 			)}
-			{!usbDevice && isAdbAvailable === true && isQrInteractive && (
+
+			{!usbDevice && isAdbAvailable === true && isConnectionAvailable && (
 				<Row
 					center="xs"
 					style={{
@@ -516,7 +402,8 @@ const ScanQRStep: React.FC = () => {
 					/>
 				</Row>
 			)}
-			{!usbDevice && isAdbAvailable === false && isQrInteractive && (
+
+			{!usbDevice && isAdbAvailable === false && isConnectionAvailable && (
 				<Row
 					center="xs"
 					style={{
@@ -546,7 +433,8 @@ const ScanQRStep: React.FC = () => {
 					/>
 				</Row>
 			)}
-			{!isQrInteractive && (
+
+			{!isConnectionAvailable && (
 				<Row
 					style={{
 						marginTop: '12px',
@@ -558,56 +446,14 @@ const ScanQRStep: React.FC = () => {
 						textAlign: 'center',
 					}}
 				>
-					<Text className="bp3-text-muted">
-						{t('connection-limit-reached', 'Límite de 5 conexiones simultáneas alcanzado.')}
+					<Text className={Classes.TEXT_MUTED}>
+						{t(
+							'connection-limit-reached',
+							'Límite de 5 conexiones simultáneas alcanzado.',
+						)}
 					</Text>
 				</Row>
 			)}
-
-			<Dialog
-				className={classes.bigQRCodeDialogRoot}
-				isOpen={isQrInteractive && isQRCodeMagnified}
-				onClose={() => setIsQRCodeMagnified(false)}
-				canEscapeKeyClose
-				canOutsideClickClose
-				transitionDuration={isProduction() ? 700 : 0}
-				style={{ position: 'relative', top: '0px' }}
-				usePortal={false}
-			>
-				<Row
-					id="qr-code-dialog-inner"
-					className={Classes.DIALOG_BODY}
-					center="xs"
-					middle="xs"
-					onClick={() => setIsQRCodeMagnified(false)}
-				>
-					<Col xs={11} className={classes.dialogQRWrapper}>
-						{/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-						{/* @ts-ignore */}
-						<QRCodeSVG
-							value={isQrInteractive ? shareUrl : 'INACTIVE'}
-							level="H"
-							imageSettings={{
-								// src: `http://127.0.0.1${portString}/logo192.png`,
-								src: Logo192,
-								width: 25,
-								height: 25,
-								excavate: true,
-							}}
-							width="390px"
-							height="390px"
-						/>
-					</Col>
-					<Col>
-						<H3>
-							{isQrInteractive
-								? `${hostname}${portString}${roomPath}`
-								: t('waiting-for-connection')}
-						</H3>
-						<H3>{isQrInteractive ? shareUrl : t('waiting-for-connection')}</H3>
-					</Col>
-				</Row>
-			</Dialog>
 		</>
 	);
 };

@@ -1,5 +1,5 @@
-import { withStyles } from '@material-ui/core/styles';
 import StepConnector from '@material-ui/core/StepConnector';
+import { withStyles } from '@material-ui/core/styles';
 
 const ColorlibConnector = withStyles({
 	alternativeLabel: {
@@ -20,7 +20,7 @@ const ColorlibConnector = withStyles({
 	line: {
 		height: 2,
 		border: 0,
-		backgroundColor: '#CED9E0',
+		backgroundColor: 'var(--color-stepper-connector, #CED9E0)',
 		borderRadius: 1,
 	},
 })(StepConnector);

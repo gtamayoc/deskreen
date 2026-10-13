@@ -5,6 +5,7 @@ import React, {
 	useState,
 	useCallback,
 } from 'react';
+import { Classes } from '@blueprintjs/core';
 
 export type ThemePreference = 'system' | 'dark' | 'light';
 
@@ -26,6 +27,34 @@ export function getSystemPrefersDark(): boolean {
 
 export function getInitialDarkMode(): boolean {
 	try {
+		if (typeof window !== 'undefined' && window.location) {
+			const params = new URLSearchParams(window.location.search);
+			const themeParam = params.get('theme') || params.get('dark');
+			if (
+				themeParam === 'dark' ||
+				themeParam === 'true' ||
+				themeParam === '1'
+			) {
+				try {
+					localStorage.setItem(STORAGE_KEY, 'true');
+				} catch {
+					// ignore localStorage restrictions
+				}
+				return true;
+			}
+			if (
+				themeParam === 'light' ||
+				themeParam === 'false' ||
+				themeParam === '0'
+			) {
+				try {
+					localStorage.setItem(STORAGE_KEY, 'false');
+				} catch {
+					// ignore localStorage restrictions
+				}
+				return false;
+			}
+		}
 		const saved = localStorage.getItem(STORAGE_KEY);
 		if (saved === 'true') return true;
 		if (saved === 'false') return false;
@@ -50,8 +79,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
 	children,
 }) => {
 	const [isDarkMode, setIsDarkMode] = useState<boolean>(getInitialDarkMode);
-	const [themePreference, setThemePreferenceState] =
-		useState<ThemePreference>(() => {
+	const [themePreference, setThemePreferenceState] = useState<ThemePreference>(
+		() => {
 			try {
 				const saved = localStorage.getItem(STORAGE_KEY);
 				if (saved === 'true') return 'dark';
@@ -60,16 +89,29 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
 				// Ignore storage access errors
 			}
 			return 'system';
-		});
+		},
+	);
 
-	// Synchronize document.body and documentElement classList
+	// Synchronize document.body, documentElement, color-scheme, and meta theme-color
 	useEffect(() => {
 		if (isDarkMode) {
-			document.documentElement.classList.add('bp3-dark');
-			document.body.classList.add('bp3-dark');
+			document.documentElement.classList.add(Classes.DARK, 'bp3-dark');
+			document.body.classList.add(Classes.DARK, 'bp3-dark');
+			document.documentElement.style.colorScheme = 'dark';
 		} else {
-			document.documentElement.classList.remove('bp3-dark');
-			document.body.classList.remove('bp3-dark');
+			document.documentElement.classList.remove(Classes.DARK, 'bp3-dark');
+			document.body.classList.remove(Classes.DARK, 'bp3-dark');
+			document.documentElement.style.colorScheme = 'light';
+		}
+
+		if (typeof document !== 'undefined') {
+			let meta = document.querySelector('meta[name="theme-color"]');
+			if (!meta) {
+				meta = document.createElement('meta');
+				meta.setAttribute('name', 'theme-color');
+				document.head.appendChild(meta);
+			}
+			meta.setAttribute('content', isDarkMode ? '#182026' : '#f4f8fa');
 		}
 	}, [isDarkMode]);
 
@@ -95,7 +137,11 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
 			'addListener' in mediaQuery &&
 			typeof (mediaQuery as { addListener: unknown }).addListener === 'function'
 		) {
-			(mediaQuery as { addListener: (listener: (e: MediaQueryListEvent) => void) => void }).addListener(handleChange);
+			(
+				mediaQuery as {
+					addListener: (listener: (e: MediaQueryListEvent) => void) => void;
+				}
+			).addListener(handleChange);
 		}
 
 		return () => {
@@ -103,9 +149,16 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
 				mediaQuery.removeEventListener('change', handleChange);
 			} else if (
 				'removeListener' in mediaQuery &&
-				typeof (mediaQuery as { removeListener: unknown }).removeListener === 'function'
+				typeof (mediaQuery as { removeListener: unknown }).removeListener ===
+					'function'
 			) {
-				(mediaQuery as { removeListener: (listener: (e: MediaQueryListEvent) => void) => void }).removeListener(handleChange);
+				(
+					mediaQuery as {
+						removeListener: (
+							listener: (e: MediaQueryListEvent) => void,
+						) => void;
+					}
+				).removeListener(handleChange);
 			}
 		};
 	}, []);

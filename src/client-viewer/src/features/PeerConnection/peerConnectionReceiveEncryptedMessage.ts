@@ -15,14 +15,31 @@ export default async (
 	// const message = payload as any;
 	if (message.type === 'CALL_USER') {
 		try {
-			if (!peerConnection.peer || peerConnection.peer.destroyed) {
+			const rawSignalData = message.payload?.signalData;
+			let signalData = rawSignalData as { type?: string } | undefined;
+			if (typeof rawSignalData === 'string') {
+				try {
+					signalData = JSON.parse(rawSignalData);
+				} catch {
+					// retain original
+				}
+			}
+			const isOffer = Boolean(
+				signalData &&
+					typeof signalData === 'object' &&
+					signalData.type === 'offer',
+			);
+			if (!peerConnection.peer || peerConnection.peer.destroyed || isOffer) {
 				peerConnection.createPeer();
 			}
 			if (peerConnection.peer && !peerConnection.peer.destroyed) {
 				peerConnection.peer.signal(message.payload.signalData);
 			}
 		} catch (signalError) {
-			console.warn('Caught client WebRTC peer signaling error safely:', signalError);
+			console.warn(
+				'Caught client WebRTC peer signaling error safely:',
+				signalError,
+			);
 		}
 	}
 	if (message.type === 'DENY_TO_CONNECT') {
@@ -67,7 +84,23 @@ export default async (
 		);
 	}
 	if (message.type === 'SOURCE_SWITCHED') {
-		const payloadObj = message.payload as { sourceId?: string };
+		const payloadObj = message.payload as {
+			sourceId?: string;
+			isConsole?: boolean;
+			sourceName?: string;
+			sourceType?: string;
+		};
+		if (typeof payloadObj.isConsole === 'boolean') {
+			peerConnection.isConsoleSource = payloadObj.isConsole;
+			peerConnection.sharingSourceName = payloadObj.sourceName || '';
+			if (payloadObj.sourceType) {
+				peerConnection.screenSharingSourceType = payloadObj.sourceType;
+			}
+			peerConnection.UIHandler.setScreenSharingSourceTypeCallback(
+				payloadObj.sourceType || 'window',
+				payloadObj.isConsole,
+			);
+		}
 		window.dispatchEvent(
 			new CustomEvent('deskreen:source-switched', {
 				detail: payloadObj,

@@ -184,10 +184,7 @@ export default function ShareAppOrScreenControlGroup(
 					/>
 					<Text className="bp3-running-text">{t('application-window')}</Text>
 				</Button>
-				<Button
-					active
-					style={orDecorationButtonStyle}
-				>
+				<Button active style={orDecorationButtonStyle}>
 					{t('or')}
 				</Button>
 			</ControlGroup>

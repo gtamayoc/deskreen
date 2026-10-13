@@ -54,7 +54,9 @@ export class SourcePreferenceService {
 			);
 		}
 
-		const screenSources = sourcesService ? sourcesService.getScreenSources() : [];
+		const screenSources = sourcesService
+			? sourcesService.getScreenSources()
+			: [];
 		const appWindowSources = sourcesService
 			? sourcesService.getAppWindowSources()
 			: [];

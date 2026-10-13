@@ -153,31 +153,34 @@ export default function ConnectedDevicesListDrawer(
 			window.electron.ipcRenderer
 				.invoke(IpcEvents.GetConnectedDevices)
 				.then(async (devices: Device[]) => {
-					const devicesWithSourceIds: DeviceWithDesktopCapturerSourceId[] = [];
-
-					for await (const device of devices) {
-						const sharingSourceId = await window.electron.ipcRenderer.invoke(
-							IpcEvents.GetDesktopCapturerSourceIdBySharingSessionId,
-							device.sharingSessionID,
+					const devicesWithSourceIds: DeviceWithDesktopCapturerSourceId[] =
+						await Promise.all(
+							devices.map(async (device) => {
+								const sharingSourceId =
+									await window.electron.ipcRenderer.invoke(
+										IpcEvents.GetDesktopCapturerSourceIdBySharingSessionId,
+										device.sharingSessionID,
+									);
+								const fp = `${device.deviceIP || ''}_${device.deviceOS || ''}_${device.deviceBrowser || ''}`;
+								try {
+									const isAllowed = await window.electron.ipcRenderer.invoke(
+										IpcEvents.GetDeviceRemoteControlAllowed,
+										fp,
+									);
+									setRemoteControlAllowedMap((prev) => ({
+										...prev,
+										[fp]: isAllowed,
+									}));
+								} catch {
+									// ignore
+								}
+								return {
+									...device,
+									desktopCapturerSourceId: sharingSourceId,
+								};
+							}),
 						);
-						const fp = `${device.deviceIP || ''}_${device.deviceOS || ''}_${device.deviceBrowser || ''}`;
-						try {
-							const isAllowed = await window.electron.ipcRenderer.invoke(
-								IpcEvents.GetDeviceRemoteControlAllowed,
-								fp,
-							);
-							setRemoteControlAllowedMap((prev) => ({
-								...prev,
-								[fp]: isAllowed,
-							}));
-						} catch {
-							// ignore
-						}
-						devicesWithSourceIds.push({
-							...device,
-							desktopCapturerSourceId: sharingSourceId,
-						});
-					}
+
 					setConnectedDevices(devicesWithSourceIds);
 
 					const map = new Map();
@@ -192,13 +195,27 @@ export default function ConnectedDevicesListDrawer(
 
 		getConnectedDevicesCallback();
 
+		// Reduced from 4000ms to 2000ms for faster list refresh
 		const connectedDevicesInterval = setInterval(
 			getConnectedDevicesCallback,
-			4000,
+			2000,
+		);
+
+		// React immediately when a device connects or disconnects
+		const handleAvailabilityChange = (): void => {
+			getConnectedDevicesCallback();
+		};
+		window.electron.ipcRenderer.on(
+			IpcEvents.ViewerConnectionAvailabilityChanged,
+			handleAvailabilityChange,
 		);
 
 		return () => {
 			clearInterval(connectedDevicesInterval);
+			window.electron.ipcRenderer.removeListener(
+				IpcEvents.ViewerConnectionAvailabilityChanged,
+				handleAvailabilityChange,
+			);
 		};
 	}, []);
 
@@ -325,16 +342,28 @@ export default function ConnectedDevicesListDrawer(
 								return (
 									<div key={device.id} style={{ marginBottom: '16px' }}>
 										<Card className="connected-device-card">
-											<Row between="xs" middle="xs" style={{ marginBottom: '12px' }}>
+											<Row
+												between="xs"
+												middle="xs"
+												style={{ marginBottom: '12px' }}
+											>
 												<Col xs={12} md={7}>
 													<InputGroup
 														leftIcon="tag"
 														placeholder="Asignar alias (ej. Mi iPad)"
 														defaultValue={alias}
-														onBlur={(e) => handleSaveAlias(fingerprint, e.currentTarget.value)}
+														onBlur={(e) =>
+															handleSaveAlias(
+																fingerprint,
+																e.currentTarget.value,
+															)
+														}
 														onKeyDown={(e) => {
 															if (e.key === 'Enter') {
-																handleSaveAlias(fingerprint, e.currentTarget.value);
+																handleSaveAlias(
+																	fingerprint,
+																	e.currentTarget.value,
+																);
 															}
 														}}
 														round
@@ -344,7 +373,10 @@ export default function ConnectedDevicesListDrawer(
 												</Col>
 												<Col xs={12} md={5}>
 													{alias !== '' && (
-														<Text className="bp3-text-muted" style={{ fontWeight: 600 }}>
+														<Text
+															className="bp3-text-muted"
+															style={{ fontWeight: 600 }}
+														>
 															{`Alias: ${alias}`}
 														</Text>
 													)}
@@ -368,9 +400,14 @@ export default function ConnectedDevicesListDrawer(
 													/>
 												</Col>
 											</Row>
-											<Row start="xs" style={{ marginTop: '10px', paddingLeft: '8px' }}>
+											<Row
+												start="xs"
+												style={{ marginTop: '10px', paddingLeft: '8px' }}
+											>
 												<Switch
-													checked={remoteControlAllowedMap[fingerprint] !== false}
+													checked={
+														remoteControlAllowedMap[fingerprint] !== false
+													}
 													label="Permitir Control Remoto (Consola e IA)"
 													onChange={() =>
 														handleToggleRemoteControl(
@@ -381,11 +418,16 @@ export default function ConnectedDevicesListDrawer(
 													style={{ marginBottom: 0, fontWeight: 600 }}
 												/>
 											</Row>
-											<Row center="xs" style={{ gap: '12px', marginTop: '14px' }}>
+											<Row
+												center="xs"
+												style={{ gap: '12px', marginTop: '14px' }}
+											>
 												<Button
 													intent="primary"
 													icon="exchange"
-													onClick={() => setSelectedDeviceForChangeSource(device)}
+													onClick={() =>
+														setSelectedDeviceForChangeSource(device)
+													}
 													style={{ borderRadius: '100px' }}
 												>
 													Cambiar Fuente
@@ -428,8 +470,9 @@ export default function ConnectedDevicesListDrawer(
 				sharingSessionId={selectedDeviceForChangeSource?.sharingSessionID || ''}
 				deviceName={
 					selectedDeviceForChangeSource
-						? aliases[`${selectedDeviceForChangeSource.deviceIP || ''}_${selectedDeviceForChangeSource.deviceOS || ''}_${selectedDeviceForChangeSource.deviceBrowser || ''}`] ||
-							selectedDeviceForChangeSource.deviceBrowser
+						? aliases[
+								`${selectedDeviceForChangeSource.deviceIP || ''}_${selectedDeviceForChangeSource.deviceOS || ''}_${selectedDeviceForChangeSource.deviceBrowser || ''}`
+							] || selectedDeviceForChangeSource.deviceBrowser
 						: ''
 				}
 				onClose={() => {

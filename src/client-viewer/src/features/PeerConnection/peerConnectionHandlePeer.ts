@@ -49,6 +49,7 @@ export default (peerConnection: PeerConnection) => {
 		setTimeout(getSharingShourceType, 1000, peerConnection);
 
 		peerConnection.isStreamStarted = true;
+		peerConnection.isReconnecting = false;
 
 		// if any transient error dialog was shown earlier, close it now
 		try {
@@ -85,8 +86,7 @@ export default (peerConnection: PeerConnection) => {
 				if (
 					peerConnection.screenSharingSourceType ===
 						ScreenSharingSource.SCREEN ||
-					peerConnection.screenSharingSourceType ===
-						ScreenSharingSource.WINDOW
+					peerConnection.screenSharingSourceType === ScreenSharingSource.WINDOW
 				) {
 					peerConnection.UIHandler.setScreenSharingSourceTypeCallback(
 						peerConnection.screenSharingSourceType,

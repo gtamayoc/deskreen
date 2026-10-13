@@ -1,12 +1,6 @@
-import SuccessStep from '../components/StepsOfStepper/SuccessStep';
-import React, { useState, useCallback, useEffect, ReactNode } from 'react';
-import { makeStyles, createStyles } from '@material-ui/core/styles';
-import Stepper from '@material-ui/core/Stepper';
-import Step from '@material-ui/core/Step';
-import StepLabel from '@material-ui/core/StepLabel';
-import { Row, Col, Grid } from 'react-flexbox-grid';
 import {
 	Button,
+	Classes,
 	Dialog,
 	H1,
 	H3,
@@ -14,22 +8,20 @@ import {
 	H5,
 	Icon,
 	Spinner,
-	Text,
 } from '@blueprintjs/core';
-import IntermediateStep from '@renderer/components/StepsOfStepper/IntermediateStep';
-import ColorlibConnector from '@renderer/components/StepperPanel/ColorlibConnector';
-import { Device } from '../../../common/Device';
-import ColorlibStepIcon, {
-	StepIconPropsDeskreen,
-} from '@renderer/components/StepperPanel/ColorlibStepIcon';
-import LanguageSelector from '@renderer/components/LanguageSelector';
-import { getShuffledArrayOfHello } from '@renderer/configs/i18next.config.client';
-import { IpcEvents } from '../../../common/IpcEvents.enum';
-import DeviceConnectedInfoButton from '@renderer/components/StepperPanel/DeviceConnectedInfoButton';
+import { createStyles, makeStyles } from '@material-ui/core/styles';
 import AllowConnectionForDeviceAlert from '@renderer/components/AllowConnectionForDeviceAlert';
-import { useTranslation } from 'react-i18next';
-import { TFunction } from 'i18next';
+import LanguageSelector from '@renderer/components/LanguageSelector';
+import IntermediateStep from '@renderer/components/StepsOfStepper/IntermediateStep';
+import { getShuffledArrayOfHello } from '@renderer/configs/i18next.config.client';
 import { showMessageFromNewToaster } from '@renderer/utils/showMessageFromNewToaster';
+import { TFunction } from 'i18next';
+import React, { ReactNode, useCallback, useEffect, useState } from 'react';
+import { Col, Grid, Row } from 'react-flexbox-grid';
+import { useTranslation } from 'react-i18next';
+import { Device } from '../../../common/Device';
+import { IpcEvents } from '../../../common/IpcEvents.enum';
+import SuccessStep from '../components/StepsOfStepper/SuccessStep';
 
 const useStyles = makeStyles(() =>
 	createStyles({
@@ -38,13 +30,6 @@ const useStyles = makeStyles(() =>
 			flexDirection: 'column',
 			justifyContent: 'center',
 			alignItems: 'center',
-		},
-		stepLabelContent: {
-			marginTop: '10px !important',
-			height: '110px',
-		},
-		stepperComponent: {
-			paddingBottom: '0px',
 		},
 	}),
 );
@@ -84,9 +69,8 @@ const DeskreenStepper = ({
 	const classes = useStyles();
 	const { t } = useTranslation();
 
-	const [isEntireScreenSelected, setIsEntireScreenSelected] = useState(false);
-	const [isApplicationWindowSelected, setIsApplicationWindowSelected] =
-		useState(false);
+	const [, setIsEntireScreenSelected] = useState(false);
+	const [, setIsApplicationWindowSelected] = useState(false);
 	const [isNoWiFiError, setisNoWiFiError] = useState(false);
 	const [isSelectLanguageDialogOpen, setIsSelectLanguageDialogOpen] =
 		useState(false);
@@ -299,24 +283,10 @@ const DeskreenStepper = ({
 	}, [
 		setActiveStep,
 		setIsAllowDeviceAlertOpen,
-		setIsApplicationWindowSelected,
-		setIsEntireScreenSelected,
 		setIsUserAllowedConnection,
 		setPendingConnectionDevice,
-		setisNoWiFiError,
 		t,
 	]);
-
-	const handleUserClickedDeviceDisconnectButton =
-		useCallback(async (): Promise<void> => {
-			handleReset();
-
-			await showMessageFromNewToaster(
-				t(
-					'device-is-successfully-disconnected-by-you-you-can-connect-a-new-device',
-				),
-			);
-		}, [handleReset, t]);
 
 	const renderIntermediateOrSuccessStepContent = useCallback(() => {
 		if (activeStep >= steps.length) {
@@ -351,67 +321,19 @@ const DeskreenStepper = ({
 		setPendingConnectionDevice,
 	]);
 
-	const renderStepLabelContent = useCallback(
-		(label, idx) => {
-			return (
-				<StepLabel
-					id="step-label-deskreen"
-					className={classes.stepLabelContent}
-					StepIconComponent={ColorlibStepIcon}
-					StepIconProps={
-						{
-							isEntireScreenSelected,
-							isApplicationWindowSelected,
-						} as StepIconPropsDeskreen
-					}
-				>
-					{pendingConnectionDevice && idx === 0 && isUserAllowedConnection ? (
-						<DeviceConnectedInfoButton
-							device={pendingConnectionDevice}
-							onDisconnect={handleUserClickedDeviceDisconnectButton}
-						/>
-					) : (
-						<Text className="bp3-text-muted">{label}</Text>
-					)}
-				</StepLabel>
-			);
-		},
-		[
-			classes.stepLabelContent,
-			handleUserClickedDeviceDisconnectButton,
-			isApplicationWindowSelected,
-			isEntireScreenSelected,
-			isUserAllowedConnection,
-			pendingConnectionDevice,
-		],
-	);
-
 	return (
 		<>
 			<Row style={{ width: '100%' }}>
-					<Col xs={12}>
-						<Stepper
-							className={classes.stepperComponent}
-							activeStep={activeStep}
-							alternativeLabel
-							style={{ background: 'transparent' }}
-							connector={<ColorlibConnector />}
-						>
-							{steps.map((label, idx) => (
-								<Step key={label}>{renderStepLabelContent(label, idx)}</Step>
-							))}
-						</Stepper>
-					</Col>
-					<Col className={classes.stepContent} xs={12}>
-						{renderIntermediateOrSuccessStepContent()}
-					</Col>
-				</Row>
-				<AllowConnectionForDeviceAlert
-					device={pendingConnectionDevice}
-					isOpen={isAllowDeviceAlertOpen}
-					onCancel={handleCancelAlert}
-					onConfirm={handleConfirmAlert}
-				/>
+				<Col className={classes.stepContent} xs={12}>
+					{renderIntermediateOrSuccessStepContent()}
+				</Col>
+			</Row>
+			<AllowConnectionForDeviceAlert
+				device={pendingConnectionDevice}
+				isOpen={isAllowDeviceAlertOpen}
+				onCancel={handleCancelAlert}
+				onConfirm={handleConfirmAlert}
+			/>
 			<Dialog
 				isOpen={
 					isNoWiFiError &&
@@ -428,7 +350,7 @@ const DeskreenStepper = ({
 				<Grid>
 					<div style={{ padding: '10px' }}>
 						<Row center="xs" style={{ marginTop: '10px' }}>
-							<Icon icon="offline" size={50} color="#8A9BA8" />
+							<Icon icon="offline" size={50} className={Classes.TEXT_MUTED} />
 						</Row>
 						<Row center="xs" style={{ marginTop: '10px' }}>
 							<H3>{t('no-wifi-and-lan-connection')}</H3>
@@ -454,7 +376,11 @@ const DeskreenStepper = ({
 						<Row>
 							<Col xs>
 								<Row center="xs" style={{ marginTop: '20px' }}>
-									<Icon icon="translate" size={50} color="#8A9BA8" />
+									<Icon
+										icon="translate"
+										size={50}
+										className={Classes.TEXT_MUTED}
+									/>
 								</Row>
 								<Row center="xs" style={{ marginTop: '20px' }}>
 									<H5>{t('language')}</H5>
@@ -463,17 +389,6 @@ const DeskreenStepper = ({
 									<LanguageSelector />
 								</Row>
 							</Col>
-							{/*<Col xs>*/}
-							{/*  <Row center="xs" style={{ marginTop: '20px' }}>*/}
-							{/*    <Icon icon="style" size={50} color="#8A9BA8" />*/}
-							{/*  </Row>*/}
-							{/*  <Row center="xs" style={{ marginTop: '20px' }}>*/}
-							{/*    <H5>{t('color-theme')}</H5>*/}
-							{/*  </Row>*/}
-							{/*  <Row center="xs" style={{ marginTop: '10px' }}>*/}
-							{/*    <ToggleThemeBtnGroup />*/}
-							{/*  </Row>*/}
-							{/*</Col>*/}
 						</Row>
 						<Row center="xs" style={{ marginTop: '20px' }}>
 							<Button

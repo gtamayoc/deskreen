@@ -1,8 +1,9 @@
-import { Classes, Dialog, Divider, H1, H2, H3, Icon } from '@blueprintjs/core';
-import { Col, Row } from 'react-flexbox-grid';
+import { useCallback } from 'react';
+import { Button, Classes, Dialog, Divider, Icon } from '@blueprintjs/core';
 import { useTranslation } from 'react-i18next';
 import './index.css';
 import { type ErrorMessageType } from './ErrorMessageEnum';
+import { useTheme } from '../../providers/ThemeProvider';
 
 interface ErrorDialogProps {
 	isOpen: boolean;
@@ -13,53 +14,109 @@ interface ErrorDialogProps {
 function ErrorDialog(props: ErrorDialogProps) {
 	const { t } = useTranslation();
 	const { errorMessage, isOpen, setIsOpen } = props;
+	const { isDarkMode, toggleDarkMode } = useTheme();
+
+	const handleReload = useCallback(() => {
+		window.location.reload();
+	}, []);
+
+	const handleClose = useCallback(() => {
+		setIsOpen(false);
+	}, [setIsOpen]);
+
+	const darkClass = isDarkMode ? `${Classes.DARK} bp3-dark` : '';
 
 	return (
 		<Dialog
-			className="error-dialog"
+			className={`error-dialog ${darkClass}`.trim()}
+			portalClassName={darkClass}
 			autoFocus
 			canEscapeKeyClose
 			canOutsideClickClose={false}
 			enforceFocus
 			isOpen={isOpen}
-			// usePortal
-			style={{
-				width: '90%',
-				maxWidth: '1200px',
-			}}
 			backdropClassName="error-dialog-backdrop"
-			onClose={() => {
-				setIsOpen(false);
-			}}
+			onClose={handleClose}
 		>
-			<Row center="xs" style={{ marginTop: '10px' }}>
-				<Col xs={12}>
-					<H3 className={Classes.TEXT_MUTED}>
-						{t('Error occurred')}
-					</H3>
-				</Col>
-			</Row>
-			<Row middle="xs" center="xs" style={{ padding: '20px', width: '100%' }}>
-				<Col xs={12} md={10} lg={6}>
-					<Row middle="xs" center="xs">
-						<Col xs={1}>
-							<Icon icon="error" size={52} color="#db3737" />
-						</Col>
-						<Col xs={11}>
-							<H1
-								style={{ color: '#db3737', marginBottom: '0px' }}
-							>
-								{`${t('Something went wrong')} :(`}
-							</H1>
-						</Col>
-					</Row>
-				</Col>
-			</Row>
-			<Divider />
-			<div className={Classes.DIALOG_BODY}>
-				<H3 className={Classes.TEXT_MUTED}>{t(`${errorMessage}`)}</H3>
-				<Divider />
-				<H2>{`${t('You may close this browser window then try to connect again')}.`}</H2>
+			<div className="error-dialog-container">
+				{/* Top bar with Badge and Theme Toggle Button */}
+				<div className="error-dialog-topbar">
+					<div className="error-dialog-badge">
+						<Icon icon="error" size={16} className="error-dialog-badge-icon" />
+						<span className="error-dialog-badge-text">
+							{t('Error occurred')}
+						</span>
+					</div>
+					<Button
+						minimal
+						className="error-dialog-theme-toggle"
+						icon={<Icon icon={isDarkMode ? 'flash' : 'moon'} />}
+						onClick={toggleDarkMode}
+						title={
+							isDarkMode
+								? (t('Modo Claro') as string)
+								: (t('Modo Oscuro') as string)
+						}
+						aria-label={
+							isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'
+						}
+					/>
+				</div>
+
+				{/* Hero Section */}
+				<div className="error-dialog-hero">
+					<div className="error-dialog-hero-icon-wrapper">
+						<Icon icon="error" size={32} className="error-dialog-hero-icon" />
+					</div>
+					<div className="error-dialog-hero-text">
+						<h1 className="error-dialog-title">
+							{`${t('Something went wrong')} :(`}
+						</h1>
+					</div>
+				</div>
+
+				<Divider className="error-dialog-divider" />
+
+				{/* Localized Error Reason Card & Advice */}
+				<div className={`error-dialog-body ${Classes.DIALOG_BODY}`}>
+					<div className="error-dialog-message-card">
+						<Icon
+							icon="issue"
+							size={18}
+							className="error-dialog-message-icon"
+						/>
+						<div className="error-dialog-message-content">
+							<div className="error-dialog-message-text">
+								{t(`${errorMessage}`)}
+							</div>
+						</div>
+					</div>
+
+					<p className="error-dialog-advice">
+						{`${t('You may close this browser window then try to connect again')}.`}
+					</p>
+				</div>
+
+				<Divider className="error-dialog-divider" />
+
+				{/* Action Buttons */}
+				<div className="error-dialog-actions">
+					<Button
+						className="rounded-pill-button error-dialog-retry-btn"
+						intent="warning"
+						icon="refresh"
+						onClick={handleReload}
+					>
+						{t('re-initiate-connection') as string}
+					</Button>
+					<Button
+						minimal
+						className="rounded-pill-button error-dialog-dismiss-btn"
+						onClick={handleClose}
+					>
+						{t('Dismiss') as string}
+					</Button>
+				</div>
 			</div>
 		</Dialog>
 	);

@@ -8,16 +8,9 @@
 	gap: 12px;
 }
 
-.logoWithAppName {
-	margin: 0 auto;
-}
-
-.appNameHeader {
-	margin: 0 auto;
-	padding-top: 5px;
-	font-family: 'Lexend Peta', sans-serif;
-	font-size: 20px;
-	color: #e2791b;
+.topPanelControlButtonMargin,
+.topPanelControlButton,
+.topPanelIconOfControlButton {
 	cursor: default !important;
 }
 
@@ -28,12 +21,10 @@
 }
 
 .topPanelControlsWrapper {
-	position: absolute;
-	right: 15px;
-	top: 15px;
 	display: flex;
 	flex-direction: column;
-	align-items: flex-end;
+	align-items: center;
+	justify-content: center;
 	gap: 6px;
 }
 
@@ -41,11 +32,9 @@
 	width: 40px;
 	height: 40px;
 	border-radius: 50px;
-	cursor: default !important;
 }
 
 .topPanelControlButtonMargin {
-	cursor: default !important;
 	position: relative;
 }
 
@@ -53,10 +42,6 @@
 	border-radius: 12px;
 	cursor: pointer;
 	box-shadow: none;
-}
-
-.topPanelIconOfControlButton {
-	cursor: default !important;
 }
 
 .connectedDevicesBadge {
@@ -70,7 +55,7 @@
 	height: 20px;
 	display: flex;
 	align-items: center;
-	justifyContent: center;
+	justify-content: center;
 	font-size: 12px;
 	font-weight: 600;
 	padding: 0 6px;

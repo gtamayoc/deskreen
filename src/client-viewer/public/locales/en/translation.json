@@ -22,6 +22,8 @@
 	"Video stream is paused": "Video stream is paused",
 	"Video stream is playing": "Video stream is playing",
 	"Video stream paused after exiting fullscreen. Please click Play to continue.": "Video stream paused after exiting fullscreen. Please click Play to continue.",
+	"Resume Fullscreen": "Resume Fullscreen",
+	"Dismiss": "Dismiss",
 	"Pause": "Pause",
 	"Play": "Play",
 	"Video Settings": "Video Settings",

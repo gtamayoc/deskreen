@@ -17,6 +17,7 @@
 	display: flex;
 }
 
+body.bp6-dark .privacy-consent-buttons-container,
 body.bp3-dark .privacy-consent-buttons-container {
 	background: #30404d;
 	border-top-color: rgba(255, 255, 255, 0.2);
@@ -77,10 +78,12 @@ body.bp3-dark .privacy-consent-buttons-container {
 	text-decoration: underline !important;
 }
 
+body.bp6-dark .disagree-analytics-button,
 body.bp3-dark .disagree-analytics-button {
 	color: #8a9ba8 !important;
 }
 
+body.bp6-dark .disagree-analytics-button:hover,
 body.bp3-dark .disagree-analytics-button:hover {
 	color: #bfccd6 !important;
 	background: none !important;

@@ -41,6 +41,7 @@ export default function handleCreatePeer(
 				// @ts-ignore
 				peerConnection.peer = new SimplePeer({
 					initiator: true,
+					channelName: 'deskreen-remote-input',
 					// trickle: false,
 					config: { iceServers: [] },
 					// sdpTransform: simplePeerHandleSdpTransform,
@@ -69,14 +70,14 @@ export default function handleCreatePeer(
 					handlePeerOnData(peerConnection, data);
 				});
 
-				// ensure cleanup on peer end/error to prevent dangling helper window
+				// on peer close or error, transition to reconnecting state instead of immediate selfDestroy
 				peerConnection.peer.on('close', () => {
-					peerConnection.selfDestroy();
+					peerConnection.handlePeerCloseOrExit();
 				});
 
 				peerConnection.peer.on('error', (e: Error) => {
 					console.error('peerConnection peer error', e);
-					peerConnection.selfDestroy();
+					peerConnection.handlePeerCloseOrExit();
 				});
 				resolve(undefined);
 			})

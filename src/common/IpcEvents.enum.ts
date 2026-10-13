@@ -64,4 +64,9 @@ export enum IpcEvents {
 	VerifyDeviceSessionToken = 'verify-device-session-token',
 	GetDeviceSessionToken = 'get-device-session-token',
 	GetSourceMetadataBySourceId = 'get-source-metadata-by-source-id',
+	NetworkGetDiscoveredDevices = 'network-get-discovered-devices',
+	NetworkScanNow = 'network-scan-now',
+	NetworkDevicesUpdated = 'network-devices-updated',
+	DispatchUrlToDevice = 'network-dispatch-url-to-device',
+	DispatchUrlToMultipleDevices = 'network-dispatch-url-to-multiple-devices',
 }

@@ -1,10 +1,10 @@
+import { Button, Icon, Position, Tag, Tooltip } from '@blueprintjs/core';
+import { SettingsContext } from '@renderer/contexts/SettingsContext';
 import React from 'react';
-import { Button, H3, Icon, Position, Tag, Tooltip } from '@blueprintjs/core';
-import { Col, Row } from 'react-flexbox-grid';
-import SettingsOverlay from './SettingsOverlay/SettingsOverlay';
-import ConnectedDevicesListDrawer from './ConnectedDevicesListDrawer';
 import { useTranslation } from 'react-i18next';
 import { IpcEvents } from '../../../common/IpcEvents.enum';
+import ConnectedDevicesListDrawer from './ConnectedDevicesListDrawer';
+import SettingsOverlay from './SettingsOverlay/SettingsOverlay';
 import classes from './TopPanel.module.css';
 
 interface Props {
@@ -13,6 +13,7 @@ interface Props {
 
 export default function TopPanel({ handleReset }: Props): React.ReactElement {
 	const { t } = useTranslation();
+	const { isDarkMode, toggleDarkMode } = React.useContext(SettingsContext);
 
 	const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 	const [isConnectedDevicesDrawerOpen, setIsConnectedDevicesDrawerOpen] =
@@ -20,22 +21,6 @@ export default function TopPanel({ handleReset }: Props): React.ReactElement {
 	const [latestVersion, setLatestVersion] = React.useState('');
 	const [currentVersion, setCurrentVersion] = React.useState('');
 	const [connectedDevicesCount, setConnectedDevicesCount] = React.useState(0);
-	const [isDarkMode, setIsDarkMode] = React.useState(() => {
-		return localStorage.getItem('deskreen_app_dark_mode') === 'true';
-	});
-
-	React.useEffect(() => {
-		if (isDarkMode) {
-			document.body.classList.add('bp3-dark');
-		} else {
-			document.body.classList.remove('bp3-dark');
-		}
-		localStorage.setItem('deskreen_app_dark_mode', String(isDarkMode));
-	}, [isDarkMode]);
-
-	const handleToggleDarkMode = React.useCallback(() => {
-		setIsDarkMode((prev) => !prev);
-	}, []);
 
 	const handleSettingsOpen = React.useCallback(() => {
 		setIsSettingsOpen(true);
@@ -48,8 +33,6 @@ export default function TopPanel({ handleReset }: Props): React.ReactElement {
 	const handleToggleConnectedDevicesListDrawer = React.useCallback(() => {
 		setIsConnectedDevicesDrawerOpen(!isConnectedDevicesDrawerOpen);
 	}, [isConnectedDevicesDrawerOpen]);
-
-
 
 	const handleTutorialButtonClick = React.useCallback(() => {
 		window.electron.ipcRenderer.invoke(
@@ -96,7 +79,20 @@ export default function TopPanel({ handleReset }: Props): React.ReactElement {
 			}
 		};
 
-		fetchConnectedDevicesCount();
+		void fetchConnectedDevicesCount();
+
+		const handleDeviceUpdate = (): void => {
+			void fetchConnectedDevicesCount();
+		};
+
+		window.electron.ipcRenderer.on(
+			IpcEvents.ViewerConnectionAvailabilityChanged,
+			handleDeviceUpdate,
+		);
+		window.electron.ipcRenderer.on(
+			IpcEvents.SetPendingConnectionDevice,
+			handleDeviceUpdate,
+		);
 
 		const connectedDevicesInterval = setInterval(
 			fetchConnectedDevicesCount,
@@ -105,6 +101,14 @@ export default function TopPanel({ handleReset }: Props): React.ReactElement {
 
 		return () => {
 			clearInterval(connectedDevicesInterval);
+			window.electron.ipcRenderer.removeListener(
+				IpcEvents.ViewerConnectionAvailabilityChanged,
+				handleDeviceUpdate,
+			);
+			window.electron.ipcRenderer.removeListener(
+				IpcEvents.SetPendingConnectionDevice,
+				handleDeviceUpdate,
+			);
 		};
 	}, []);
 
@@ -112,8 +116,6 @@ export default function TopPanel({ handleReset }: Props): React.ReactElement {
 		latestVersion !== '' &&
 		currentVersion !== '' &&
 		latestVersion !== currentVersion;
-
-
 
 	const renderConnectedDevicesListButton = (
 		<div className={classes.topPanelControlButtonMargin}>
@@ -208,7 +210,7 @@ export default function TopPanel({ handleReset }: Props): React.ReactElement {
 			>
 				<Button
 					id="top-panel-dark-mode-button"
-					onClick={handleToggleDarkMode}
+					onClick={toggleDarkMode}
 					className={classes.topPanelControlButton}
 				>
 					<Icon
@@ -221,21 +223,9 @@ export default function TopPanel({ handleReset }: Props): React.ReactElement {
 		</div>
 	);
 
-	const renderLogoWithAppName = (
-		<div
-			id="logo-with-popover-visit-website"
-			className={classes.logoWithAppName}
-		>
-			<H3>Deskreen Community Edition</H3>
-		</div>
-	);
-
 	return (
 		<>
 			<div className={classes.topPanelRoot}>
-				<Row middle="xs" center="xs" style={{ width: '100%' }}>
-					<Col>{renderLogoWithAppName}</Col>
-				</Row>
 				<div className={classes.topPanelControlsWrapper}>
 					<div className={classes.topPanelControlButtonsRoot}>
 						{renderConnectedDevicesListButton}

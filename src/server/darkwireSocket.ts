@@ -48,9 +48,14 @@ export default class Socket implements SocketOPTS {
 		this.socket = socket;
 		this.roomIdOriginal = roomIdOriginal;
 		this.room = room;
-		if (room.isLocked) {
+		const users = room.users || [];
+		if (room.isLocked && users.length > 1) {
 			this.sendRoomLocked();
 			return;
+		}
+		if (room.isLocked && users.length <= 1) {
+			this.room.isLocked = false;
+			void this.saveRoom(this.room);
 		}
 
 		this.handleSocket();
@@ -157,7 +162,7 @@ export default class Socket implements SocketOPTS {
 				const connectedViewers = (room.users || []).filter((user) => {
 					return !user.isOwner;
 				});
-				if (connectedViewers.length >= 1) {
+				if (connectedViewers.length >= 5) {
 					this.socket.emit('NOT_ALLOWED');
 					setTimeout(() => {
 						this.socket.disconnect(true);
@@ -221,14 +226,14 @@ export default class Socket implements SocketOPTS {
 			(u) => u.socketId === socket.id && u.isOwner,
 		);
 
+		const remainingUsers = (room.users || []).filter(
+			(u) => u.socketId !== socket.id,
+		);
+
 		const newRoom = {
 			...room,
-			users: (room.users || [])
-				.filter((u) => u.socketId !== socket.id)
-				.map((u, index) => ({
-					...u,
-					isOwner: index === 0,
-				})),
+			isLocked: remainingUsers.length <= 1 ? false : room.isLocked,
+			users: remainingUsers,
 		};
 
 		if (isOwnerUser) {

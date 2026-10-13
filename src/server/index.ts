@@ -24,6 +24,7 @@ import { getDeskreenGlobal } from '../main/helpers/getDeskreenGlobal';
 import getMyLocalIpV4 from '../main/helpers/getMyLocalIpV4';
 import { getClientViewerDistPath } from './getClientViewerDistPath';
 import { store } from '../common/deskreen-electron-store';
+import SharingSessionStatusEnum from '../features/SharingSessionService/SharingSessionStatusEnum';
 
 const { hostname, primaryPort, backupPort } = config;
 
@@ -31,35 +32,94 @@ const getRoomIdHash = (id: string): string => {
 	return crypto.createHash('sha256').update(id).digest('hex');
 };
 
+export const isRoomActiveOrWaiting = (roomIdStr: string): boolean => {
+	const deskreenGlobal = getDeskreenGlobal();
+	if (!roomIdStr) return false;
+	if (deskreenGlobal.roomIDService.isRoomIDTaken(roomIdStr)) {
+		return true;
+	}
+	if (
+		deskreenGlobal.sharingSessionService.waitingForConnectionSharingSession
+			?.roomID === roomIdStr
+	) {
+		return true;
+	}
+	for (const session of deskreenGlobal.sharingSessionService.sharingSessions.values()) {
+		if (session.roomID === roomIdStr) {
+			return true;
+		}
+	}
+	return false;
+};
+
 const ioHandleOnConnection = (socket): void => {
 	let { roomId } = socket.handshake.query;
 	const store = getStore();
 
 	(async () => {
-		const waitingSession =
-			getDeskreenGlobal().sharingSessionService
-				.waitingForConnectionSharingSession;
+		const deskreenGlobal = getDeskreenGlobal();
+		let waitingSession =
+			deskreenGlobal.sharingSessionService.waitingForConnectionSharingSession;
+		const isHelper = socket.handshake.query?.isHelper === 'true';
+
+		// If no waiting session is present but device slots are available, dynamically provision one
 		if (
-			(!roomId ||
-				!getDeskreenGlobal().roomIDService.isRoomIDTaken(String(roomId))) &&
-			waitingSession
+			!waitingSession &&
+			!isHelper &&
+			deskreenGlobal.connectedDevicesService?.isSlotAvailable()
 		) {
+			try {
+				waitingSession =
+					await deskreenGlobal.sharingSessionService.createWaitingForConnectionSharingSession();
+			} catch {
+				// ignore
+			}
+		}
+
+		if ((!roomId || !isRoomActiveOrWaiting(String(roomId))) && waitingSession) {
 			roomId = waitingSession.roomID;
 		}
 
-		if (!roomId || !getDeskreenGlobal().roomIDService.isRoomIDTaken(String(roomId))) {
+		if (!roomId || !isRoomActiveOrWaiting(String(roomId))) {
 			socket.emit('NOT_ALLOWED');
 			setTimeout(() => {
 				socket.disconnect(true);
 			}, 1000);
 			return;
 		}
-		const finalRoomId = String(roomId);
-		const roomIdHash = getRoomIdHash(finalRoomId);
+		let finalRoomId = String(roomId);
+		let roomIdHash = getRoomIdHash(finalRoomId);
 
-		const storedRoom = await store.get('rooms', roomIdHash);
-		const parsedRoom =
+		let storedRoom = await store.get('rooms', roomIdHash);
+		let parsedRoom =
 			typeof storedRoom === 'string' ? JSON.parse(storedRoom) : {};
+
+		let usersInRoom = (parsedRoom as Room)?.users || [];
+
+		// If this is a viewer socket and this room is ALREADY occupied by another viewer:
+		// Route the viewer to the available waiting room instead of collision!
+		const viewersInRoom = usersInRoom.filter((u) => !u.isOwner);
+		if (
+			!isHelper &&
+			viewersInRoom.length >= 1 &&
+			waitingSession &&
+			waitingSession.roomID &&
+			waitingSession.roomID !== finalRoomId
+		) {
+			console.log(
+				`[SignalingServer] Room ${finalRoomId} already occupied by a viewer. Routing incoming viewer to available waiting room ${waitingSession.roomID}`,
+			);
+			finalRoomId = waitingSession.roomID;
+			roomIdHash = getRoomIdHash(finalRoomId);
+			storedRoom = await store.get('rooms', roomIdHash);
+			parsedRoom = typeof storedRoom === 'string' ? JSON.parse(storedRoom) : {};
+			usersInRoom = (parsedRoom as Room)?.users || [];
+		}
+
+		if ((parsedRoom as Room)?.isLocked && usersInRoom.length <= 1) {
+			(parsedRoom as Room).isLocked = false;
+			await store.set('rooms', roomIdHash, JSON.stringify(parsedRoom));
+		}
 
 		new DarkwireSocket({
 			roomIdOriginal: finalRoomId,
@@ -128,6 +188,9 @@ class DeskreenSignalingServer {
 	init(): void {
 		this.app = new Koa();
 		const router = new Router();
+		router.get('/ping', (ctx) => {
+			ctx.body = 'pong';
+		});
 
 		this.app.use(cors());
 		this.app.use(router.routes());
@@ -143,6 +206,42 @@ class DeskreenSignalingServer {
 					if (waitingSession && waitingSession.roomID) {
 						ctx.redirect(`/${waitingSession.roomID}`);
 						return;
+					}
+					const activeSessions = Array.from(
+						getDeskreenGlobal().sharingSessionService.sharingSessions.values(),
+					);
+					if (activeSessions.length > 0 && activeSessions[0].roomID) {
+						ctx.redirect(`/${activeSessions[0].roomID}`);
+						return;
+					}
+				} else {
+					const cleanPath = ctx.path.replace(/^\//, '').split('?')[0];
+					if (cleanPath) {
+						const deskreenGlobal = getDeskreenGlobal();
+						const waitingSession =
+							deskreenGlobal.sharingSessionService
+								?.waitingForConnectionSharingSession;
+						const activeSessions = Array.from(
+							deskreenGlobal.sharingSessionService?.sharingSessions?.values() ||
+								[],
+						);
+						const isPathOccupied = activeSessions.some(
+							(s) =>
+								s.roomID === cleanPath &&
+								s.status === SharingSessionStatusEnum.SHARING,
+						);
+						if (
+							isPathOccupied &&
+							waitingSession &&
+							waitingSession.roomID &&
+							waitingSession.roomID !== cleanPath
+						) {
+							console.log(
+								`[Server] Path /${cleanPath} already in active sharing. Redirecting HTTP request to waiting room /${waitingSession.roomID}`,
+							);
+							ctx.redirect(`/${waitingSession.roomID}`);
+							return;
+						}
 					}
 				}
 				setStaticFileHeaders(ctx);

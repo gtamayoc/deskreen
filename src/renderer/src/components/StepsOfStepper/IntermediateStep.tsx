@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, Text } from '@blueprintjs/core';
 import { Col, Row } from 'react-flexbox-grid';
 import { useTranslation } from 'react-i18next';
-import ScanQRStep from './ScanQRStep';
+import NetworkAnalyzerPanel from '../NetworkAnalyzer/NetworkAnalyzerPanel';
 import ChooseAppOrScreenStep from './ChooseAppOrScreenStep';
 import ConfirmStep from './ConfirmStep';
 import SuccessStep from './SuccessStep';
@@ -32,7 +32,7 @@ function getStepContent(
 ): React.ReactNode {
 	switch (stepIndex) {
 		case 0:
-			return <ScanQRStep />;
+			return <NetworkAnalyzerPanel />;
 		case 1:
 			return (
 				<>
@@ -54,7 +54,7 @@ function getStepContent(
 		case 3:
 			return <SuccessStep handleReset={handleReset} />;
 		default:
-			return <ScanQRStep />;
+			return <NetworkAnalyzerPanel />;
 	}
 }
 
@@ -88,7 +88,8 @@ export default function IntermediateStep(
 				flexDirection: 'column',
 				justifyContent: 'center',
 				alignItems: 'center',
-				height: '260px',
+				minHeight: '260px',
+				height: 'auto',
 				width: '100%',
 			}}
 		>
@@ -99,21 +100,6 @@ export default function IntermediateStep(
 				handleNextApplicationWindow,
 				connectedDevice,
 				handleReset,
-			)}
-			{(typeof process === 'undefined' || process.env?.NODE_ENV === 'production') &&
-			(typeof process === 'undefined' ||
-				(process.env?.RUN_MODE !== 'dev' && process.env?.RUN_MODE !== 'test')) ? (
-				<></>
-			) : activeStep === 0 ? (
-				<Button
-					onClick={() => {
-						// connectedDevicesService.setPendingConnectionDevice(DEVICES[Math.floor(Math.random() * DEVICES.length)]);
-					}}
-				>
-					Connect Test Device
-				</Button>
-			) : (
-				<></>
 			)}
 			{activeStep !== 0 ? (
 				<Row>

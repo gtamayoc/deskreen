@@ -14,8 +14,8 @@ src/client-viewer/node_modules
 tsconfig.web.tsbuildinfo
 src/client-viewer/.env
 
-AGENTS.md
 .codebase-memory/
 tasks/
 .agents/
 tests/
+docs/

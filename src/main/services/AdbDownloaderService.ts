@@ -51,7 +51,10 @@ export class AdbDownloaderService {
 		this.isDownloading = true;
 		const downloadUrl = this.getDownloadUrl();
 		const binDir = path.join(app.getPath('userData'), 'bin');
-		const tempZipPath = path.join(app.getPath('temp'), `platform-tools-${Date.now()}.zip`);
+		const tempZipPath = path.join(
+			app.getPath('temp'),
+			`platform-tools-${Date.now()}.zip`,
+		);
 
 		try {
 			if (!fs.existsSync(binDir)) {

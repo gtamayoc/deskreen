@@ -1,24 +1,24 @@
-import React, { useCallback, useEffect, useState } from 'react';
 import {
-	Overlay2,
+	Callout,
 	Classes,
 	H3,
-	Tabs,
-	Tab,
-	Icon,
-	Text,
-	TabsExpander,
-	Callout,
 	HTMLSelect,
+	Icon,
 	InputGroup,
+	Overlay2,
+	Tab,
+	Tabs,
+	TabsExpander,
+	Text,
 } from '@blueprintjs/core';
-import { Col, Row } from 'react-flexbox-grid';
 import { createStyles, makeStyles } from '@material-ui/core/styles';
-import CloseOverlayButton from '../CloseOverlayButton';
-import SettingRowLabelAndInput from './SettingRowLabelAndInput';
-import LanguageSelector from '../LanguageSelector';
-import { IpcEvents } from '../../../../common/IpcEvents.enum';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Col, Row } from 'react-flexbox-grid';
 import { useTranslation } from 'react-i18next';
+import { IpcEvents } from '../../../../common/IpcEvents.enum';
+import CloseOverlayButton from '../CloseOverlayButton';
+import LanguageSelector from '../LanguageSelector';
+import SettingRowLabelAndInput from './SettingRowLabelAndInput';
 import './settings-overlay.css';
 
 interface SettingsOverlayProps {
@@ -308,10 +308,6 @@ export default function SettingsOverlay(
 									target="_blank"
 									rel="noopener noreferrer"
 									className="bp3-link"
-									style={{
-										color: '#106ba3',
-										textDecoration: 'none',
-									}}
 								>
 									Pavlo Buidenkov
 								</a>
@@ -325,10 +321,6 @@ export default function SettingsOverlay(
 									target="_blank"
 									rel="noopener noreferrer"
 									className="bp3-link"
-									style={{
-										color: '#106ba3',
-										textDecoration: 'none',
-									}}
 								>
 									https://www.deskreen.com
 								</a>

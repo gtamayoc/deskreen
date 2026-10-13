@@ -13,6 +13,7 @@ import { Col, Row } from 'react-flexbox-grid';
 import { useTranslation } from 'react-i18next';
 import i18nInstance from '../../config/i18n';
 import { getConsentStatus, type ConsentStatus } from '../../utils/analytics';
+import { useTheme } from '../../providers/ThemeProvider';
 import './index.css';
 
 interface PrivacyControlDialogProps {
@@ -96,7 +97,13 @@ function TranslatedContent() {
 				)}
 			</p>
 
-			<p style={{ marginBottom: '24px', fontSize: '14px', color: 'var(--text-muted-color, #5c7080)' }}>
+			<p
+				style={{
+					marginBottom: '24px',
+					fontSize: '14px',
+					color: 'var(--text-muted-color, #5c7080)',
+				}}
+			>
 				{t('Data goes to: Google Analytics. See')}{' '}
 				<a
 					href="https://policies.google.com/privacy"
@@ -167,6 +174,7 @@ function TranslatedButtons({
 function PrivacyControlDialog(props: PrivacyControlDialogProps) {
 	const { t, i18n } = useTranslation();
 	const { isOpen, onClose, onAccept, onOptOut } = props;
+	const { isDarkMode } = useTheme();
 	const [currentLanguage, setCurrentLanguage] = useState(i18n.language || 'en');
 	const [forceUpdate, setForceUpdate] = useState(0);
 	const [currentStatus, setCurrentStatus] = useState<ConsentStatus>(null);
@@ -223,10 +231,12 @@ function PrivacyControlDialog(props: PrivacyControlDialogProps) {
 	};
 
 	const langKey = `${currentLanguage}-${forceUpdate}`;
+	const darkClass = isDarkMode ? `${Classes.DARK} bp3-dark` : '';
 
 	return (
 		<Dialog
-			className="privacy-control-dialog"
+			className={`privacy-control-dialog ${darkClass}`.trim()}
+			portalClassName={darkClass}
 			autoFocus
 			canEscapeKeyClose={true}
 			canOutsideClickClose={true}
@@ -251,7 +261,10 @@ function PrivacyControlDialog(props: PrivacyControlDialogProps) {
 			>
 				<Col xs={6}>
 					<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-						<Icon icon="translate" style={{ color: 'var(--text-muted-color, #5c7080)' }} />
+						<Icon
+							icon="translate"
+							style={{ color: 'var(--text-muted-color, #5c7080)' }}
+						/>
 						<HTMLSelect
 							value={currentLanguage}
 							onChange={handleLanguageChange}

@@ -65,17 +65,24 @@ export class VirtualDisplayService {
 		if (os.platform() !== 'win32') {
 			return {
 				success: false,
-				message: 'Automated provisioning script is currently configured for Windows',
+				message:
+					'Automated provisioning script is currently configured for Windows',
 				displayAdded: false,
 			};
 		}
 
 		this.isProvisioning = true;
-		this.log.info('Only 1 display detected. Launching automated virtual display script...');
+		this.log.info(
+			'Only 1 display detected. Launching automated virtual display script...',
+		);
 
 		return new Promise((resolve) => {
 			try {
-				const scriptPath = path.resolve(process.cwd(), 'scripts', 'setup-virtual-display.ps1');
+				const scriptPath = path.resolve(
+					process.cwd(),
+					'scripts',
+					'setup-virtual-display.ps1',
+				);
 
 				const ps = spawn(
 					'powershell.exe',
@@ -105,7 +112,9 @@ export class VirtualDisplayService {
 
 				ps.on('close', (code) => {
 					this.isProvisioning = false;
-					this.log.info(`Virtual display script exited with code ${code}. Output: ${stdout}`);
+					this.log.info(
+						`Virtual display script exited with code ${code}. Output: ${stdout}`,
+					);
 					if (stderr) {
 						this.log.warn(`Virtual display script stderr: ${stderr}`);
 					}
@@ -122,7 +131,10 @@ export class VirtualDisplayService {
 
 				ps.on('error', (err) => {
 					this.isProvisioning = false;
-					this.log.error('Failed to spawn virtual display provisioning script', err);
+					this.log.error(
+						'Failed to spawn virtual display provisioning script',
+						err,
+					);
 					resolve({
 						success: false,
 						message: `Failed to execute script: ${err.message}`,
@@ -194,7 +206,14 @@ if ($proc) {
 			try {
 				const ps = spawn(
 					'powershell.exe',
-					['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', psCommand],
+					[
+						'-NoProfile',
+						'-NonInteractive',
+						'-ExecutionPolicy',
+						'Bypass',
+						'-Command',
+						psCommand,
+					],
 					{ windowsHide: true },
 				);
 
@@ -266,7 +285,14 @@ if ($proc) {
 			try {
 				const ps = spawn(
 					'powershell.exe',
-					['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', psCommand],
+					[
+						'-NoProfile',
+						'-NonInteractive',
+						'-ExecutionPolicy',
+						'Bypass',
+						'-Command',
+						psCommand,
+					],
 					{ windowsHide: true },
 				);
 				let output = '';

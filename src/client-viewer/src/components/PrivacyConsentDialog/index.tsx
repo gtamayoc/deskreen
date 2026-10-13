@@ -12,6 +12,7 @@ import {
 import { Col, Row } from 'react-flexbox-grid';
 import { useTranslation } from 'react-i18next';
 import i18nInstance from '../../config/i18n';
+import { useTheme } from '../../providers/ThemeProvider';
 import './index.css';
 
 interface PrivacyConsentDialogProps {
@@ -94,7 +95,13 @@ function TranslatedContent() {
 				)}
 			</p>
 
-			<p style={{ marginBottom: '24px', fontSize: '14px', color: 'var(--text-muted-color, #5c7080)' }}>
+			<p
+				style={{
+					marginBottom: '24px',
+					fontSize: '14px',
+					color: 'var(--text-muted-color, #5c7080)',
+				}}
+			>
 				{t('Data goes to: Google Analytics. See')}{' '}
 				<a
 					href="https://policies.google.com/privacy"
@@ -155,6 +162,7 @@ function TranslatedButtons({
 function PrivacyConsentDialog(props: PrivacyConsentDialogProps) {
 	const { t, i18n } = useTranslation();
 	const { isOpen, onAccept, onOptOut } = props;
+	const { isDarkMode } = useTheme();
 	const [currentLanguage, setCurrentLanguage] = useState(i18n.language || 'en');
 	const [forceUpdate, setForceUpdate] = useState(0);
 
@@ -194,10 +202,12 @@ function PrivacyConsentDialog(props: PrivacyConsentDialogProps) {
 	};
 
 	const langKey = `${currentLanguage}-${forceUpdate}`;
+	const darkClass = isDarkMode ? `${Classes.DARK} bp3-dark` : '';
 
 	return (
 		<Dialog
-			className="privacy-consent-dialog"
+			className={`privacy-consent-dialog ${darkClass}`.trim()}
+			portalClassName={darkClass}
 			autoFocus
 			canEscapeKeyClose={false}
 			canOutsideClickClose={false}
@@ -221,7 +231,10 @@ function PrivacyConsentDialog(props: PrivacyConsentDialogProps) {
 			>
 				<Col xs={6}>
 					<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-						<Icon icon="translate" style={{ color: 'var(--text-muted-color, #5c7080)' }} />
+						<Icon
+							icon="translate"
+							style={{ color: 'var(--text-muted-color, #5c7080)' }}
+						/>
 						<HTMLSelect
 							value={currentLanguage}
 							onChange={handleLanguageChange}

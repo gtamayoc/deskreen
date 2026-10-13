@@ -3,16 +3,38 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" id="meta-theme-color" content="#182026" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Screen Viewer</title>
     <!-- Anti-flash hydration script for dark mode before initial paint -->
     <script>
       (function() {
         try {
+          var params = new URLSearchParams(window.location.search);
+          var themeParam = params.get('theme') || params.get('dark');
           var saved = localStorage.getItem('deskreen_dark_mode');
+          if (themeParam === 'dark' || themeParam === 'true' || themeParam === '1') {
+            saved = 'true';
+            localStorage.setItem('deskreen_dark_mode', 'true');
+          } else if (themeParam === 'light' || themeParam === 'false' || themeParam === '0') {
+            saved = 'false';
+            localStorage.setItem('deskreen_dark_mode', 'false');
+          }
           var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-          if (saved === 'true' || (saved !== 'false' && prefersDark)) {
-            document.documentElement.classList.add('bp3-dark');
+          var isDark = saved === 'true' || (saved !== 'false' && prefersDark);
+          var meta = document.getElementById('meta-theme-color');
+          if (isDark) {
+            document.documentElement.classList.add('bp6-dark', 'bp3-dark');
+            document.documentElement.style.colorScheme = 'dark';
+            if (meta) meta.setAttribute('content', '#182026');
+          } else {
+            document.documentElement.classList.remove('bp6-dark', 'bp3-dark');
+            document.documentElement.style.colorScheme = 'light';
+            if (meta) meta.setAttribute('content', '#f4f8fa');
           }
         } catch (_err) {
           // Storage access restricted or private mode
@@ -181,8 +203,8 @@
   </head>
   <body>
     <script>
-      if (document.documentElement.classList.contains('bp3-dark')) {
-        document.body.classList.add('bp3-dark');
+      if (document.documentElement.classList.contains('bp6-dark') || document.documentElement.classList.contains('bp3-dark')) {
+        document.body.classList.add('bp6-dark', 'bp3-dark');
       }
     </script>
     <div id="root"></div>

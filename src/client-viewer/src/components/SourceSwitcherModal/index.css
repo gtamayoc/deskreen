@@ -126,34 +126,47 @@
 }
 
 /* Dark mode overrides */
-body.bp3-dark .source-switcher-dialog {
+body.bp6-dark .source-switcher-dialog,
+body.bp3-dark .source-switcher-dialog,
+.bp6-dark .source-switcher-dialog,
+.bp3-dark .source-switcher-dialog {
 	background: #202b33 !important;
 	color: #f5f8fa !important;
 }
 
+body.bp6-dark .source-switcher-header,
 body.bp3-dark .source-switcher-header {
 	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+body.bp6-dark .source-switcher-subtitle,
 body.bp3-dark .source-switcher-subtitle {
 	color: #8a9ba8;
 }
 
+body.bp6-dark .source-section-title,
 body.bp3-dark .source-section-title {
 	color: #48aff0;
 }
 
-body.bp3-dark .source-card {
+body.bp6-dark .source-card,
+body.bp3-dark .source-card,
+.bp6-dark .source-card,
+.bp3-dark .source-card {
 	background: rgba(255, 255, 255, 0.05);
 	border: 1px solid rgba(255, 255, 255, 0.1);
 	color: #f5f8fa;
 }
 
-body.bp3-dark .source-card:hover {
+body.bp6-dark .source-card:hover,
+body.bp3-dark .source-card:hover,
+.bp6-dark .source-card:hover,
+.bp3-dark .source-card:hover {
 	background: rgba(255, 255, 255, 0.1);
 	border-color: #48aff0;
 }
 
+body.bp6-dark .source-card-icon,
 body.bp3-dark .source-card-icon {
 	color: #ced9e0;
 }
