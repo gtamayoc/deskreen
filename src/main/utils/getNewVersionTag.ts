@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const githubApiRepoLatestReleaseUrl =
-	'https://api.github.com/repos/pavlobu/deskreen/releases/latest';
+	'https://api.github.com/repos/gtamayoc/deskreen/releases/latest';
 
 export default async function getNewVersionTag(): Promise<string> {
 	try {

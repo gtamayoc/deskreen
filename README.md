@@ -4,12 +4,12 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg" alt="License: AGPL-3.0" /></a>
-  <a href="package.json"><img src="https://img.shields.io/badge/version-3.2.16-indigo.svg" alt="Version 3.2.16" /></a>
+  <a href="package.json"><img src="https://img.shields.io/badge/version-1.0.0-indigo.svg" alt="Version 1.0.0" /></a>
   <img src="https://img.shields.io/badge/node-%3E%3D22.6.0-emerald.svg" alt="Node >= 22.6.0" />
   <img src="https://img.shields.io/badge/electron-37.9.0-cyan.svg" alt="Electron 37.9.0" />
   <img src="https://img.shields.io/badge/react-19.2.0-61dafb.svg" alt="React 19.2.0" />
   <img src="https://img.shields.io/badge/vite-7.2.4-purple.svg" alt="Vite 7" />
-  <img src="https://img.shields.io/badge/tests-393%20passing-brightgreen.svg" alt="393 tests passing" />
+  <img src="https://img.shields.io/badge/tests-424%20passing-brightgreen.svg" alt="424 tests passing" />
 </p>
 
 <p align="center">
@@ -26,8 +26,8 @@
 
 ## 2. Estado Real del Desarrollo
 
-- **Versión activa:** `3.2.16 (Community Edition)`.
-- **Estabilidad de compilación:** Suite nativa de Node.js con **393 pruebas unitarias y de estrés pasando** sin fallas.
+- **Versión activa:** `1.0.0 (Community Edition)`.
+- **Estabilidad de compilación:** Suite nativa de Node.js con **424 pruebas unitarias y de estrés pasando** sin fallas.
 - **Auditoría de licenciamiento:** Código abierto verificado bajo **GNU AGPL-3.0** con estricta preservación de avisos de autoría original.
 - **Madurez de empaquetado:** Probado y validado en Windows 10/11 x64, macOS (Apple Silicon y x64) y Linux (x64 y ARM).
 

@@ -8,9 +8,8 @@ La seguridad y la privacidad de las comunicaciones entre tu computadora y tus di
 
 | Versión | Estado de Soporte |
 | :--- | :--- |
-| **3.2.x (Community Edition)** | :white_check_mark: Soportada activamente |
-| 3.0.x / 3.1.x | :warning: Se recomienda actualizar a 3.2.16+ |
-| < 3.0.0 (Upstream 1.x / 2.x) | :x: Obsoleta / No soportada |
+| **1.0.x (Community Edition)** | :white_check_mark: Soportada activamente |
+| < 1.0.0 (Upstream legacy 1.x / 2.x) | :x: Obsoleta / No soportada |
 
 ---
 

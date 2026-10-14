@@ -1,7 +1,7 @@
 # Lista de Verificación de Preparación para Publicación (Release Readiness): Deskreen CE
 
 **Fecha de evaluación:** 13 de octubre de 2026  
-**Versión evaluada:** 3.2.16  
+**Versión evaluada:** 1.0.0  
 **Rama:** `chore/public-release-compliance-branding`  
 **Estado general:** **LISTO PARA PUBLICACIÓN PÚBLICA (Pendiente de revisión final del mantenedor)**
 
@@ -57,4 +57,4 @@ Antes de hacer `git push` a `origin` o publicar el repositorio como público en 
 2. **Configurar el repositorio en GitHub:**
    - Asegurarse de que en la configuración del repositorio el fork tenga habilitadas las pestañas de *Issues* y *Discussions*.
    - Establecer la descripción breve: *"Community fork of Deskreen: Ultra-low latency secondary displays and AI consoles over WebRTC with HWND focus lock."*
-3. **Decisión sobre etiquetado (Tagging):** Si se desea publicar una versión de lanzamiento oficial, crear la etiqueta `v3.2.16` únicamente después de fusionar esta rama en la rama principal.
+3. **Decisión sobre etiquetado (Tagging):** Si se desea publicar una versión de lanzamiento oficial, crear la etiqueta `v1.0.0` únicamente después de fusionar esta rama en la rama principal.
