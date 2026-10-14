@@ -99,21 +99,36 @@ const ioHandleOnConnection = (socket): void => {
 		// If this is a viewer socket and this room is ALREADY occupied by another viewer:
 		// Route the viewer to the available waiting room instead of collision!
 		const viewersInRoom = usersInRoom.filter((u) => !u.isOwner);
-		if (
-			!isHelper &&
-			viewersInRoom.length >= 1 &&
-			waitingSession &&
-			waitingSession.roomID &&
-			waitingSession.roomID !== finalRoomId
-		) {
-			console.log(
-				`[SignalingServer] Room ${finalRoomId} already occupied by a viewer. Routing incoming viewer to available waiting room ${waitingSession.roomID}`,
-			);
-			finalRoomId = waitingSession.roomID;
-			roomIdHash = getRoomIdHash(finalRoomId);
-			storedRoom = await store.get('rooms', roomIdHash);
-			parsedRoom = typeof storedRoom === 'string' ? JSON.parse(storedRoom) : {};
-			usersInRoom = (parsedRoom as Room)?.users || [];
+		if (!isHelper && viewersInRoom.length >= 1) {
+			if (
+				(!waitingSession ||
+					!waitingSession.roomID ||
+					waitingSession.roomID === finalRoomId) &&
+				deskreenGlobal.connectedDevicesService?.isSlotAvailable()
+			) {
+				try {
+					waitingSession =
+						await deskreenGlobal.sharingSessionService.createWaitingForConnectionSharingSession();
+				} catch {
+					// ignore
+				}
+			}
+
+			if (
+				waitingSession &&
+				waitingSession.roomID &&
+				waitingSession.roomID !== finalRoomId
+			) {
+				console.log(
+					`[SignalingServer] Room ${finalRoomId} already occupied by a viewer. Routing incoming viewer to available waiting room ${waitingSession.roomID}`,
+				);
+				finalRoomId = waitingSession.roomID;
+				roomIdHash = getRoomIdHash(finalRoomId);
+				storedRoom = await store.get('rooms', roomIdHash);
+				parsedRoom =
+					typeof storedRoom === 'string' ? JSON.parse(storedRoom) : {};
+				usersInRoom = (parsedRoom as Room)?.users || [];
+			}
 		}
 
 		if ((parsedRoom as Room)?.isLocked && usersInRoom.length <= 1) {

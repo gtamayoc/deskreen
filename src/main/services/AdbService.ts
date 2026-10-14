@@ -63,19 +63,60 @@ export class AdbService {
 		this.mainWindow = window;
 	}
 
+	isWifiDevice(deviceId: string): boolean {
+		if (!deviceId || typeof deviceId !== 'string') {
+			return false;
+		}
+		return (
+			deviceId.includes(':') ||
+			deviceId.includes('._tcp') ||
+			deviceId.includes('adb-') ||
+			/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(deviceId)
+		);
+	}
+
 	setSessionInfo(port: number, roomID: string): void {
 		this.currentPort = port;
+		const previousRoomId = this._currentRoomId;
 		this.currentRoomId = roomID;
 		console.log(
 			`[AdbService] Session info updated: port=${port}, roomID=${roomID}`,
 		);
-		// Trigger reverse port and auto-launch only on new pending connected devices
+
+		// Clean up obsolete launched sessions when renewing or setting a new session
+		if (roomID && roomID !== previousRoomId) {
+			for (const key of Array.from(this.launchedSessions)) {
+				const lastColonIndex = key.lastIndexOf(':');
+				const keyRoom =
+					lastColonIndex !== -1 ? key.slice(lastColonIndex + 1) : '';
+				if (keyRoom !== roomID) {
+					this.launchedSessions.delete(key);
+				}
+			}
+			// Synchronize device room IDs for connected devices
+			let assignedWaitingRoom = false;
+			for (const dev of this.connectedDevices.values()) {
+				const existingRoom = this.deviceRoomIds.get(dev.id);
+				if (!existingRoom || existingRoom === previousRoomId) {
+					if (!assignedWaitingRoom) {
+						this.deviceRoomIds.set(dev.id, roomID);
+						assignedWaitingRoom = true;
+					} else {
+						// For subsequent devices, delete old dead room so resolveRoomIdForDevice provisions a distinct room
+						this.deviceRoomIds.delete(dev.id);
+					}
+				}
+			}
+		}
+
+		// Trigger reverse port and auto-launch for connected devices (including pre-connected devices)
 		for (const dev of this.connectedDevices.values()) {
-			const hasLaunched = Array.from(this.launchedSessions).some((key) =>
-				key.startsWith(`${dev.id}:`),
-			);
-			if (!hasLaunched) {
-				void this.handleDeviceConnected(dev);
+			if (dev.type === 'device') {
+				const targetRoom = this.deviceRoomIds.get(dev.id) || roomID;
+				const currentLaunchKey = `${dev.id}:${targetRoom}`;
+				if (!this.launchedSessions.has(currentLaunchKey)) {
+					void this.handleDeviceConnected(dev);
+				}
 			}
 		}
 	}
@@ -226,6 +267,9 @@ export class AdbService {
 					}
 					this.connectedDevices.set(device.id, info);
 					void this.handleDeviceConnected(info);
+				} else {
+					// Device transitioned to offline, unauthorized, etc.
+					this.handleDeviceDisconnected(device.id);
 				}
 			});
 
@@ -345,19 +389,23 @@ export class AdbService {
 		const roomID = await this.resolveRoomIdForDevice(info.id);
 
 		if (port > 0) {
-			// Auto setup reverse port (force = true on reconnect to re-establish adb reverse tunnel)
-			await this.setupReversePort(info.id, port, true);
+			const isWifi = this.isWifiDevice(info.id);
 
-			// Check sequence token and connection state to protect against rapid jitter / disconnect during await
-			if (
-				this.connectionSeq.get(info.id) !== currentSeq ||
-				!this.connectedDevices.has(info.id) ||
-				!this.activeDeviceIds.has(info.id)
-			) {
-				console.log(
-					`[AdbService] Connection sequence superseded or device ${info.id} disconnected during reverse setup. Aborting launch.`,
-				);
-				return;
+			if (!isWifi) {
+				// Auto setup reverse port only for physical USB devices (force = true on reconnect to re-establish adb reverse tunnel)
+				await this.setupReversePort(info.id, port, true);
+
+				// Check sequence token and connection state to protect against rapid jitter / disconnect during await
+				if (
+					this.connectionSeq.get(info.id) !== currentSeq ||
+					!this.connectedDevices.has(info.id) ||
+					!this.activeDeviceIds.has(info.id)
+				) {
+					console.log(
+						`[AdbService] Connection sequence superseded or device ${info.id} disconnected during reverse setup. Aborting launch.`,
+					);
+					return;
+				}
 			}
 
 			// Auto open browser on device ONLY if not already launched in this session
@@ -365,13 +413,19 @@ export class AdbService {
 				const launchKey = `${info.id}:${roomID}`;
 				if (!this.launchedSessions.has(launchKey)) {
 					this.launchedSessions.add(launchKey);
-					const lanIp = this.resolveHostLanIp();
-					const fallbackParam = lanIp ? `&fallbackHost=${lanIp}` : '';
-					const usbUrl = `http://localhost:${port}/${roomID}?transport=usb${fallbackParam}`;
+					let targetUrl: string;
+					if (isWifi) {
+						const lanIp = this.resolveHostLanIp() || '127.0.0.1';
+						targetUrl = `http://${lanIp}:${port}/${roomID}?transport=wifi`;
+					} else {
+						const lanIp = this.resolveHostLanIp();
+						const fallbackParam = lanIp ? `&fallbackHost=${lanIp}` : '';
+						targetUrl = `http://localhost:${port}/${roomID}?transport=usb${fallbackParam}`;
+					}
 					console.log(
-						`[AdbService] Automatically opening URL on Android device: ${usbUrl}`,
+						`[AdbService] Automatically opening URL on Android device (${isWifi ? 'Wi-Fi' : 'USB'}): ${targetUrl}`,
 					);
-					const launched = await this.launchClientOnDevice(info.id, usbUrl);
+					const launched = await this.launchClientOnDevice(info.id, targetUrl);
 					// Re-check sequence token after launch await
 					if (!launched && this.connectionSeq.get(info.id) === currentSeq) {
 						this.launchedSessions.delete(launchKey);
@@ -431,6 +485,11 @@ export class AdbService {
 					this.launchedSessions.delete(key);
 				}
 			}
+			this.activeDeviceIds.delete(deviceId);
+			this.deviceRoomIds.delete(deviceId);
+			if (this.activeDeviceId === deviceId) {
+				this._currentRoomId = '';
+			}
 		}
 
 		console.log(
@@ -462,13 +521,13 @@ export class AdbService {
 			}
 		}
 
+		this.cleanupSessionForDevice(deviceId);
+
 		this.activeDeviceIds.delete(deviceId);
 		this.deviceRoomIds.delete(deviceId);
 		if (this.activeDeviceId === deviceId) {
 			this._currentRoomId = '';
 		}
-
-		this.cleanupSessionForDevice(deviceId);
 
 		if (this.mainWindow && !this.mainWindow.isDestroyed()) {
 			this.mainWindow.webContents.send(IpcEvents.AdbDeviceDisconnected, {
@@ -564,6 +623,12 @@ export class AdbService {
 		port: number,
 		force = false,
 	): Promise<boolean> {
+		if (this.isWifiDevice(deviceId)) {
+			console.log(
+				`[AdbService] Skipping reverse port setup for Wi-Fi device: ${deviceId}`,
+			);
+			return false;
+		}
 		if (!force && this.reversedPorts.get(deviceId)?.has(port)) {
 			return true;
 		}
@@ -607,6 +672,9 @@ export class AdbService {
 	}
 
 	async removeReversePort(deviceId: string, port: number): Promise<boolean> {
+		if (this.isWifiDevice(deviceId)) {
+			return false;
+		}
 		try {
 			if (this.resolvedAdbPath) {
 				await execFileAsync(this.resolvedAdbPath, [
@@ -633,11 +701,22 @@ export class AdbService {
 	async connectWifiDevice(
 		ip: string,
 		port = 5555,
+		timeoutMs = 1500,
 	): Promise<{ success: boolean; deviceId?: string; error?: string }> {
-		const endpoint = `${ip}:${port}`;
+		const cleanIp = ip.includes(':') ? ip.split(':')[0] : ip;
+		const targetPort = ip.includes(':')
+			? Number.parseInt(ip.split(':')[1], 10) || port
+			: port;
+		const endpoint = `${cleanIp}:${targetPort}`;
 		try {
 			if (!this.isInitialized || !this.resolvedAdbPath) {
-				await this.init();
+				const initialized = await this.init();
+				if (!initialized && !this.resolvedAdbPath) {
+					return {
+						success: false,
+						error: 'ADB binary is not available on host system',
+					};
+				}
 			}
 
 			// If device is already connected and recognized
@@ -646,18 +725,32 @@ export class AdbService {
 				return { success: true, deviceId: endpoint };
 			}
 
-			// Execute adb connect with timeout
+			// Execute adb connect with non-blocking timeout (max 1.5s)
 			const adbBin = this.resolvedAdbPath || 'adb';
+			const effectiveTimeout = Math.min(timeoutMs, 1500);
 			let timeoutHandle: NodeJS.Timeout | null = null;
 			const connectPromise = execFileAsync(adbBin, ['connect', endpoint], {
 				timeout: 8000,
 			});
+			const childProcess = (
+				connectPromise as unknown as {
+					child?: ReturnType<typeof execFile>;
+				}
+			).child;
+
 			const timeoutPromise = new Promise<{ stdout: string }>((_, reject) => {
 				timeoutHandle = setTimeout(() => {
+					try {
+						childProcess?.kill();
+					} catch {
+						// ignore kill error
+					}
 					reject(
-						new Error(`ADB connect timeout (8s) connecting to ${endpoint}`),
+						new Error(
+							`ADB connect timeout (${effectiveTimeout}ms) connecting to ${endpoint}`,
+						),
 					);
-				}, 8000);
+				}, effectiveTimeout);
 			});
 
 			let output = '';
@@ -721,11 +814,27 @@ export class AdbService {
 
 	async launchClientOnDevice(deviceId: string, url: string): Promise<boolean> {
 		try {
-			// If device is a Wi-Fi endpoint (ip:port) and not yet connected, attempt connection first
-			if (deviceId.includes(':') && !this.connectedDevices.has(deviceId)) {
-				const [ip, portStr] = deviceId.split(':');
-				const port = Number.parseInt(portStr, 10) || 5555;
-				await this.connectWifiDevice(ip, port);
+			// If device is a Wi-Fi endpoint and not yet connected, attempt connection first
+			if (this.isWifiDevice(deviceId) && !this.connectedDevices.has(deviceId)) {
+				const lastColon = deviceId.lastIndexOf(':');
+				const ip = lastColon > -1 ? deviceId.slice(0, lastColon) : deviceId;
+				const portStr =
+					lastColon > -1 ? deviceId.slice(lastColon + 1) : '';
+				const port = portStr ? Number.parseInt(portStr, 10) || 5555 : 5555;
+				const connRes = await this.connectWifiDevice(ip, port);
+				if (!connRes.success && !this.connectedDevices.has(deviceId)) {
+					console.warn(
+						`[AdbService] Cannot launch client on unreachable Wi-Fi device ${deviceId}: ${connRes.error || 'Connection failed'}`,
+					);
+					return false;
+				}
+			}
+
+			if (!this.resolvedAdbPath && !this.client) {
+				console.warn(
+					`[AdbService] Cannot launch client on ${deviceId}: ADB binary or client is not available`,
+				);
+				return false;
 			}
 
 			// Wake up screen if locked/sleeping (224 = KEYCODE_WAKEUP)
@@ -794,11 +903,11 @@ export class AdbService {
 				const isNew = !info;
 				const typeChanged = Boolean(info && info.type !== dev.type);
 				if (isNew || typeChanged) {
-					info = {
-						id: dev.id,
-						type: dev.type,
-					};
 					if (dev.type === 'device') {
+						info = {
+							id: dev.id,
+							type: dev.type,
+						};
 						try {
 							const properties = await this.client
 								.getDevice(dev.id)
@@ -810,9 +919,11 @@ export class AdbService {
 						} catch {
 							// safe ignore
 						}
+						this.connectedDevices.set(dev.id, info);
+						void this.handleDeviceConnected(info);
+					} else {
+						this.handleDeviceDisconnected(dev.id);
 					}
-					this.connectedDevices.set(dev.id, info);
-					void this.handleDeviceConnected(info);
 				}
 			}
 
@@ -855,6 +966,7 @@ export class AdbService {
 		this.gracePeriodDevices.clear();
 		this.activeDeviceId = null;
 		this.currentRoomId = '';
+		this.deviceRoomIds.clear();
 		this.connectionSeq.clear();
 		this.launchedSessions.clear();
 		if (this.tracker) {

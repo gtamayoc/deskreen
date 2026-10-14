@@ -61,7 +61,18 @@ const ScanQRStep: React.FC = () => {
 							devices.find((d) => d.type === 'device') || devices[0];
 						setUsbDevice(readyDev);
 						const port = Number(clientViewerPort);
-						if (port && port >= 1024 && readyDev.type === 'device') {
+						const isReadyWifi = Boolean(
+							readyDev.id.includes(':') ||
+								readyDev.id.includes('._tcp') ||
+								readyDev.id.includes('adb-') ||
+								/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(readyDev.id),
+						);
+						if (
+							port &&
+							port >= 1024 &&
+							readyDev.type === 'device' &&
+							!isReadyWifi
+						) {
 							if (usbDeviceRef.current?.id !== readyDev.id) {
 								void window.electron.ipcRenderer.invoke(
 									IpcEvents.AdbSetupReverse,
@@ -89,7 +100,13 @@ const ScanQRStep: React.FC = () => {
 		) => {
 			setUsbDevice(dev);
 			const port = Number(clientViewerPort);
-			if (port && port >= 1024 && dev.type === 'device') {
+			const isDevWifi = Boolean(
+				dev.id.includes(':') ||
+					dev.id.includes('._tcp') ||
+					dev.id.includes('adb-') ||
+					/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(dev.id),
+			);
+			if (port && port >= 1024 && dev.type === 'device' && !isDevWifi) {
 				if (usbDeviceRef.current?.id !== dev.id) {
 					void window.electron.ipcRenderer.invoke(IpcEvents.AdbSetupReverse, {
 						deviceId: dev.id,
@@ -323,40 +340,59 @@ const ScanQRStep: React.FC = () => {
 					}}
 				>
 					<Col xs={11}>
-						<Callout
-							intent="success"
-							icon="flash"
-							title={`Dispositivo USB Detectado: ${usbDevice.model || usbDevice.id}`}
-							style={{ textAlign: 'left', borderRadius: '8px' }}
-						>
-							<Row between="xs" middle="xs">
-								<Col xs={12} md={8}>
-									<Text style={{ fontSize: '12px' }}>
-										Canal USB directo activo (Reverse ADB a 60 FPS sin lag de
-										Wi-Fi).
-									</Text>
-								</Col>
-								<Col xs={12} md={4} style={{ textAlign: 'right' }}>
-									<Button
-										intent="success"
-										icon="mobile-phone"
-										small
-										onClick={async () => {
-											const usbUrl = `http://localhost:${clientViewerPort}${roomPath}?transport=usb&theme=${isDarkMode ? 'dark' : 'light'}`;
-											await window.electron.ipcRenderer.invoke(
-												IpcEvents.AdbLaunchUrl,
-												{
-													deviceId: usbDevice.id,
-													url: usbUrl,
-												},
-											);
-										}}
-									>
-										Abrir en el móvil
-									</Button>
-								</Col>
-							</Row>
-						</Callout>
+						{(() => {
+							const isAdbWifi = Boolean(
+								usbDevice.id.includes(':') ||
+									usbDevice.id.includes('._tcp') ||
+									usbDevice.id.includes('adb-') ||
+									/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(usbDevice.id),
+							);
+							return (
+								<Callout
+									intent="success"
+									icon={isAdbWifi ? 'ip-address' : 'flash'}
+									title={
+										isAdbWifi
+											? `Dispositivo ADB Inalámbrico Detectado: ${usbDevice.model || usbDevice.id}`
+											: `Dispositivo USB Detectado: ${usbDevice.model || usbDevice.id}`
+									}
+									style={{ textAlign: 'left', borderRadius: '8px' }}
+								>
+									<Row between="xs" middle="xs">
+										<Col xs={12} md={8}>
+											<Text style={{ fontSize: '12px' }}>
+												{isAdbWifi
+													? 'Depuración inalámbrica activa. Apertura automática directa en la red Wi-Fi.'
+													: 'Canal USB directo activo (Reverse ADB a 60 FPS sin lag de Wi-Fi).'}
+											</Text>
+										</Col>
+										<Col xs={12} md={4} style={{ textAlign: 'right' }}>
+											<Button
+												intent="success"
+												icon="mobile-phone"
+												small
+												onClick={async () => {
+													const hostIp = isAdbWifi
+														? LOCAL_LAN_IP || '127.0.0.1'
+														: 'localhost';
+													const transportParam = isAdbWifi ? 'wifi' : 'usb';
+													const targetUrl = `http://${hostIp}:${clientViewerPort}${roomPath}?transport=${transportParam}&theme=${isDarkMode ? 'dark' : 'light'}`;
+													await window.electron.ipcRenderer.invoke(
+														IpcEvents.AdbLaunchUrl,
+														{
+															deviceId: usbDevice.id,
+															url: targetUrl,
+														},
+													);
+												}}
+											>
+												{isAdbWifi ? 'Abrir por Wi-Fi' : 'Abrir en el móvil'}
+											</Button>
+										</Col>
+									</Row>
+								</Callout>
+							);
+						})()}
 					</Col>
 				</Row>
 			)}

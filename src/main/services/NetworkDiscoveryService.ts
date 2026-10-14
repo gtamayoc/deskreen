@@ -76,6 +76,7 @@ export const DEFAULT_QUERY_SERVICES = [
 	'_apple-mobdev2._tcp.local',
 	'_adb._tcp.local',
 	'_adb-tls._tcp.local',
+	'_adb-tls-connect._tcp.local',
 	'_http._tcp.local',
 ];
 

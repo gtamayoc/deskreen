@@ -65,6 +65,7 @@ export default class PeerConnection {
 	isReconnecting: boolean = false;
 	isUsingFallbackHost: boolean = false;
 	isDestroyed: boolean = false;
+	isWifiMode: boolean = false;
 	fallbackHost: string = '';
 	usbProbeTimer: NodeJS.Timeout | null = null;
 	probeAbortController: AbortController | null = null;
@@ -93,19 +94,35 @@ export default class PeerConnection {
 		this.UIHandler = UIHandler;
 		this.roomId = roomId;
 
+		const urlParams =
+			typeof window !== 'undefined'
+				? new URLSearchParams(window.location.search)
+				: null;
+		const transportParam = urlParams?.get('transport');
+		const hostname =
+			typeof window !== 'undefined' ? window.location.hostname : '';
+		const isLocalhost =
+			hostname === 'localhost' ||
+			hostname === '127.0.0.1' ||
+			hostname === '[::1]' ||
+			hostname === '::1';
+		this.isWifiMode =
+			transportParam === 'wifi' || (!isLocalhost && transportParam !== 'usb');
+
 		let initialFallback = '';
-		try {
-			const urlParams = new URLSearchParams(window.location.search);
-			initialFallback =
-				urlParams.get('fallbackHost') ||
-				urlParams.get('hostLanIp') ||
-				localStorage.getItem('deskreen_fallback_host') ||
-				'';
-			if (initialFallback) {
-				localStorage.setItem('deskreen_fallback_host', initialFallback);
+		if (!this.isWifiMode) {
+			try {
+				initialFallback =
+					urlParams?.get('fallbackHost') ||
+					urlParams?.get('hostLanIp') ||
+					localStorage.getItem('deskreen_fallback_host') ||
+					'';
+				if (initialFallback) {
+					localStorage.setItem('deskreen_fallback_host', initialFallback);
+				}
+			} catch {
+				// ignore storage errors
 			}
-		} catch {
-			// ignore storage errors
 		}
 		this.fallbackHost = initialFallback;
 
@@ -127,7 +144,7 @@ export default class PeerConnection {
 				document.visibilityState === 'visible'
 			) {
 				// Mobile browser tab regained foreground visibility after background timer throttling
-				if (this.isUsingFallbackHost) {
+				if (this.isUsingFallbackHost && !this.isWifiMode) {
 					void this.probeUsbOnce();
 				}
 				if (this.socket && !this.socket.connected && !this.isReconnecting) {
@@ -268,6 +285,7 @@ export default class PeerConnection {
 	}
 
 	getFallbackHost(): string {
+		if (this.isWifiMode) return '';
 		if (this.fallbackHost) return this.fallbackHost;
 		try {
 			return localStorage.getItem('deskreen_fallback_host') || '';
@@ -277,7 +295,13 @@ export default class PeerConnection {
 	}
 
 	switchToFallbackHost(host: string): void {
-		if (this.isDestroyed || this.isUsingFallbackHost || !host) return;
+		if (
+			this.isDestroyed ||
+			this.isWifiMode ||
+			this.isUsingFallbackHost ||
+			!host
+		)
+			return;
 		console.log(
 			`[PeerConnection] Switching to Wi-Fi fallback transport: ${host}`,
 		);
@@ -289,7 +313,7 @@ export default class PeerConnection {
 	}
 
 	switchToUsbHost(): void {
-		if (this.isDestroyed || !this.isUsingFallbackHost) return;
+		if (this.isDestroyed || this.isWifiMode || !this.isUsingFallbackHost) return;
 		console.log(
 			'[PeerConnection] USB connection re-established! Prioritizing USB transport over Wi-Fi.',
 		);
@@ -308,7 +332,7 @@ export default class PeerConnection {
 	}
 
 	startUsbProbeLoop(): void {
-		if (this.isDestroyed) return;
+		if (this.isDestroyed || this.isWifiMode) return;
 		if (this.usbProbeTimer) {
 			clearInterval(this.usbProbeTimer);
 			this.usbProbeTimer = null;
@@ -322,7 +346,7 @@ export default class PeerConnection {
 	}
 
 	async probeUsbOnce(): Promise<void> {
-		if (this.isDestroyed || !this.isUsingFallbackHost) {
+		if (this.isDestroyed || this.isWifiMode || !this.isUsingFallbackHost) {
 			if (this.usbProbeTimer) {
 				clearInterval(this.usbProbeTimer);
 				this.usbProbeTimer = null;

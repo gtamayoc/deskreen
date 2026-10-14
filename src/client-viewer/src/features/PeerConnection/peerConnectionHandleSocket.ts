@@ -44,8 +44,13 @@ export default (peerConnection: PeerConnection) => {
 		);
 
 		// If connected via USB (localhost) and a Wi-Fi fallback host is available,
-		// switch to the fallback host after 2 failed attempts to prevent total session failure
-		if (disconnectCount >= 2 && !peerConnection.isUsingFallbackHost) {
+		// switch to the fallback host after 2 failed attempts to prevent total session failure.
+		// In Wi-Fi mode, never switch or probe localhost.
+		if (
+			!peerConnection.isWifiMode &&
+			disconnectCount >= 2 &&
+			!peerConnection.isUsingFallbackHost
+		) {
 			const fallback = peerConnection.getFallbackHost();
 			if (fallback) {
 				console.log(
@@ -130,19 +135,31 @@ export default (peerConnection: PeerConnection) => {
 
 		if (!peerConnection.partner) return;
 
+		const urlParams = new URLSearchParams(window.location.search);
+		const isUsb =
+			urlParams.get('transport') === 'usb' ||
+			(!peerConnection.isWifiMode &&
+				(window.location.hostname === 'localhost' ||
+					window.location.hostname === '127.0.0.1' ||
+					window.location.hostname === '[::1]' ||
+					window.location.hostname === '::1'));
+
 		let cachedToken: string | null = null;
 		try {
-			cachedToken = localStorage.getItem('deskreen_reconnect_token');
+			// Isolate reconnect token per transport mode to prevent cross-transport contamination
+			const tokenKey = isUsb
+				? 'deskreen_reconnect_token_usb'
+				: 'deskreen_reconnect_token_wifi';
+			cachedToken =
+				localStorage.getItem(tokenKey) ||
+				(!peerConnection.isWifiMode
+					? localStorage.getItem('deskreen_reconnect_token')
+					: null);
 		} catch {
 			// ignore localStorage error in private mode
 		}
-		const urlParams = new URLSearchParams(window.location.search);
 		const reconnectToken =
 			urlParams.get('reconnectToken') || cachedToken || undefined;
-		const isUsb =
-			urlParams.get('transport') === 'usb' ||
-			window.location.hostname === 'localhost' ||
-			window.location.hostname === '127.0.0.1';
 
 		peerConnection.sendEncryptedMessage({
 			type: 'DEVICE_DETAILS',

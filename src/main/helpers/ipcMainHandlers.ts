@@ -950,7 +950,7 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 		adbError?: string;
 	}> {
 		try {
-			const {
+			let {
 				deviceId,
 				ip,
 				platform,
@@ -1011,16 +1011,28 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 					}
 				}
 
+				const maxProbeBudgetMs = 1500;
+				const probeStartTime = Date.now();
+				const cleanIp = ip.includes(':') ? ip.split(':')[0] : ip;
+				ip = cleanIp;
 				const selectedPort = dynamicPort || 5555;
-				let connectRes = await adbService.connectWifiDevice(ip, selectedPort);
+				let connectRes = await adbService.connectWifiDevice(
+					cleanIp,
+					selectedPort,
+					maxProbeBudgetMs,
+				);
 				let effectivePort = selectedPort;
 
 				// Fallback to 5555 if dynamic port connection fails
 				if (!connectRes.success && selectedPort !== 5555) {
-					const fallbackRes = await adbService.connectWifiDevice(ip, 5555);
-					if (fallbackRes.success) {
-						connectRes = fallbackRes;
-						effectivePort = 5555;
+					const elapsedMs = Date.now() - probeStartTime;
+					const remainingBudgetMs = maxProbeBudgetMs - elapsedMs;
+					if (remainingBudgetMs >= 300) {
+						const fallbackRes = await adbService.connectWifiDevice(ip, 5555);
+						if (fallbackRes.success) {
+							connectRes = fallbackRes;
+							effectivePort = 5555;
+						}
 					}
 				}
 
@@ -1028,7 +1040,7 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 					connectRes.deviceId ||
 					(targetDeviceId.includes(':')
 						? targetDeviceId
-						: `${ip}:${effectivePort}`);
+						: `${cleanIp}:${effectivePort}`);
 
 				if (connectRes.success) {
 					const launched = await adbService.launchClientOnDevice(

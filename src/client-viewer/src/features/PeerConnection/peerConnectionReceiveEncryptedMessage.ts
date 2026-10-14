@@ -54,10 +54,17 @@ export default async (
 			| undefined;
 		if (payloadObj?.reconnectToken) {
 			try {
-				localStorage.setItem(
-					'deskreen_reconnect_token',
-					payloadObj.reconnectToken,
-				);
+				const isWifi = peerConnection.isWifiMode;
+				const tokenKey = isWifi
+					? 'deskreen_reconnect_token_wifi'
+					: 'deskreen_reconnect_token_usb';
+				localStorage.setItem(tokenKey, payloadObj.reconnectToken);
+				if (!isWifi) {
+					localStorage.setItem(
+						'deskreen_reconnect_token',
+						payloadObj.reconnectToken,
+					);
+				}
 			} catch {
 				// ignore localStorage errors
 			}
