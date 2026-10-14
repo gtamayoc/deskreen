@@ -426,6 +426,10 @@ export class RemoteInputInjectionService {
 			/^(screen|entire screen|pantalla|pantalla completa)/i.test(
 				targetWindowTitle.trim(),
 			);
+		const cleanTitle =
+			!isScreenTitle && targetWindowTitle
+				? this.escapePowerShellString(targetWindowTitle).trim()
+				: '';
 
 		if (targetWindowHandle) {
 			const hwndNum =
@@ -444,7 +448,10 @@ export class RemoteInputInjectionService {
 					`if ($null -eq $global:wshell) { $global:wshell = New-Object -ComObject WScript.Shell }; ` +
 					(targetProcessId && targetProcessId > 0
 						? `$null = $global:wshell.AppActivate(${targetProcessId}); `
-						: '') +
+						: cleanTitle
+							? `$act = $global:wshell.AppActivate("${cleanTitle}"); if (-not $act) { $prefix = "${cleanTitle}".Split('-:')[0].Trim(); if ($prefix.Length -gt 2) { $null = $global:wshell.AppActivate($prefix) } }; `
+							: '') +
+					`Start-Sleep -Milliseconds 50; ` +
 					`} catch {}; ` +
 					sendKeysClause;
 			}
@@ -452,10 +459,9 @@ export class RemoteInputInjectionService {
 
 		if (!command && targetProcessId && targetProcessId > 0) {
 			command =
-				`try { if ($null -eq $global:wshell) { $global:wshell = New-Object -ComObject WScript.Shell }; $null = $global:wshell.AppActivate(${targetProcessId}); } catch {}; ` +
+				`try { if ($null -eq $global:wshell) { $global:wshell = New-Object -ComObject WScript.Shell }; $null = $global:wshell.AppActivate(${targetProcessId}); Start-Sleep -Milliseconds 50; } catch {}; ` +
 				sendKeysClause;
-		} else if (!command && targetWindowTitle && !isScreenTitle && targetWindowTitle.trim().length > 0) {
-			const cleanTitle = this.escapePowerShellString(targetWindowTitle).trim();
+		} else if (!command && cleanTitle.length > 0) {
 			command =
 				`try { ` +
 				`if ($null -eq $global:wshell) { $global:wshell = New-Object -ComObject WScript.Shell }; ` +
@@ -464,6 +470,7 @@ export class RemoteInputInjectionService {
 				`$prefix = "${cleanTitle}".Split('-:')[0].Trim(); ` +
 				`if ($prefix.Length -gt 2) { $act = $global:wshell.AppActivate($prefix) } ` +
 				`}; ` +
+				`Start-Sleep -Milliseconds 50; ` +
 				`} catch {}; ` +
 				sendKeysClause;
 		} else if (!command) {

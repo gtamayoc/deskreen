@@ -409,11 +409,12 @@ function PlayerView(props: PlayerViewProps) {
 
 	const handlePointerDown = useCallback(
 		(e: React.PointerEvent<HTMLDivElement>) => {
+			if (isAIPadOpen) return;
 			const target = e.target;
 			if (
 				target instanceof HTMLElement &&
 				target.closest(
-					'button, input, select, textarea, a, .player-control-panel, .console-action-pad, .fullscreen-hud, .bp5-dialog, .bp5-overlay, .bp5-portal',
+					'button, input, select, textarea, a, .player-control-panel, .console-action-pad, [class*="console-"], .fullscreen-hud, .bp5-dialog, .bp5-overlay, .bp5-portal',
 				)
 			) {
 				return;
@@ -430,12 +431,12 @@ function PlayerView(props: PlayerViewProps) {
 				time: Date.now(),
 			};
 		},
-		[],
+		[isAIPadOpen],
 	);
 
 	const handlePointerMove = useCallback(
 		(e: React.PointerEvent<HTMLDivElement>) => {
-			if (!isPointerDownRef.current) return;
+			if (isAIPadOpen || !isPointerDownRef.current) return;
 			if (
 				activePointerIdRef.current !== null &&
 				e.pointerId !== activePointerIdRef.current
@@ -446,7 +447,7 @@ function PlayerView(props: PlayerViewProps) {
 			if (
 				target instanceof HTMLElement &&
 				target.closest(
-					'button, input, select, textarea, a, .player-control-panel, .console-action-pad, .fullscreen-hud, .bp5-dialog, .bp5-overlay, .bp5-portal',
+					'button, input, select, textarea, a, .player-control-panel, .console-action-pad, [class*="console-"], .fullscreen-hud, .bp5-dialog, .bp5-overlay, .bp5-portal',
 				)
 			) {
 				return;
@@ -472,12 +473,12 @@ function PlayerView(props: PlayerViewProps) {
 				});
 			}
 		},
-		[peer, getRelativeCoordinates],
+		[peer, getRelativeCoordinates, isAIPadOpen],
 	);
 
 	const handlePointerUp = useCallback(
 		(e: React.PointerEvent<HTMLDivElement>) => {
-			if (!isPointerDownRef.current) return;
+			if (isAIPadOpen || !isPointerDownRef.current) return;
 			if (
 				activePointerIdRef.current !== null &&
 				e.pointerId !== activePointerIdRef.current
@@ -490,7 +491,7 @@ function PlayerView(props: PlayerViewProps) {
 			if (
 				target instanceof HTMLElement &&
 				target.closest(
-					'button, input, select, textarea, a, .player-control-panel, .console-action-pad, .fullscreen-hud, .bp5-dialog, .bp5-overlay, .bp5-portal',
+					'button, input, select, textarea, a, .player-control-panel, .console-action-pad, [class*="console-"], .fullscreen-hud, .bp5-dialog, .bp5-overlay, .bp5-portal',
 				)
 			) {
 				return;
@@ -516,7 +517,7 @@ function PlayerView(props: PlayerViewProps) {
 				});
 			}
 		},
-		[peer, getRelativeCoordinates],
+		[peer, getRelativeCoordinates, isAIPadOpen],
 	);
 
 	const handlePointerCancel = useCallback(
@@ -531,11 +532,12 @@ function PlayerView(props: PlayerViewProps) {
 
 	const handleContextMenu = useCallback(
 		(e: React.MouseEvent<HTMLDivElement>) => {
+			if (isAIPadOpen) return;
 			const target = e.target;
 			if (
 				target instanceof HTMLElement &&
 				target.closest(
-					'button, input, select, textarea, a, .player-control-panel, .console-action-pad, .fullscreen-hud, .bp5-dialog, .bp5-overlay, .bp5-portal',
+					'button, input, select, textarea, a, .player-control-panel, .console-action-pad, [class*="console-"], .fullscreen-hud, .bp5-dialog, .bp5-overlay, .bp5-portal',
 				)
 			) {
 				return;
@@ -554,7 +556,7 @@ function PlayerView(props: PlayerViewProps) {
 				});
 			}
 		},
-		[peer, getRelativeCoordinates],
+		[peer, getRelativeCoordinates, isAIPadOpen],
 	);
 
 	// handle iPhone fullscreen exit - detect when video stops and auto-resume

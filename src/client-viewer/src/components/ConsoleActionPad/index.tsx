@@ -226,6 +226,10 @@ const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({
 		[inputText, sendInput],
 	);
 
+	const stopPointerPropagation = useCallback((e: React.SyntheticEvent) => {
+		e.stopPropagation();
+	}, []);
+
 	if (!isVisible) {
 		return null;
 	}
@@ -238,6 +242,10 @@ const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({
 					intent={Intent.PRIMARY}
 					icon={<Icon icon="console" />}
 					onClick={() => setIsOpen(true)}
+					onPointerDown={stopPointerPropagation}
+					onPointerUp={stopPointerPropagation}
+					onTouchStart={stopPointerPropagation}
+					onTouchEnd={stopPointerPropagation}
 					text="IA Console Pad"
 				/>
 			)}
@@ -247,10 +255,19 @@ const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({
 					<div
 						className={`console-action-pad-backdrop ${isFullscreen ? 'is-fullscreen' : ''}`}
 						onClick={() => setIsOpen(false)}
+						onPointerDown={stopPointerPropagation}
+						onPointerUp={stopPointerPropagation}
+						onTouchStart={stopPointerPropagation}
+						onTouchEnd={stopPointerPropagation}
 						aria-label="Cerrar modal"
 					/>
 					<div
 						className={`console-action-pad-drawer ${isFullscreen ? 'is-fullscreen' : ''}`}
+						onPointerDown={stopPointerPropagation}
+						onPointerMove={stopPointerPropagation}
+						onPointerUp={stopPointerPropagation}
+						onTouchStart={stopPointerPropagation}
+						onTouchEnd={stopPointerPropagation}
 						style={
 							keyboardOffset > 0 ? { bottom: `${keyboardOffset}px` } : undefined
 						}
