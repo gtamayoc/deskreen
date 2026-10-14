@@ -129,8 +129,10 @@ export class RemoteInputInjectionService {
 					'try {\n' +
 					'$win32Members = @\'\n' +
 					'[DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);\n' +
+					'[DllImport("user32.dll")] public static extern void SwitchToThisWindow(IntPtr hWnd, bool fUnknown);\n' +
 					'[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);\n' +
 					'[DllImport("user32.dll")] public static extern bool IsIconic(IntPtr hWnd);\n' +
+					'[DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);\n' +
 					'[DllImport("user32.dll")] public static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, UIntPtr dwExtraInfo);\n' +
 					'[StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }\n' +
 					'[DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);\n' +
@@ -287,6 +289,7 @@ export class RemoteInputInjectionService {
 			`$h = [IntPtr]::new(${hwnd}); ` +
 			`if ($h -ne [IntPtr]::Zero) { ` +
 			`if ([Deskreen.Win32Focus]::IsIconic($h)) { $null = [Deskreen.Win32Focus]::ShowWindow($h, 9) }; ` +
+			`[Deskreen.Win32Focus]::SwitchToThisWindow($h, 1); ` +
 			`$null = [Deskreen.Win32Focus]::SetForegroundWindow($h); ` +
 			`$null = Focus-TerminalTab $h "${safeTitle}"; ` +
 			`}; ` +
@@ -442,16 +445,25 @@ export class RemoteInputInjectionService {
 					`$h = [IntPtr]::new(${hwndNum}); ` +
 					`if ($h -ne [IntPtr]::Zero) { ` +
 					`if ([Deskreen.Win32Focus]::IsIconic($h)) { $null = [Deskreen.Win32Focus]::ShowWindow($h, 9) }; ` +
+					`[Deskreen.Win32Focus]::SwitchToThisWindow($h, $true); ` +
 					`$null = [Deskreen.Win32Focus]::SetForegroundWindow($h); ` +
 					(cleanTab ? `$null = Focus-TerminalTab $h "${cleanTab}"; ` : '') +
 					`}; ` +
 					`if ($null -eq $global:wshell) { $global:wshell = New-Object -ComObject WScript.Shell }; ` +
+					`$act = $false; ` +
+					`if ($h -ne [IntPtr]::Zero) { ` +
+					`[uint32]$foundPid = 0; ` +
+					`$null = [Deskreen.Win32Focus]::GetWindowThreadProcessId($h, [ref]$foundPid); ` +
+					`if ($foundPid -gt 0) { $act = $global:wshell.AppActivate([int]$foundPid) }; ` +
+					`}; ` +
 					(targetProcessId && targetProcessId > 0
-						? `$null = $global:wshell.AppActivate(${targetProcessId}); `
-						: cleanTitle
-							? `$act = $global:wshell.AppActivate("${cleanTitle}"); if (-not $act) { $prefix = "${cleanTitle}".Split('-:')[0].Trim(); if ($prefix.Length -gt 2) { $null = $global:wshell.AppActivate($prefix) } }; `
-							: '') +
-					`Start-Sleep -Milliseconds 50; ` +
+						? `if (-not $act) { $act = $global:wshell.AppActivate(${targetProcessId}) }; `
+						: '') +
+					(cleanTitle
+						? `if (-not $act) { $act = $global:wshell.AppActivate("${cleanTitle}") }; ` +
+						  `if (-not $act) { $prefix = "${cleanTitle}".Split('-:')[0].Trim(); if ($prefix.Length -gt 2) { $act = $global:wshell.AppActivate($prefix) } }; `
+						: '') +
+					`Start-Sleep -Milliseconds 60; ` +
 					`} catch {}; ` +
 					sendKeysClause;
 			}
@@ -517,6 +529,7 @@ export class RemoteInputInjectionService {
 					`$h = [IntPtr]::new(${hwndNum}); ` +
 					`if ($h -ne [IntPtr]::Zero) { ` +
 					`if ([Deskreen.Win32Focus]::IsIconic($h)) { $null = [Deskreen.Win32Focus]::ShowWindow($h, 9) }; ` +
+					`[Deskreen.Win32Focus]::SwitchToThisWindow($h, $true); ` +
 					`$null = [Deskreen.Win32Focus]::SetForegroundWindow($h); ` +
 					(cleanTitle ? `$null = Focus-TerminalTab $h "${cleanTitle}"; ` : '') +
 					`$rect = New-Object Deskreen.Win32Focus+RECT; ` +
