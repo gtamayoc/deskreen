@@ -830,13 +830,13 @@ function PlayerView(props: PlayerViewProps) {
 						}}
 					/>
 				)}
-				{isConsoleSharing && (
+				{(isConsoleSharing || isAIPadOpen) && (
 					<ConsoleActionPad
 						peer={peer}
 						isOpen={isAIPadOpen}
 						onOpenChange={setIsAIPadOpen}
 						isFullscreen={isFullscreen}
-						isVisible={isConsoleSharing}
+						isVisible={isConsoleSharing || isAIPadOpen}
 					/>
 				)}
 				<SourceSwitcherModal

@@ -127,21 +127,15 @@ export class RemoteInputInjectionService {
 					'Add-Type -AssemblyName UIAutomationClient -ErrorAction SilentlyContinue;\n' +
 					'Add-Type -AssemblyName UIAutomationTypes -ErrorAction SilentlyContinue;\n' +
 					'try {\n' +
-					'$win32Code = @\'\n' +
-					'using System;\n' +
-					'using System.Runtime.InteropServices;\n' +
-					'namespace Deskreen {\n' +
-					'  public class Win32Focus {\n' +
-					'    [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);\n' +
-					'    [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);\n' +
-					'    [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr hWnd);\n' +
-					'    [DllImport("user32.dll")] public static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, UIntPtr dwExtraInfo);\n' +
-					'    [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }\n' +
-					'    [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);\n' +
-					'  }\n' +
-					'}\n' +
+					'$win32Members = @\'\n' +
+					'[DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);\n' +
+					'[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);\n' +
+					'[DllImport("user32.dll")] public static extern bool IsIconic(IntPtr hWnd);\n' +
+					'[DllImport("user32.dll")] public static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, UIntPtr dwExtraInfo);\n' +
+					'[StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }\n' +
+					'[DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);\n' +
 					'\'@;\n' +
-					'Add-Type -TypeDefinition $win32Code -ErrorAction SilentlyContinue;\n' +
+					'$null = Add-Type -MemberDefinition $win32Members -Name "Win32Focus" -Namespace "Deskreen" -ErrorAction SilentlyContinue -PassThru;\n' +
 					'} catch {};\n' +
 					'try { $global:wshell = New-Object -ComObject WScript.Shell } catch {};\n' +
 					'function Focus-TerminalTab([IntPtr]$h, [string]$tabTitle) {\n' +
@@ -420,10 +414,18 @@ export class RemoteInputInjectionService {
 		let command = '';
 
 		const sendKeysClause =
-			`try { [System.Windows.Forms.SendKeys]::SendWait("${safeKeys}") } catch { ` +
+			`try { ` +
 			`if ($null -eq $global:wshell) { $global:wshell = New-Object -ComObject WScript.Shell }; ` +
 			`$global:wshell.SendKeys("${safeKeys}"); ` +
+			`} catch { ` +
+			`try { [System.Windows.Forms.SendKeys]::SendWait("${safeKeys}") } catch {}; ` +
 			`}\n`;
+
+		const isScreenTitle =
+			targetWindowTitle &&
+			/^(screen|entire screen|pantalla|pantalla completa)/i.test(
+				targetWindowTitle.trim(),
+			);
 
 		if (targetWindowHandle) {
 			const hwndNum =
@@ -442,7 +444,7 @@ export class RemoteInputInjectionService {
 					`if ($null -eq $global:wshell) { $global:wshell = New-Object -ComObject WScript.Shell }; ` +
 					(targetProcessId && targetProcessId > 0
 						? `$null = $global:wshell.AppActivate(${targetProcessId}); `
-						: `$null = $global:wshell.AppActivate(${hwndNum}); `) +
+						: '') +
 					`} catch {}; ` +
 					sendKeysClause;
 			}
@@ -452,7 +454,7 @@ export class RemoteInputInjectionService {
 			command =
 				`try { if ($null -eq $global:wshell) { $global:wshell = New-Object -ComObject WScript.Shell }; $null = $global:wshell.AppActivate(${targetProcessId}); } catch {}; ` +
 				sendKeysClause;
-		} else if (!command && targetWindowTitle && targetWindowTitle.trim().length > 0) {
+		} else if (!command && targetWindowTitle && !isScreenTitle && targetWindowTitle.trim().length > 0) {
 			const cleanTitle = this.escapePowerShellString(targetWindowTitle).trim();
 			command =
 				`try { ` +

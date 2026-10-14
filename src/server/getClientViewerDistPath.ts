@@ -29,16 +29,23 @@ const normalizeCandidates = (candidates: string[]): string[] => {
 export const getClientViewerDistPath = (): string => {
 	const resourcesPath = process.resourcesPath ?? '';
 	const appPath = app.getAppPath();
+	const isPackaged = app.isPackaged;
 
-	const candidates = normalizeCandidates([
-		join(__dirname, '../client-viewer'),
-		join(appPath, 'client-viewer'),
-		join(appPath, 'out/client-viewer'),
-		join(resourcesPath, 'client-viewer'),
-		join(resourcesPath, 'app.asar.unpacked/client-viewer'),
-		join(process.cwd(), 'out/client-viewer'),
-		join(process.cwd(), 'src/client-viewer/dist'),
-	]);
+	const candidates = isPackaged
+		? normalizeCandidates([
+				join(resourcesPath, 'client-viewer'),
+				join(resourcesPath, 'app.asar.unpacked/client-viewer'),
+				join(__dirname, '../client-viewer'),
+				join(appPath, 'client-viewer'),
+				join(appPath, 'out/client-viewer'),
+				join(process.cwd(), 'out/client-viewer'),
+			])
+		: normalizeCandidates([
+				join(process.cwd(), 'src/client-viewer/dist'),
+				join(appPath, 'src/client-viewer/dist'),
+				join(process.cwd(), 'out/client-viewer'),
+				join(appPath, 'out/client-viewer'),
+			]);
 
 	for (const candidate of candidates) {
 		if (hasClientViewerBundle(candidate)) {

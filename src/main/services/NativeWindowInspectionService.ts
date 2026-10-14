@@ -26,7 +26,7 @@ export class NativeWindowInspectionService {
 	private cache = new Map<string, WindowInspectionResult>();
 	private readonly ttlMs: number;
 
-	public constructor(ttlMs = 3000) {
+	public constructor(ttlMs = 300000) {
 		this.ttlMs = ttlMs;
 	}
 

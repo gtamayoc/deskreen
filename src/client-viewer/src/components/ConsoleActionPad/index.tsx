@@ -148,15 +148,17 @@ const ConsoleActionPad: React.FC<ConsoleActionPadProps> = ({
 					});
 				}
 				triggerFeedback(`Enviado: ${label}`);
-				setTimeout(() => {
-					setIsOpen(false);
-				}, 120);
+				if (autoCollapse) {
+					setTimeout(() => {
+						setIsOpen(false);
+					}, 120);
+				}
 			} catch (err) {
 				console.warn('[ConsoleActionPad] Failed to send remote input:', err);
 				triggerFeedback('Error de envío');
 			}
 		},
-		[peer, triggerFeedback, blurActiveElement, setIsOpen],
+		[peer, triggerFeedback, blurActiveElement, setIsOpen, autoCollapse],
 	);
 
 	const handleSendOption = useCallback(

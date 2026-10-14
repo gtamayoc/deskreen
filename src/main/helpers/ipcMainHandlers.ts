@@ -805,11 +805,12 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 
 			if (session?.desktopCapturerSourceID) {
 				const sourceId = session.desktopCapturerSourceID;
+				const isScreen = sourceId.toLowerCase().includes('screen');
 				const sourceInfo =
 					getDeskreenGlobal().desktopCapturerSourcesService.sources.get(
 						sourceId,
 					);
-				if (sourceInfo?.source?.name && !payload.targetWindowTitle) {
+				if (sourceInfo?.source?.name && !payload.targetWindowTitle && !isScreen) {
 					payload.targetWindowTitle = sourceInfo.source.name;
 				}
 
@@ -829,7 +830,19 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 				payload.sessionId = sessionId;
 			}
 
-			return remoteInputInjectionService.injectInput(payload);
+			console.log('[RemoteInput] Processing input injection request:', {
+				action: payload.action,
+				text: payload.text,
+				key: payload.key,
+				macro: payload.macro,
+				targetWindowTitle: payload.targetWindowTitle,
+				targetWindowHandle: payload.targetWindowHandle,
+				targetProcessId: payload.targetProcessId,
+			});
+
+			const injected = await remoteInputInjectionService.injectInput(payload);
+			console.log('[RemoteInput] Injection result:', injected);
+			return injected;
 		},
 	);
 
