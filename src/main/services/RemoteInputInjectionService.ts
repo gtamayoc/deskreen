@@ -122,20 +122,28 @@ export class RemoteInputInjectionService {
 			// Pre-load Windows Forms, Drawing, UI Automation, and Win32 helpers
 			if (this.psWorker.stdin) {
 				const initScript =
-					'Add-Type -AssemblyName System.Windows.Forms;\n' +
-					'Add-Type -AssemblyName System.Drawing;\n' +
-					'Add-Type -AssemblyName UIAutomationClient;\n' +
-					'Add-Type -AssemblyName UIAutomationTypes;\n' +
+					'Add-Type -AssemblyName System.Windows.Forms -ErrorAction SilentlyContinue;\n' +
+					'Add-Type -AssemblyName System.Drawing -ErrorAction SilentlyContinue;\n' +
+					'Add-Type -AssemblyName UIAutomationClient -ErrorAction SilentlyContinue;\n' +
+					'Add-Type -AssemblyName UIAutomationTypes -ErrorAction SilentlyContinue;\n' +
 					'try {\n' +
-					'Add-Type -MemberDefinition @"\n' +
-					'[DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);\n' +
-					'[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);\n' +
-					'[DllImport("user32.dll")] public static extern bool IsIconic(IntPtr hWnd);\n' +
-					'[DllImport("user32.dll")] public static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, UIntPtr dwExtraInfo);\n' +
-					'public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }\n' +
-					'[DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);\n' +
-					'"@ -Name "Win32Focus" -Namespace "Deskreen" -ErrorAction SilentlyContinue;\n' +
+					'$win32Code = @\'\n' +
+					'using System;\n' +
+					'using System.Runtime.InteropServices;\n' +
+					'namespace Deskreen {\n' +
+					'  public class Win32Focus {\n' +
+					'    [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);\n' +
+					'    [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);\n' +
+					'    [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr hWnd);\n' +
+					'    [DllImport("user32.dll")] public static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, UIntPtr dwExtraInfo);\n' +
+					'    [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }\n' +
+					'    [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);\n' +
+					'  }\n' +
+					'}\n' +
+					'\'@;\n' +
+					'Add-Type -TypeDefinition $win32Code -ErrorAction SilentlyContinue;\n' +
 					'} catch {};\n' +
+					'try { $global:wshell = New-Object -ComObject WScript.Shell } catch {};\n' +
 					'function Focus-TerminalTab([IntPtr]$h, [string]$tabTitle) {\n' +
 					'  try {\n' +
 					'    if ($h -eq [IntPtr]::Zero -or [string]::IsNullOrWhiteSpace($tabTitle)) { return $false }\n' +
@@ -411,6 +419,12 @@ export class RemoteInputInjectionService {
 		).trim();
 		let command = '';
 
+		const sendKeysClause =
+			`try { [System.Windows.Forms.SendKeys]::SendWait("${safeKeys}") } catch { ` +
+			`if ($null -eq $global:wshell) { $global:wshell = New-Object -ComObject WScript.Shell }; ` +
+			`$global:wshell.SendKeys("${safeKeys}"); ` +
+			`}\n`;
+
 		if (targetWindowHandle) {
 			const hwndNum =
 				typeof targetWindowHandle === 'string'
@@ -425,28 +439,33 @@ export class RemoteInputInjectionService {
 					`$null = [Deskreen.Win32Focus]::SetForegroundWindow($h); ` +
 					(cleanTab ? `$null = Focus-TerminalTab $h "${cleanTab}"; ` : '') +
 					`}; ` +
+					`if ($null -eq $global:wshell) { $global:wshell = New-Object -ComObject WScript.Shell }; ` +
 					(targetProcessId && targetProcessId > 0
-						? `$wshell = New-Object -ComObject WScript.Shell; $null = $wshell.AppActivate(${targetProcessId}); `
-						: '') +
+						? `$null = $global:wshell.AppActivate(${targetProcessId}); `
+						: `$null = $global:wshell.AppActivate(${hwndNum}); `) +
 					`} catch {}; ` +
-					`[System.Windows.Forms.SendKeys]::SendWait("${safeKeys}")\n`;
+					sendKeysClause;
 			}
 		}
 
 		if (!command && targetProcessId && targetProcessId > 0) {
-			command = `$wshell = New-Object -ComObject WScript.Shell; $null = $wshell.AppActivate(${targetProcessId}); [System.Windows.Forms.SendKeys]::SendWait("${safeKeys}")\n`;
+			command =
+				`try { if ($null -eq $global:wshell) { $global:wshell = New-Object -ComObject WScript.Shell }; $null = $global:wshell.AppActivate(${targetProcessId}); } catch {}; ` +
+				sendKeysClause;
 		} else if (!command && targetWindowTitle && targetWindowTitle.trim().length > 0) {
 			const cleanTitle = this.escapePowerShellString(targetWindowTitle).trim();
 			command =
-				`$wshell = New-Object -ComObject WScript.Shell; ` +
-				`$act = $wshell.AppActivate("${cleanTitle}"); ` +
+				`try { ` +
+				`if ($null -eq $global:wshell) { $global:wshell = New-Object -ComObject WScript.Shell }; ` +
+				`$act = $global:wshell.AppActivate("${cleanTitle}"); ` +
 				`if (-not $act) { ` +
 				`$prefix = "${cleanTitle}".Split('-:')[0].Trim(); ` +
-				`if ($prefix.Length -gt 2) { $act = $wshell.AppActivate($prefix) } ` +
+				`if ($prefix.Length -gt 2) { $act = $global:wshell.AppActivate($prefix) } ` +
 				`}; ` +
-				`[System.Windows.Forms.SendKeys]::SendWait("${safeKeys}")\n`;
+				`} catch {}; ` +
+				sendKeysClause;
 		} else if (!command) {
-			command = `[System.Windows.Forms.SendKeys]::SendWait("${safeKeys}")\n`;
+			command = sendKeysClause;
 		}
 
 		try {

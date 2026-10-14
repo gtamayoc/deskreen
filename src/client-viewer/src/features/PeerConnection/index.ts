@@ -515,7 +515,7 @@ export default class PeerConnection {
 			type: 'deskreen-remote-input',
 			payload,
 		});
-		if (this.peer && !this.peer.destroyed) {
+		if (this.peer && !this.peer.destroyed && this.peer.connected) {
 			try {
 				this.peer.send(dataJSON);
 				return;

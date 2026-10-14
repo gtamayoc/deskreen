@@ -15,11 +15,25 @@ interface PeerDataMessage {
 
 export default async function handlePeerOnData(
 	peerConnection: PeerConnection,
-	data: string,
+	data: string | Uint8Array | ArrayBuffer | unknown,
 ): Promise<void> {
+	let rawString = '';
+	if (typeof data === 'string') {
+		rawString = data;
+	} else if (
+		data instanceof Uint8Array ||
+		(typeof ArrayBuffer !== 'undefined' && data instanceof ArrayBuffer)
+	) {
+		rawString = new TextDecoder().decode(data);
+	} else if (
+		typeof (data as { toString?: () => string })?.toString === 'function'
+	) {
+		rawString = (data as { toString: () => string }).toString();
+	}
+
 	let dataJSON: PeerDataMessage;
 	try {
-		dataJSON = JSON.parse(data) as PeerDataMessage;
+		dataJSON = JSON.parse(rawString) as PeerDataMessage;
 	} catch (err) {
 		console.warn('Failed to parse peer data message:', err);
 		return;
@@ -28,12 +42,36 @@ export default async function handlePeerOnData(
 	if (
 		dataJSON.type === 'deskreen-remote-input' ||
 		dataJSON.type === 'remote_pointer_input' ||
-		dataJSON.type === 'remote_input'
+		dataJSON.type === 'remote_input' ||
+		dataJSON.type === 'REMOTE_CONSOLE_INPUT' ||
+		dataJSON.type === 'REMOTE_POINTER_INPUT'
 	) {
 		const partnerDetails = peerConnection.partnerDeviceDetails;
 		const deviceFingerprint = partnerDetails
 			? `${partnerDetails.deviceIP}_${partnerDetails.deviceOS}_${partnerDetails.deviceBrowser}`
 			: undefined;
+
+		const cleanPayload = { ...(dataJSON.payload || {}) };
+		if (
+			typeof cleanPayload.text === 'string' &&
+			cleanPayload.text.includes('%20')
+		) {
+			try {
+				cleanPayload.text = decodeURIComponent(cleanPayload.text);
+			} catch {
+				// ignore
+			}
+		}
+		if (
+			typeof cleanPayload.macro === 'string' &&
+			cleanPayload.macro.includes('%20')
+		) {
+			try {
+				cleanPayload.macro = decodeURIComponent(cleanPayload.macro);
+			} catch {
+				// ignore
+			}
+		}
 
 		if (typeof window !== 'undefined' && window.electron?.ipcRenderer) {
 			try {
@@ -42,7 +80,7 @@ export default async function handlePeerOnData(
 					{
 						sessionId: peerConnection.sharingSessionID,
 						deviceFingerprint,
-						payload: dataJSON.payload,
+						payload: cleanPayload,
 					},
 				);
 			} catch (err) {

@@ -776,7 +776,12 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 			}
 
 			if (!session) {
-				return false;
+				const activeSessions = [
+					...getDeskreenGlobal().sharingSessionService.sharingSessions.values(),
+				];
+				if (activeSessions.length > 0) {
+					session = activeSessions[0];
+				}
 			}
 
 			try {
@@ -814,13 +819,15 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 				targetProcessId = details.processId;
 			}
 
-			if (targetWindowHandle !== undefined) {
+			if (targetWindowHandle !== undefined && !payload.targetWindowHandle) {
 				payload.targetWindowHandle = targetWindowHandle;
 			}
-			if (targetProcessId !== undefined) {
+			if (targetProcessId !== undefined && !payload.targetProcessId) {
 				payload.targetProcessId = targetProcessId;
 			}
-			payload.sessionId = sessionId;
+			if (sessionId && !payload.sessionId) {
+				payload.sessionId = sessionId;
+			}
 
 			return remoteInputInjectionService.injectInput(payload);
 		},
