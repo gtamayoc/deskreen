@@ -1,0 +1,86 @@
+name: Reporte de Error (Bug Report)
+description: Notifica un error o comportamiento inesperado en Deskreen CE.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por tomarte el tiempo de reportar este problema. Antes de enviar este formulario, asegúrate de haber revisado las [preguntas frecuentes en SUPPORT.md](https://github.com/gtamayoc/deskreen/blob/master/SUPPORT.md).
+        
+        > **Aviso de Privacidad:** No incluyas direcciones IP privadas, tokens de sesión ni capturas que contengan información confidencial.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Verificaciones previas
+      options:
+        - label: He verificado que estoy usando Node.js >= 22.6.0 y npm >= 10.9.0
+          required: true
+        - label: He comprobado que no existe ya un reporte similar abierto en Issues
+          required: true
+        - label: Comprendo que para extender pantalla en Windows se requiere un driver virtual (VDD) o un dummy plug físico
+          required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Sistema Operativo del Anfitrión (PC)
+      description: ¿En qué sistema operativo se ejecuta Deskreen CE?
+      options:
+        - Windows 11 (64-bit)
+        - Windows 10 (64-bit)
+        - macOS (Apple Silicon ARM64)
+        - macOS (Intel x64)
+        - Linux (Ubuntu/Debian)
+        - Linux (Arch/Fedora/Otros)
+      default: 0
+    validations:
+      required: true
+
+  - type: input
+    id: client_device
+    attributes:
+      label: Dispositivo y Navegador Cliente
+      description: Ej. "iPhone 13 - Safari iOS 17" o "Samsung Galaxy Tab S8 - Chrome 120"
+      placeholder: Dispositivo móvil / tableta y versión de navegador
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_behavior
+    attributes:
+      label: Comportamiento Actual
+      description: ¿Qué ocurrió de forma incorrecta?
+      placeholder: Describe qué sucedió.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Comportamiento Esperado
+      description: ¿Qué esperabas que ocurriera?
+      placeholder: Describe qué debería haber pasado.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction_steps
+    attributes:
+      label: Pasos para Reproducir
+      description: Pasos ordenados y reproducibles.
+      placeholder: |
+        1. Iniciar Deskreen CE en el anfitrión.
+        2. Conectar el dispositivo cliente escaneando el código QR.
+        3. Seleccionar la fuente de pantalla X.
+        4. Observar el error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Registros de Consola o Mensajes de Error (Opcional)
+      description: Pega aquí los registros relevantes.
+      render: shell

@@ -1,0 +1,41 @@
+name: Solicitud de Función (Feature Request)
+description: Propón una nueva funcionalidad o mejora técnica para Deskreen CE.
+title: "[Propuesta]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ¡Gracias por tus ideas para hacer crecer **Deskreen CE**! Las mejores propuestas describen con claridad el caso de uso real y el beneficio técnico.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema o Necesidad Detectada
+      description: ¿Qué limitación o fricción actual busca resolver esta propuesta?
+      placeholder: "Me resulta frustrante cuando..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Solución o Comportamiento Propuesto
+      description: Describe cómo te gustaría que funcionara la solución.
+      placeholder: "Propondría añadir..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativas Consideradas
+      description: ¿Has probado alguna otra solución temporal o alternativa técnica?
+      placeholder: "Actualmente lo resuelvo mediante..."
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Disposición a Contribuir
+      options:
+        - label: Estaría dispuesto a enviar un Pull Request con la implementación o pruebas

@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 380" width="1200" height="380">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090D16" />
+      <stop offset="50%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#1E293B" />
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0066FF" />
+      <stop offset="100%" stop-color="#00D2FF" />
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#00D2FF" />
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1E293B" stroke-width="1" stroke-opacity="0.6" />
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="380" fill="url(#bgGrad)" />
+  <rect width="1200" height="380" fill="url(#grid)" />
+
+  <!-- Ambient Light Orbs -->
+  <circle cx="200" cy="80" r="180" fill="#0066FF" opacity="0.12" filter="blur(60px)" />
+  <circle cx="1000" cy="300" r="220" fill="#00D2FF" opacity="0.08" filter="blur(80px)" />
+
+  <!-- Left Content Area -->
+  <g transform="translate(80, 70)">
+    <!-- Pill Badge -->
+    <rect width="210" height="30" rx="15" fill="#1E293B" stroke="#334155" stroke-width="1.5" />
+    <circle cx="16" cy="15" r="5" fill="#10B981" />
+    <text x="30" y="20" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="600" fill="#94A3B8" letter-spacing="0.5">COMMUNITY EDITION v3.2</text>
+
+    <!-- Headline -->
+    <g transform="translate(0, 72)">
+      <text x="0" y="0" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="52" font-weight="900" fill="#F8FAFC" letter-spacing="-1">
+        DESKREEN <tspan fill="url(#glowGrad)">CE</tspan>
+      </text>
+    </g>
+
+    <!-- Subheadline -->
+    <text x="2" y="112" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="19" font-weight="400" fill="#94A3B8">
+      Turn any mobile or tablet into a high-performance secondary display
+    </text>
+    <text x="2" y="136" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="17" font-weight="500" fill="#38BDF8">
+      &amp; independent AI console companion with HWND focus lock
+    </text>
+
+    <!-- Feature Pillars -->
+    <g transform="translate(2, 175)">
+      <!-- Pillar 1 -->
+      <g transform="translate(0, 0)">
+        <rect width="160" height="42" rx="8" fill="#1E293B" stroke="#334155" stroke-width="1" />
+        <circle cx="20" cy="21" r="4" fill="#00D2FF" />
+        <text x="32" y="26" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="13" font-weight="600" fill="#E2E8F0">WebRTC P2P LAN</text>
+      </g>
+      <!-- Pillar 2 -->
+      <g transform="translate(175, 0)">
+        <rect width="170" height="42" rx="8" fill="#1E293B" stroke="#334155" stroke-width="1" />
+        <circle cx="20" cy="21" r="4" fill="#10B981" />
+        <text x="32" y="26" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="13" font-weight="600" fill="#E2E8F0">Target HWND Lock</text>
+      </g>
+      <!-- Pillar 3 -->
+      <g transform="translate(360, 0)">
+        <rect width="180" height="42" rx="8" fill="#1E293B" stroke="#334155" stroke-width="1" />
+        <circle cx="20" cy="21" r="4" fill="#A855F7" />
+        <text x="32" y="26" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="13" font-weight="600" fill="#E2E8F0">USB Reverse Auto-ADB</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- Right Visual Art / Hardware Composition -->
+  <g transform="translate(760, 50)">
+    <!-- Main Laptop / Monitor Art -->
+    <rect x="0" y="30" width="300" height="200" rx="16" fill="#1E293B" stroke="url(#glowGrad)" stroke-width="4" />
+    <rect x="15" y="45" width="270" height="150" rx="8" fill="#0F172A" />
+    <!-- Terminal Header on Monitor -->
+    <circle cx="32" cy="60" r="4" fill="#EF4444" />
+    <circle cx="46" cy="60" r="4" fill="#F59E0B" />
+    <circle cx="60" cy="60" r="4" fill="#10B981" />
+    <text x="80" y="64" font-family="monospace" font-size="11" fill="#64748B">host: windows (x64) ~ deskreen-ce</text>
+    <line x1="15" y1="74" x2="285" y2="74" stroke="#1E293B" stroke-width="1.5" />
+    <!-- Code in host -->
+    <path d="M 32 94 L 80 94 M 32 110 L 140 110 M 32 126 L 110 126 M 32 142 L 180 142" stroke="#475569" stroke-width="3" stroke-linecap="round" />
+    <!-- Stand -->
+    <path d="M 120 230 L 120 270 M 80 270 L 220 270" stroke="#334155" stroke-width="5" stroke-linecap="round" />
+
+    <!-- Mobile Companion Phone overlapping in foreground -->
+    <g transform="translate(190, 80)">
+      <rect x="0" y="0" width="130" height="200" rx="20" fill="#0F172A" stroke="url(#accentGrad)" stroke-width="4" />
+      <rect x="45" y="10" width="40" height="5" rx="2.5" fill="#334155" />
+      <!-- Mobile Screen -->
+      <rect x="12" y="26" width="106" height="148" rx="10" fill="#1E293B" />
+      <!-- Companion Pad -->
+      <rect x="20" y="38" width="90" height="48" rx="6" fill="#0F172A" stroke="#334155" stroke-width="1" />
+      <text x="65" y="58" font-family="-apple-system, sans-serif" font-size="10" font-weight="bold" fill="#00D2FF" text-anchor="middle">ANTIGRAVITY CLI</text>
+      <text x="65" y="74" font-family="monospace" font-size="9" fill="#10B981" text-anchor="middle">ACTIVE HWND #1</text>
+      
+      <!-- Keypad buttons -->
+      <rect x="20" y="96" width="40" height="26" rx="6" fill="#0066FF" />
+      <text x="40" y="113" font-family="sans-serif" font-size="11" font-weight="bold" fill="#FFF" text-anchor="middle">y ↵</text>
+      
+      <rect x="70" y="96" width="40" height="26" rx="6" fill="#1E293B" stroke="#64748B" stroke-width="1" />
+      <text x="90" y="113" font-family="sans-serif" font-size="11" font-weight="bold" fill="#E2E8F0" text-anchor="middle">^C</text>
+
+      <rect x="20" y="130" width="90" height="26" rx="6" fill="#10B981" />
+      <text x="65" y="147" font-family="sans-serif" font-size="10" font-weight="bold" fill="#0F172A" text-anchor="middle">QUICK ACTION</text>
+    </g>
+
+    <!-- Signal bridge -->
+    <path d="M 170 120 C 190 100, 195 100, 205 110" fill="none" stroke="#00D2FF" stroke-width="3" stroke-linecap="round" stroke-dasharray="3 3" />
+  </g>
+</svg>

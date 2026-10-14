@@ -18,4 +18,7 @@ src/client-viewer/.env
 tasks/
 .agents/
 tests/
-docs/
+
+
+
+

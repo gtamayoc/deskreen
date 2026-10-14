@@ -1,4 +1,37 @@
-# 1.0.11 (8 Mar 2021)
+# Historial de Cambios (Changelog) - Deskreen CE
+
+Todas las modificaciones notables de este proyecto están documentadas en este archivo.
+El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
+
+---
+
+## [3.2.16] - 2026-10-13 (Community Edition)
+
+### Añadido
+- **Target Window Handle Lock (HWND Lock):** Enrutamiento nativo de entradas de teclado por handle de ventana Win32 (`HWND`) y PID, permitiendo que múltiples celulares operen consolas paralelas independientes sin robar el foco global.
+- **Cola Asíncrona Serializada de Entradas:** Ejecución atómica FIFO de pulsaciones para prevenir colisiones o caracteres entrelazados entre múltiples sesiones concurrentes.
+- **Doble Contingencia USB y Wi-Fi:** Auto-detección y reconexión resiliente vía `adb reverse` con fallback automático a la red local al desconectar el cable.
+- **Identidad Visual Original y Assets SVG:** Logotipo (`deskreen-ce-logo.svg`), icono (`deskreen-ce-icon.svg`) y banner (`deskreen-ce-banner.svg`) completamente originales y libres de dependencias binarias pesadas.
+- **Manual de Marca y Cumplimiento Legal:** Creación de `BRAND_GUIDELINES.md`, `LEGAL_COMPLIANCE.md`, `AUDIT_REPORT.md` y `SECURITY_REVIEW.md`.
+
+### Modernizado
+- **Electron 37.9.0:** Actualización desde Electron 13 obsoleto, con compatibilidad para Chromium 134+ y Node.js `>=22.6`.
+- **React 19.2.0:** Migración del frontend del anfitrión y del visor cliente web a React 19.
+- **Vite 7.2.4 & electron-vite 4.0.1:** Reemplazo integral de Webpack por Vite con compilación de alto rendimiento y HMR instantáneo.
+- **TypeScript 5.9.3 & Biome 2.3.6:** Tipado estricto en todos los targets y linter/formateador moderno ultrarrápido.
+- **Node Test Runner Nativo:** Suite de 393 pruebas unitarias y de estrés sin dependencias pesadas de frameworks externos (`node:test`).
+- **Visor Cliente Accesible:** Soporte reactivo de tema oscuro/claro y cumplimiento de contraste WCAG AA.
+
+### Corregido
+- Eliminación de pantalla negra en Windows mediante desactivación preventiva de capturadores WGC inestables y fallback a DXGI/GDI.
+- Eliminación de referencias obsoletas a Yarn y plantillas legadas de 2020.
+
+---
+
+## [Historial Histórico de Deskreen Upstream]
+
+### 1.0.11 (8 Mar 2021)
+
 
 Changes:
 
