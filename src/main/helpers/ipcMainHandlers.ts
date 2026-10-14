@@ -814,10 +814,36 @@ export const initIpcMainHandlers = (mainWindow: BrowserWindow): void => {
 					payload.targetWindowTitle = sourceInfo.source.name;
 				}
 
-				const details =
-					nativeWindowInspectionService.getWindowProcessIdAndHandle(sourceId);
-				targetWindowHandle = details.hwnd;
-				targetProcessId = details.processId;
+				if (isScreen) {
+					try {
+						const displays = screen.getAllDisplays();
+						const displayIdStr = sourceInfo?.source?.display_id;
+						const matchedDisplay =
+							displays.find((d) => String(d.id) === String(displayIdStr)) ||
+							screen.getPrimaryDisplay();
+						if (matchedDisplay) {
+							payload.displayBounds = matchedDisplay.bounds;
+						}
+					} catch (err) {
+						console.warn('[RemoteInput] Error resolving screen bounds:', err);
+					}
+				} else {
+					const details =
+						nativeWindowInspectionService.getWindowProcessIdAndHandle(sourceId);
+					targetWindowHandle = details.hwnd;
+					targetProcessId = details.processId;
+				}
+			}
+
+			if (!payload.displayBounds && !targetWindowHandle) {
+				try {
+					const primary = screen.getPrimaryDisplay();
+					if (primary) {
+						payload.displayBounds = primary.bounds;
+					}
+				} catch {
+					// ignore
+				}
 			}
 
 			if (targetWindowHandle !== undefined && !payload.targetWindowHandle) {

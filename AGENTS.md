@@ -34,6 +34,7 @@ Packaging: `build:win`, `build:mac`, `build:linux` (+ arch variants). Only CI is
 - `src/client-viewer/.env` (`VITE_CLIENT_VIEWER_GA_TAG`) is gitignored, release-only for analytics — never required for dev/build.
 - `main/index.ts` disables WGC capturers on Win32 to avoid `ProcessFrame E_FAIL` — keep, don't "fix".
 - `.gitignore` hides `tests/`, `tasks/`, `.agents/`, `.codebase-memory/`, `out/`, `dist/` — they exist locally, don't recreate or commit them.
+- RemoteInput PowerShell worker (`-Command -`): never pipe multiline scriptblocks to stdin; interactive prompt deadlocks waiting for block close. Keep statements single-line.
 
 ## Self-maintenance of this file
 

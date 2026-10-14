@@ -135,8 +135,8 @@ function PlayerView(props: PlayerViewProps) {
 	}, []);
 
 	useEffect(() => {
-		if (!isConsoleSharing) {
-			setIsAIPadOpen(false);
+		if (isConsoleSharing) {
+			setIsAIPadOpen(true);
 		}
 	}, [isConsoleSharing]);
 
@@ -379,8 +379,35 @@ function PlayerView(props: PlayerViewProps) {
 			const rect = container.getBoundingClientRect();
 			if (rect.width <= 0 || rect.height <= 0) return { x: 0.5, y: 0.5 };
 
-			let relX = (clientX - rect.left) / rect.width;
-			let relY = (clientY - rect.top) / rect.height;
+			// Calculate rendered video bounds inside container (accounting for object-fit: contain)
+			const videoEl = container.querySelector('video');
+			let renderWidth = rect.width;
+			let renderHeight = rect.height;
+			let offsetX = 0;
+			let offsetY = 0;
+
+			if (videoEl && videoEl.videoWidth > 0 && videoEl.videoHeight > 0) {
+				const isRotated = videoRotation === 90 || videoRotation === 270;
+				const vWidth = isRotated ? videoEl.videoHeight : videoEl.videoWidth;
+				const vHeight = isRotated ? videoEl.videoWidth : videoEl.videoHeight;
+				const videoAspect = vWidth / vHeight;
+				const containerAspect = rect.width / rect.height;
+
+				if (containerAspect > videoAspect) {
+					// Pillarboxed (black bars left/right)
+					renderHeight = rect.height;
+					renderWidth = rect.height * videoAspect;
+					offsetX = (rect.width - renderWidth) / 2;
+				} else {
+					// Letterboxed (black bars top/bottom)
+					renderWidth = rect.width;
+					renderHeight = rect.width / videoAspect;
+					offsetY = (rect.height - renderHeight) / 2;
+				}
+			}
+
+			let relX = (clientX - (rect.left + offsetX)) / (renderWidth || 1);
+			let relY = (clientY - (rect.top + offsetY)) / (renderHeight || 1);
 
 			relX = Math.max(0, Math.min(1, relX));
 			relY = Math.max(0, Math.min(1, relY));
@@ -419,10 +446,29 @@ function PlayerView(props: PlayerViewProps) {
 			) {
 				return;
 			}
-			// Only allow primary active pointer to prevent multi-touch coordinate jumping
-			if (activePointerIdRef.current !== null) {
+
+			// Capture pointer so pointerup is never lost when moving or releasing
+			try {
+				e.currentTarget.setPointerCapture(e.pointerId);
+			} catch {
+				// ignore if pointer capture not supported
+			}
+
+			// If previous pointer was abandoned (e.g. timeout > 2s), clear it
+			if (
+				activePointerIdRef.current !== null &&
+				Date.now() - pointerStartPosRef.current.time > 2000
+			) {
+				activePointerIdRef.current = null;
+			}
+
+			if (
+				activePointerIdRef.current !== null &&
+				activePointerIdRef.current !== e.pointerId
+			) {
 				return;
 			}
+
 			activePointerIdRef.current = e.pointerId;
 			isPointerDownRef.current = true;
 			pointerStartPosRef.current = {
@@ -454,14 +500,14 @@ function PlayerView(props: PlayerViewProps) {
 			}
 
 			const now = Date.now();
-			if (now - lastMoveSentRef.current < 33) return;
+			if (now - lastMoveSentRef.current < 40) return;
 			lastMoveSentRef.current = now;
 
 			const dist = Math.hypot(
 				e.clientX - pointerStartPosRef.current.x,
 				e.clientY - pointerStartPosRef.current.y,
 			);
-			if (dist >= 5 && peer) {
+			if (dist >= 10 && peer) {
 				const { x, y } = getRelativeCoordinates(e.clientX, e.clientY);
 				peer.sendRemoteInput({
 					action: 'pointer',
@@ -478,15 +524,30 @@ function PlayerView(props: PlayerViewProps) {
 
 	const handlePointerUp = useCallback(
 		(e: React.PointerEvent<HTMLDivElement>) => {
-			if (isAIPadOpen || !isPointerDownRef.current) return;
+			try {
+				if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+					e.currentTarget.releasePointerCapture(e.pointerId);
+				}
+			} catch {
+				// ignore
+			}
+
+			if (isAIPadOpen || !isPointerDownRef.current) {
+				activePointerIdRef.current = null;
+				isPointerDownRef.current = false;
+				return;
+			}
+
 			if (
 				activePointerIdRef.current !== null &&
 				e.pointerId !== activePointerIdRef.current
 			) {
 				return;
 			}
+
 			activePointerIdRef.current = null;
 			isPointerDownRef.current = false;
+
 			const target = e.target;
 			if (
 				target instanceof HTMLElement &&
@@ -503,7 +564,11 @@ function PlayerView(props: PlayerViewProps) {
 				e.clientY - pointerStartPosRef.current.y,
 			);
 
-			if (dist < 10 && elapsed < 500 && peer) {
+			// Generous threshold for touch screens: human fingers easily move 25-35px during a tap
+			const maxDist = e.pointerType === 'touch' ? 35 : 15;
+			const maxElapsed = 1200;
+
+			if (dist < maxDist && elapsed < maxElapsed && peer) {
 				const { x, y } = getRelativeCoordinates(e.clientX, e.clientY);
 				const button = e.button === 2 ? 'right' : 'left';
 				peer.sendRemoteInput({
@@ -522,10 +587,15 @@ function PlayerView(props: PlayerViewProps) {
 
 	const handlePointerCancel = useCallback(
 		(e: React.PointerEvent<HTMLDivElement>) => {
-			if (activePointerIdRef.current === e.pointerId) {
-				activePointerIdRef.current = null;
-				isPointerDownRef.current = false;
+			try {
+				if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+					e.currentTarget.releasePointerCapture(e.pointerId);
+				}
+			} catch {
+				// ignore
 			}
+			activePointerIdRef.current = null;
+			isPointerDownRef.current = false;
 		},
 		[],
 	);
@@ -715,6 +785,8 @@ function PlayerView(props: PlayerViewProps) {
 					backgroundColor: 'black',
 					overflow: 'hidden',
 					touchAction: 'none',
+					userSelect: 'none',
+					WebkitUserSelect: 'none',
 				}}
 			>
 				<div
@@ -803,7 +875,7 @@ function PlayerView(props: PlayerViewProps) {
 						onToggleAIPad={() => {
 							setIsAIPadOpen((prev) => !prev);
 						}}
-						showAIPad={isConsoleSharing}
+						showAIPad={true}
 						isPlaying={isPlaying}
 						onTogglePlayPause={handlePlayPauseWithNotification}
 						brightness={screenBrightness}
@@ -832,15 +904,13 @@ function PlayerView(props: PlayerViewProps) {
 						}}
 					/>
 				)}
-				{(isConsoleSharing || isAIPadOpen) && (
-					<ConsoleActionPad
-						peer={peer}
-						isOpen={isAIPadOpen}
-						onOpenChange={setIsAIPadOpen}
-						isFullscreen={isFullscreen}
-						isVisible={isConsoleSharing || isAIPadOpen}
-					/>
-				)}
+				<ConsoleActionPad
+					peer={peer}
+					isOpen={isAIPadOpen}
+					onOpenChange={setIsAIPadOpen}
+					isFullscreen={isFullscreen}
+					isVisible={true}
+				/>
 				<SourceSwitcherModal
 					isOpen={isSourceSwitcherOpen}
 					onClose={() => setIsSourceSwitcherOpen(false)}

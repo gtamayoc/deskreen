@@ -20,6 +20,12 @@ export interface RemoteInputPayload {
 	sessionId?: string;
 	targetTabName?: string;
 	pointer?: RemotePointerEvent;
+	displayBounds?: {
+		x: number;
+		y: number;
+		width: number;
+		height: number;
+	};
 }
 
 export interface RemoteInputInjectionServiceOptions {
@@ -84,7 +90,7 @@ export class RemoteInputInjectionService {
 						'-',
 					],
 					{
-						stdio: ['pipe', 'ignore', 'ignore'],
+						stdio: ['pipe', 'ignore', 'pipe'],
 						windowsHide: true,
 					},
 				);
@@ -109,6 +115,10 @@ export class RemoteInputInjectionService {
 				// Suppress EPIPE on child worker stdin
 			});
 
+			this.psWorker.stderr?.on('data', (d) => {
+				console.warn('[RemoteInput] PowerShell worker stderr:', d.toString());
+			});
+
 			this.psWorker.on('error', (err) => {
 				console.warn('[RemoteInput] PowerShell worker error:', err);
 				this.psWorker = null;
@@ -121,55 +131,28 @@ export class RemoteInputInjectionService {
 
 			// Pre-load Windows Forms, Drawing, UI Automation, and Win32 helpers
 			if (this.psWorker.stdin) {
-				const initScript =
-					'Add-Type -AssemblyName System.Windows.Forms -ErrorAction SilentlyContinue;\n' +
-					'Add-Type -AssemblyName System.Drawing -ErrorAction SilentlyContinue;\n' +
-					'Add-Type -AssemblyName UIAutomationClient -ErrorAction SilentlyContinue;\n' +
-					'Add-Type -AssemblyName UIAutomationTypes -ErrorAction SilentlyContinue;\n' +
-					'try {\n' +
-					'$win32Members = @\'\n' +
-					'[DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);\n' +
-					'[DllImport("user32.dll")] public static extern void SwitchToThisWindow(IntPtr hWnd, bool fUnknown);\n' +
-					'[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);\n' +
-					'[DllImport("user32.dll")] public static extern bool IsIconic(IntPtr hWnd);\n' +
-					'[DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);\n' +
-					'[DllImport("user32.dll")] public static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, UIntPtr dwExtraInfo);\n' +
-					'[StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }\n' +
-					'[DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);\n' +
-					'\'@;\n' +
-					'$null = Add-Type -MemberDefinition $win32Members -Name "Win32Focus" -Namespace "Deskreen" -ErrorAction SilentlyContinue -PassThru;\n' +
-					'} catch {};\n' +
-					'try { $global:wshell = New-Object -ComObject WScript.Shell } catch {};\n' +
-					'function Focus-TerminalTab([IntPtr]$h, [string]$tabTitle) {\n' +
-					'  try {\n' +
-					'    if ($h -eq [IntPtr]::Zero -or [string]::IsNullOrWhiteSpace($tabTitle)) { return $false }\n' +
-					'    $win = [System.Windows.Automation.AutomationElement]::FromHandle($h);\n' +
-					'    if ($null -eq $win) { return $false }\n' +
-					'    $cls = $win.Current.ClassName;\n' +
-					'    if ($cls -ne "CASCADIA_HOSTING_WINDOW_CLASS" -and -not $cls.ToLower().Contains("cascadia")) { return $false }\n' +
-					'    $tabCond = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::TabItem);\n' +
-					'    $tabItems = $win.FindAll([System.Windows.Automation.TreeScope]::Descendants, $tabCond);\n' +
-					'    if ($null -eq $tabItems -or $tabItems.Count -eq 0) { return $false }\n' +
-					'    $clean = $tabTitle.Trim();\n' +
-					'    $targetTab = $null;\n' +
-					'    foreach ($tab in $tabItems) {\n' +
-					'      if ($tab.Current.Name -and $tab.Current.Name.Trim() -ieq $clean) { $targetTab = $tab; break }\n' +
-					'    }\n' +
-					'    if ($null -eq $targetTab) {\n' +
-					'      foreach ($tab in $tabItems) {\n' +
-					'        if ($tab.Current.Name -and ($tab.Current.Name.IndexOf($clean, [System.StringComparison]::OrdinalIgnoreCase) -ge 0 -or $clean.IndexOf($tab.Current.Name, [System.StringComparison]::OrdinalIgnoreCase) -ge 0)) {\n' +
-					'          $targetTab = $tab; break\n' +
-					'        }\n' +
-					'      }\n' +
-					'    }\n' +
-					'    if ($null -ne $targetTab) {\n' +
-					'      $pattern = $targetTab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern) -as [System.Windows.Automation.SelectionItemPattern];\n' +
-					'      if ($null -ne $pattern) { $pattern.Select() } else { $targetTab.SetFocus() };\n' +
-					'      return $true;\n' +
-					'    }\n' +
-					'  } catch {}\n' +
-					'  return $false;\n' +
-					'};\n';
+				const win32Members = [
+					'[DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);',
+					'[DllImport("user32.dll")] public static extern void SwitchToThisWindow(IntPtr hWnd, bool fUnknown);',
+					'[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);',
+					'[DllImport("user32.dll")] public static extern bool IsIconic(IntPtr hWnd);',
+					'[DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);',
+					'[DllImport("user32.dll")] public static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, UIntPtr dwExtraInfo);',
+					'[StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }',
+					'[DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);',
+				].join(' ');
+
+				const escapedMembers = win32Members.replace(/"/g, '`"');
+
+				const initScript = [
+					'Add-Type -AssemblyName System.Windows.Forms -ErrorAction SilentlyContinue',
+					'Add-Type -AssemblyName System.Drawing -ErrorAction SilentlyContinue',
+					'Add-Type -AssemblyName UIAutomationClient -ErrorAction SilentlyContinue',
+					'Add-Type -AssemblyName UIAutomationTypes -ErrorAction SilentlyContinue',
+					`try { $null = Add-Type -MemberDefinition "${escapedMembers}" -Name "Win32Focus" -Namespace "Deskreen" -ErrorAction SilentlyContinue -PassThru } catch {}`,
+					'try { $global:wshell = New-Object -ComObject WScript.Shell } catch {}',
+					'function Focus-TerminalTab([IntPtr]$h, [string]$tabTitle) { try { if ($h -eq [IntPtr]::Zero -or [string]::IsNullOrWhiteSpace($tabTitle)) { return $false }; $win = [System.Windows.Automation.AutomationElement]::FromHandle($h); if ($null -eq $win) { return $false }; $cls = $win.Current.ClassName; if ($cls -ne "CASCADIA_HOSTING_WINDOW_CLASS" -and -not $cls.ToLower().Contains("cascadia")) { return $false }; $tabCond = New-Object System.Windows.Automation.PropertyCondition([System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::TabItem); $tabItems = $win.FindAll([System.Windows.Automation.TreeScope]::Descendants, $tabCond); if ($null -eq $tabItems -or $tabItems.Count -eq 0) { return $false }; $clean = $tabTitle.Trim(); $targetTab = $null; foreach ($tab in $tabItems) { if ($tab.Current.Name -and $tab.Current.Name.Trim() -ieq $clean) { $targetTab = $tab; break } }; if ($null -eq $targetTab) { foreach ($tab in $tabItems) { if ($tab.Current.Name -and ($tab.Current.Name.IndexOf($clean, [System.StringComparison]::OrdinalIgnoreCase) -ge 0 -or $clean.IndexOf($tab.Current.Name, [System.StringComparison]::OrdinalIgnoreCase) -ge 0)) { $targetTab = $tab; break } } }; if ($null -ne $targetTab) { $pattern = $targetTab.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern) -as [System.Windows.Automation.SelectionItemPattern]; if ($null -ne $pattern) { $pattern.Select() } else { $targetTab.SetFocus() }; return $true } } catch {}; return $false }',
+				].join('\r\n') + '\r\n';
 				this.psWorker.stdin.write(initScript);
 				this.isInitialized = true;
 			}
@@ -293,7 +276,7 @@ export class RemoteInputInjectionService {
 			`$null = [Deskreen.Win32Focus]::SetForegroundWindow($h); ` +
 			`$null = Focus-TerminalTab $h "${safeTitle}"; ` +
 			`}; ` +
-			`} catch {};\n`;
+			`} catch {};\r\n`;
 
 		try {
 			if (this.psWorker?.stdin && !this.psWorker.killed) {
@@ -317,6 +300,7 @@ export class RemoteInputInjectionService {
 					payload.targetProcessId,
 					payload.targetWindowHandle,
 					payload.targetTabName,
+					payload.displayBounds,
 				);
 			}
 			if (platform === 'darwin') {
@@ -411,9 +395,9 @@ export class RemoteInputInjectionService {
 		}
 
 		const safeKeys = this.escapePowerShellString(keysToSend);
-		const cleanTab = this.escapePowerShellString(
-			targetTabName || targetWindowTitle || '',
-		).trim();
+		const cleanTab = targetTabName
+			? this.escapePowerShellString(targetTabName).trim()
+			: '';
 		let command = '';
 
 		const sendKeysClause =
@@ -422,7 +406,7 @@ export class RemoteInputInjectionService {
 			`$global:wshell.SendKeys("${safeKeys}"); ` +
 			`} catch { ` +
 			`try { [System.Windows.Forms.SendKeys]::SendWait("${safeKeys}") } catch {}; ` +
-			`}\n`;
+			`}\r\n`;
 
 		const isScreenTitle =
 			targetWindowTitle &&
@@ -502,10 +486,11 @@ export class RemoteInputInjectionService {
 
 	private injectPointerWindows(
 		pointer: NonNullable<RemoteInputPayload['pointer']>,
-		targetWindowTitle?: string,
+		_targetWindowTitle?: string,
 		_targetProcessId?: number,
 		targetWindowHandle?: number | string,
-		targetTabName?: string,
+		_targetTabName?: string,
+		displayBounds?: RemoteInputPayload['displayBounds'],
 	): boolean {
 		if (!this.psWorker || !this.psWorker.stdin || !this.isInitialized) {
 			this.initWindowsWorker();
@@ -513,11 +498,19 @@ export class RemoteInputInjectionService {
 
 		const normX = Math.max(0, Math.min(1, pointer.x));
 		const normY = Math.max(0, Math.min(1, pointer.y));
-		const cleanTitle = this.escapePowerShellString(
-			targetTabName || targetWindowTitle || '',
-		).trim();
 
 		let cmd = 'try { ';
+
+		let targetXExpr: string;
+		let targetYExpr: string;
+
+		if (displayBounds && displayBounds.width > 0 && displayBounds.height > 0) {
+			targetXExpr = `[int](${displayBounds.x} + ${displayBounds.width} * ${normX})`;
+			targetYExpr = `[int](${displayBounds.y} + ${displayBounds.height} * ${normY})`;
+		} else {
+			targetXExpr = `[int]([System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Left + [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Width * ${normX})`;
+			targetYExpr = `[int]([System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Top + [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Height * ${normY})`;
+		}
 
 		if (targetWindowHandle) {
 			const hwndNum =
@@ -528,10 +521,11 @@ export class RemoteInputInjectionService {
 				cmd +=
 					`$h = [IntPtr]::new(${hwndNum}); ` +
 					`if ($h -ne [IntPtr]::Zero) { ` +
-					`if ([Deskreen.Win32Focus]::IsIconic($h)) { $null = [Deskreen.Win32Focus]::ShowWindow($h, 9) }; ` +
-					`[Deskreen.Win32Focus]::SwitchToThisWindow($h, $true); ` +
-					`$null = [Deskreen.Win32Focus]::SetForegroundWindow($h); ` +
-					(cleanTitle ? `$null = Focus-TerminalTab $h "${cleanTitle}"; ` : '') +
+					(pointer.type !== 'move'
+						? `if ([Deskreen.Win32Focus]::IsIconic($h)) { $null = [Deskreen.Win32Focus]::ShowWindow($h, 9) }; ` +
+						  `[Deskreen.Win32Focus]::SwitchToThisWindow($h, $true); ` +
+						  `$null = [Deskreen.Win32Focus]::SetForegroundWindow($h); `
+						: '') +
 					`$rect = New-Object Deskreen.Win32Focus+RECT; ` +
 					`$got = [Deskreen.Win32Focus]::GetWindowRect($h, [ref]$rect); ` +
 					`if ($got) { ` +
@@ -539,22 +533,18 @@ export class RemoteInputInjectionService {
 					`$targetX = [Math]::Max($rect.Left, [Math]::Min($rect.Right, [int]($rect.Left + $w * ${normX}))); ` +
 					`$targetY = [Math]::Max($rect.Top, [Math]::Min($rect.Bottom, [int]($rect.Top + $hgt * ${normY}))); ` +
 					`} else { ` +
-					`$targetX = [int]([System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Left + [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Width * ${normX}); ` +
-					`$targetY = [int]([System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Top + [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Height * ${normY}); ` +
+					`$targetX = ${targetXExpr}; ` +
+					`$targetY = ${targetYExpr}; ` +
 					`} ` +
 					`} else { ` +
-					`$targetX = [int]([System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Left + [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Width * ${normX}); ` +
-					`$targetY = [int]([System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Top + [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Height * ${normY}); ` +
+					`$targetX = ${targetXExpr}; ` +
+					`$targetY = ${targetYExpr}; ` +
 					`} `;
 			} else {
-				cmd +=
-					`$targetX = [int]([System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Left + [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Width * ${normX}); ` +
-					`$targetY = [int]([System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Top + [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Height * ${normY}); `;
+				cmd += `$targetX = ${targetXExpr}; $targetY = ${targetYExpr}; `;
 			}
 		} else {
-			cmd +=
-				`$targetX = [int]([System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Left + [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Width * ${normX}); ` +
-				`$targetY = [int]([System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Top + [System.Windows.Forms.Screen]::PrimaryScreen.Bounds.Height * ${normY}); `;
+			cmd += `$targetX = ${targetXExpr}; $targetY = ${targetYExpr}; `;
 		}
 
 		cmd += `[System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point($targetX, $targetY); `;
@@ -563,21 +553,27 @@ export class RemoteInputInjectionService {
 			if (pointer.button === 'right') {
 				cmd +=
 					`[Deskreen.Win32Focus]::mouse_event(0x0008, 0, 0, 0, [UIntPtr]::Zero); ` +
+					`Start-Sleep -Milliseconds 20; ` +
 					`[Deskreen.Win32Focus]::mouse_event(0x0010, 0, 0, 0, [UIntPtr]::Zero); `;
 			} else {
 				cmd +=
 					`[Deskreen.Win32Focus]::mouse_event(0x0002, 0, 0, 0, [UIntPtr]::Zero); ` +
+					`Start-Sleep -Milliseconds 20; ` +
 					`[Deskreen.Win32Focus]::mouse_event(0x0004, 0, 0, 0, [UIntPtr]::Zero); `;
 			}
 		} else if (pointer.type === 'contextmenu') {
 			cmd +=
 				`[Deskreen.Win32Focus]::mouse_event(0x0008, 0, 0, 0, [UIntPtr]::Zero); ` +
+				`Start-Sleep -Milliseconds 20; ` +
 				`[Deskreen.Win32Focus]::mouse_event(0x0010, 0, 0, 0, [UIntPtr]::Zero); `;
 		} else if (pointer.type === 'dblclick') {
 			cmd +=
 				`[Deskreen.Win32Focus]::mouse_event(0x0002, 0, 0, 0, [UIntPtr]::Zero); ` +
+				`Start-Sleep -Milliseconds 20; ` +
 				`[Deskreen.Win32Focus]::mouse_event(0x0004, 0, 0, 0, [UIntPtr]::Zero); ` +
+				`Start-Sleep -Milliseconds 80; ` +
 				`[Deskreen.Win32Focus]::mouse_event(0x0002, 0, 0, 0, [UIntPtr]::Zero); ` +
+				`Start-Sleep -Milliseconds 20; ` +
 				`[Deskreen.Win32Focus]::mouse_event(0x0004, 0, 0, 0, [UIntPtr]::Zero); `;
 		} else if (pointer.type === 'down') {
 			cmd +=
@@ -591,7 +587,7 @@ export class RemoteInputInjectionService {
 					: `[Deskreen.Win32Focus]::mouse_event(0x0004, 0, 0, 0, [UIntPtr]::Zero); `;
 		}
 
-		cmd += `} catch {};\n`;
+		cmd += `} catch {};\r\n`;
 
 		try {
 			if (this.psWorker?.stdin && !this.psWorker.killed) {
