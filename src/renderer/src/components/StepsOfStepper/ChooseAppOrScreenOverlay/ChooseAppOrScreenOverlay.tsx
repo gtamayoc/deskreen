@@ -1,35 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { H3, Dialog, Button, Spinner } from '@blueprintjs/core';
 import { Row, Col } from 'react-flexbox-grid';
-import { createStyles, makeStyles } from '@material-ui/core/styles';
 import CloseOverlayButton from '../../CloseOverlayButton';
 import PreviewGridList from './PreviewGridList';
 import { IpcEvents } from '../../../../../common/IpcEvents.enum';
 import { useTranslation } from 'react-i18next';
-
-const useStyles = makeStyles(() =>
-	createStyles({
-		dialogRoot: {
-			width: '90%',
-			height: '87vh !important',
-			overflowY: 'scroll',
-		},
-		closeButton: {
-			position: 'relative',
-			width: '40px',
-			height: '40px',
-			left: 'calc(100% - 55px)',
-			borderRadius: '100px',
-			zIndex: 9999,
-		},
-		overlayInnerRoot: { width: '90%', height: '90%' },
-		sharePreviewsContainer: {
-			top: '60px',
-			position: 'relative',
-			height: '100%',
-		},
-	}),
-);
+import classes from './ChooseAppOrScreenOverlay.module.css';
 
 interface ChooseAppOrScreenOverlayProps {
 	isEntireScreenToShareChosen: boolean;
@@ -51,7 +27,6 @@ export default function ChooseAppOrScreenOverlay(
 		handleNextApplicationWindow,
 		isWaylandSession,
 	} = props;
-	const classes = useStyles();
 	const { t } = useTranslation();
 
 	const [viewSharingIds, setViewSharingIds] = useState<string[]>([]);

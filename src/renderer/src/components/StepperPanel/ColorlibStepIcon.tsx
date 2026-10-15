@@ -1,12 +1,26 @@
 import { Icon } from '@blueprintjs/core';
-import { StepIconProps } from '@material-ui/core/StepIcon';
-import { makeStyles } from '@material-ui/core/styles';
 import clsx from 'clsx';
 import React, { ReactNode } from 'react';
+
+export interface StepIconProps {
+	active?: boolean;
+	completed?: boolean;
+	error?: boolean;
+	icon?: React.ReactNode;
+}
 
 export interface StepIconPropsDeskreen extends StepIconProps {
 	isEntireScreenSelected: boolean;
 	isApplicationWindowSelected: boolean;
+}
+
+function makeStyles(_styles: Record<string, unknown>) {
+	return () => ({
+		root: 'colorlib-step-icon-root',
+		active: 'colorlib-step-icon-active',
+		completed: 'colorlib-step-icon-completed',
+		stepContent: 'colorlib-step-icon-content',
+	});
 }
 
 const useColorlibStepIconStyles = makeStyles({

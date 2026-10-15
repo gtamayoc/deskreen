@@ -47,7 +47,7 @@ export default async (
 	height: number | null | undefined = undefined,
 	minSizeMultiplier = 1,
 	maxSizeMultiplier = 1,
-	minFrameRate = 15,
+	minFrameRate = 30,
 	maxFrameRate = 60,
 ): Promise<MediaStream> => {
 	try {

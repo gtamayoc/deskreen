@@ -13,6 +13,7 @@ import { Row, Col } from 'react-flexbox-grid';
 import config from '../../../../common/config';
 import { IpcEvents } from '../../../../common/IpcEvents.enum';
 import { useTranslation } from 'react-i18next';
+import { QRCodeSVG } from 'qrcode.react';
 
 const { hostname } = config;
 
@@ -292,11 +293,35 @@ const ScanQRStep: React.FC = () => {
 						{isConnectionAvailable
 							? t(
 									'enter-the-following-address-in-browser-address-bar-on-any-device',
-									'Abre la siguiente dirección en tu navegador:',
+									'Escanea el código QR o abre la siguiente dirección en tu navegador:',
 								)
 							: t('one-viewing-client-is-connected-already')}
 					</Text>
 				</div>
+
+				{isConnectionAvailable && (
+					<div
+						style={{
+							display: 'flex',
+							flexDirection: 'column',
+							alignItems: 'center',
+							justifyContent: 'center',
+							padding: '12px',
+							background: '#ffffff',
+							borderRadius: '12px',
+							boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
+							marginBottom: '16px',
+						}}
+					>
+						<QRCodeSVG
+							value={shareUrl}
+							size={170}
+							level="M"
+							bgColor="#ffffff"
+							fgColor="#000000"
+						/>
+					</div>
+				)}
 
 				<Tooltip content={copyTooltipContent} position={Position.TOP}>
 					<span>

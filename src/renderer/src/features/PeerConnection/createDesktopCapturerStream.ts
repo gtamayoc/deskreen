@@ -14,8 +14,10 @@ export default async function createDesktopCapturerStream(
 				sourceID,
 				peerConnection.sourceDisplaySize?.width,
 				peerConnection.sourceDisplaySize?.height,
-				0.5,
+				0.8,
 				1,
+				30,
+				60,
 			);
 			peerConnection.localStream = stream;
 		} else {

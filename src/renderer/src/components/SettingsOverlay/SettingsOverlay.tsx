@@ -11,7 +11,6 @@ import {
 	TabsExpander,
 	Text,
 } from '@blueprintjs/core';
-import { createStyles, makeStyles } from '@material-ui/core/styles';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Col, Row } from 'react-flexbox-grid';
 import { useTranslation } from 'react-i18next';
@@ -38,39 +37,16 @@ type SettingsOverlayClassKey =
 
 type SettingsOverlayClassMap = Record<SettingsOverlayClassKey, string>;
 
-const useStyles = makeStyles(() =>
-	createStyles({
-		checkboxSettings: { margin: '0' },
-		overlayInnerRoot: { width: '90%' },
-		overlayInsideFade: {
-			height: '90vh',
-			backgroundColor: 'var(--light-bg-color)',
-		},
-		absoluteCloseButton: { position: 'absolute', left: 'calc(100% - 65px)' },
-		tabNavigationRowButton: {
-			fontWeight: 700,
-			padding: '6px 10px',
-			borderRadius: '100px',
-		},
-		iconInTablLeftButton: { marginRight: '5px' },
-		updateCalloutWrapper: {
-			display: 'flex',
-			justifyContent: 'center',
-			marginBottom: '16px',
-			width: '100%',
-		},
-		updateCallout: {
-			cursor: 'pointer',
-			boxShadow: 'none',
-			display: 'inline-flex',
-			flexDirection: 'column',
-			gap: '4px',
-			width: 'auto',
-			maxWidth: '420px',
-			borderRadius: '8px',
-		},
-	}),
-);
+const classes: SettingsOverlayClassMap = {
+	checkboxSettings: 'checkboxSettings',
+	overlayInnerRoot: 'overlayInnerRoot',
+	overlayInsideFade: 'overlayInsideFade',
+	absoluteCloseButton: 'absoluteCloseButton',
+	tabNavigationRowButton: 'tabNavigationRowButton',
+	iconInTablLeftButton: 'iconInTablLeftButton',
+	updateCalloutWrapper: 'updateCalloutWrapper',
+	updateCallout: 'updateCallout',
+};
 
 export default function SettingsOverlay(
 	props: SettingsOverlayProps,
@@ -138,8 +114,6 @@ export default function SettingsOverlay(
 			customPortInput.trim(),
 		);
 	}, [customPortInput]);
-
-	const classes = useStyles() as SettingsOverlayClassMap;
 
 	const handleOpenDownload = useCallback((): void => {
 		void window.electron.ipcRenderer.invoke(

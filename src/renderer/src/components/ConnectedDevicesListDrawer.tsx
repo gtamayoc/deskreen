@@ -12,7 +12,6 @@ import {
 	Switch,
 } from '@blueprintjs/core';
 import { Row, Col } from 'react-flexbox-grid';
-import { createStyles, makeStyles } from '@material-ui/core/styles';
 import CloseOverlayButton from './CloseOverlayButton';
 import DeviceInfoCallout from './DeviceInfoCallout';
 import SharingSourcePreviewCard from './SharingSourcePreviewCard';
@@ -21,6 +20,7 @@ import { Device } from '../../../common/Device';
 import { IpcEvents } from '../../../common/IpcEvents.enum';
 import isProduction from '../../../common/isProduction';
 import { useTranslation } from 'react-i18next';
+import classes from './ConnectedDevicesListDrawer.module.css';
 
 type DeviceWithDesktopCapturerSourceId = Device & {
 	desktopCapturerSourceId: string;
@@ -32,26 +32,9 @@ interface ConnectedDevicesListDrawerProps {
 	handleReset: () => void;
 }
 
-const useStyles = makeStyles(() =>
-	createStyles({
-		drawerRoot: { overflowY: 'scroll', overflowX: 'hidden' },
-		drawerInnerTopPanel: { padding: '20px 10px 0px 30px' },
-		connectedDevicesRoot: { padding: '10px 20px' },
-		topHeader: {
-			marginRight: '20px',
-			fontSize: '20px',
-			fontWeight: 900,
-		},
-		zoomFullWidth: {
-			width: '100%',
-		},
-	}),
-);
-
 export default function ConnectedDevicesListDrawer(
 	props: ConnectedDevicesListDrawerProps,
 ) {
-	const classes = useStyles();
 	const { t } = useTranslation();
 
 	const [isAlertDisconectAllOpen, setIsAlertDisconectAllOpen] = useState(false);

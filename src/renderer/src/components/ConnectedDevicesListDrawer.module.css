@@ -1,0 +1,22 @@
+.drawerRoot {
+	overflow-y: scroll;
+	overflow-x: hidden;
+}
+
+.drawerInnerTopPanel {
+	padding: 20px 10px 0px 30px;
+}
+
+.connectedDevicesRoot {
+	padding: 10px 20px;
+}
+
+.topHeader {
+	margin-right: 20px;
+	font-size: 20px;
+	font-weight: 900;
+}
+
+.zoomFullWidth {
+	width: 100%;
+}

@@ -1,0 +1,11 @@
+.dialogRoot {
+	width: 90%;
+	height: 87vh !important;
+	overflow-y: scroll;
+}
+
+.sharePreviewsContainer {
+	top: 60px;
+	position: relative;
+	height: 100%;
+}

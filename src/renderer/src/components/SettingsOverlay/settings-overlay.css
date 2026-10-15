@@ -1,3 +1,49 @@
 .tab-panel-wide-custom-style {
 	width: 100%;
 }
+
+.checkboxSettings {
+	margin: 0;
+}
+
+.overlayInnerRoot {
+	width: 90%;
+}
+
+.overlayInsideFade {
+	height: 90vh;
+	background-color: var(--light-bg-color);
+}
+
+.absoluteCloseButton {
+	position: absolute;
+	left: calc(100% - 65px);
+}
+
+.tabNavigationRowButton {
+	font-weight: 700;
+	padding: 6px 10px;
+	border-radius: 100px;
+}
+
+.iconInTablLeftButton {
+	margin-right: 5px;
+}
+
+.updateCalloutWrapper {
+	display: flex;
+	justify-content: center;
+	margin-bottom: 16px;
+	width: 100%;
+}
+
+.updateCallout {
+	cursor: pointer;
+	box-shadow: none;
+	display: inline-flex;
+	flex-direction: column;
+	gap: 4px;
+	width: auto;
+	max-width: 420px;
+	border-radius: 8px;
+}

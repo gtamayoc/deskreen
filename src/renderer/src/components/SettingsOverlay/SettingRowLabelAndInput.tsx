@@ -1,24 +1,20 @@
 import React from 'react';
 import { Row, Col } from 'react-flexbox-grid';
 import { Icon, Text } from '@blueprintjs/core';
-import { createStyles, makeStyles } from '@material-ui/core/styles';
 
-const useStyles = makeStyles(() =>
-	createStyles({
-		oneSettingRow: {
-			color: 'var(--text-color, #182026) !important',
-			fontSize: '18px',
-			fontWeight: 900,
-			display: 'flex',
-			flexDirection: 'row',
-			alignItems: 'center',
-		},
-		settingRowIcon: {
-			margin: '10px',
-			color: 'var(--text-muted-color, #8A9BA8)',
-		},
-	}),
-);
+const oneSettingRowStyle: React.CSSProperties = {
+	color: 'var(--text-color, #182026)',
+	fontSize: '18px',
+	fontWeight: 900,
+	display: 'flex',
+	flexDirection: 'row',
+	alignItems: 'center',
+};
+
+const settingRowIconStyle: React.CSSProperties = {
+	margin: '10px',
+	color: 'var(--text-muted-color, #8A9BA8)',
+};
 
 interface SettingRowLabelAndInput {
 	icon: string;
@@ -30,18 +26,17 @@ export default function SettingRowLabelAndInput(
 	props: SettingRowLabelAndInput,
 ) {
 	const { icon, label, input } = props;
-	const classes = useStyles();
 
 	return (
 		<Row middle="xs" between="xs" style={{ display: 'flex', width: '100%' }}>
 			<div style={{ flex: 8 }}>
-				<div className={classes.oneSettingRow}>
+				<div style={oneSettingRowStyle}>
 					<Col>
 						<Icon
 							// @ts-ignore: ok here
 							icon={icon}
 							size={25}
-							className={classes.settingRowIcon}
+							style={settingRowIconStyle}
 						/>
 					</Col>
 					<Col>

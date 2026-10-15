@@ -1,5 +1,17 @@
-import StepConnector from '@material-ui/core/StepConnector';
-import { withStyles } from '@material-ui/core/styles';
+import React from 'react';
+
+// Decoupled connector component for React 19
+export function withStyles(styles: Record<string, unknown>) {
+	return <P extends object>(Component: React.ComponentType<P>) => {
+		return function StyledComponent(props: P) {
+			return <Component {...props} styles={styles} />;
+		};
+	};
+}
+
+export const StepConnector: React.FC<{ className?: string }> = ({ className }) => (
+	<div className={className} />
+);
 
 const ColorlibConnector = withStyles({
 	alternativeLabel: {

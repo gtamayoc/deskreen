@@ -9,7 +9,6 @@ import {
 	Icon,
 	Spinner,
 } from '@blueprintjs/core';
-import { createStyles, makeStyles } from '@material-ui/core/styles';
 import AllowConnectionForDeviceAlert from '@renderer/components/AllowConnectionForDeviceAlert';
 import LanguageSelector from '@renderer/components/LanguageSelector';
 import IntermediateStep from '@renderer/components/StepsOfStepper/IntermediateStep';
@@ -23,16 +22,12 @@ import { Device } from '../../../common/Device';
 import { IpcEvents } from '../../../common/IpcEvents.enum';
 import SuccessStep from '../components/StepsOfStepper/SuccessStep';
 
-const useStyles = makeStyles(() =>
-	createStyles({
-		stepContent: {
-			display: 'flex',
-			flexDirection: 'column',
-			justifyContent: 'center',
-			alignItems: 'center',
-		},
-	}),
-);
+const stepContentStyle: React.CSSProperties = {
+	display: 'flex',
+	flexDirection: 'column',
+	justifyContent: 'center',
+	alignItems: 'center',
+};
 
 function getSteps(t: TFunction): string[] {
 	return [t('connect'), t('select'), t('confirm')];
@@ -66,7 +61,6 @@ const DeskreenStepper = ({
 	setPendingConnectionDevice,
 	handleReset,
 }: Props): ReactNode => {
-	const classes = useStyles();
 	const { t } = useTranslation();
 
 	const [, setIsEntireScreenSelected] = useState(false);
@@ -324,7 +318,7 @@ const DeskreenStepper = ({
 	return (
 		<>
 			<Row style={{ width: '100%' }}>
-				<Col className={classes.stepContent} xs={12}>
+				<Col style={stepContentStyle} xs={12}>
 					{renderIntermediateOrSuccessStepContent()}
 				</Col>
 			</Row>

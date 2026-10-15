@@ -78,23 +78,23 @@
 ```mermaid
 flowchart TD
     subgraph Host ["PC Anfitrión (Deskreen CE)"]
-        Main["Proceso Principal Electron 37\n(Window Manager, IPC, HWND Lock)"]
-        Server["Servidor Local Koa 3 + Socket.io 4\n(Puerto 3131 / Señalización E2E)"]
-        Capturer["DesktopCapturer\n(Captura DXGI / GDI)"]
-        Helper["Helper Renderer Off-screen\n(WebRTC simple-peer host)"]
+        Main["Proceso Principal Electron 37<br/>(Window Manager, IPC, HWND Lock)"]
+        Server["Servidor Local Koa 3 + Socket.io 4<br/>(Puerto 3131 / Señalización E2E)"]
+        Capturer["DesktopCapturer<br/>(Captura DXGI / GDI)"]
+        Helper["Helper Renderer Off-screen<br/>(WebRTC W3C Native host)"]
     end
 
     subgraph Client ["Dispositivo Cliente (Móvil / Tablet)"]
-        Browser["Navegador Web Moderno\n(Chrome, Safari, Firefox)"]
-        Viewer["React 19 Client Viewer\n(Video Player + ActionPad)"]
+        Browser["Navegador Web Moderno<br/>(Chrome, Safari, Firefox)"]
+        Viewer["React 19 Client Viewer<br/>(Video Player + ActionPad)"]
     end
 
-    Main -->|Señalización local| Server
-    Capturer -->|MediaStream Video| Helper
-    Helper <-->|Canal WebRTC P2P (DTLS-SRTP)| Viewer
-    Browser -->|Carga HTTP Bundle| Server
-    Viewer -->|Comandos de Entrada Remota| Server
-    Server -->|IPC Input Injection| Main
+    Main -->|"Señalización local"| Server
+    Capturer -->|"MediaStream Video"| Helper
+    Helper <-- "Canal WebRTC P2P (DTLS-SRTP)" --> Viewer
+    Browser -->|"Carga HTTP Bundle"| Server
+    Viewer -->|"Comandos de Entrada Remota"| Server
+    Server -->|"IPC Input Injection"| Main
 ```
 
 ---
@@ -165,7 +165,7 @@ npm run typecheck
 # 2. Análisis estático y verificación de formato con Biome
 npm run lint
 
-# 3. Suite completa de 393 pruebas unitarias y de estrés (Node native test runner)
+# 3. Suite completa de 424 pruebas unitarias y de estrés (Node native test runner)
 npm test
 ```
 

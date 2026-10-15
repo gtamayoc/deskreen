@@ -35,6 +35,7 @@ Packaging: `build:win`, `build:mac`, `build:linux` (+ arch variants). Only CI is
 - `main/index.ts` disables WGC capturers on Win32 to avoid `ProcessFrame E_FAIL` — keep, don't "fix".
 - `.gitignore` hides `tests/`, `tasks/`, `.agents/`, `.codebase-memory/`, `out/`, `dist/` — they exist locally, don't recreate or commit them.
 - RemoteInput PowerShell worker (`-Command -`): never pipe multiline scriptblocks to stdin; interactive prompt deadlocks waiting for block close. Keep statements single-line.
+- Stepper CSS variables (`--color-stepper-step-bg`, `--color-stepper-step-icon`, `--color-stepper-connector`) are checked by contract in `tests/` — preserve them on `ColorlibStepIcon`/`ColorlibConnector`.
 
 ## Self-maintenance of this file
 

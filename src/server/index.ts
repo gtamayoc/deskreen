@@ -8,8 +8,7 @@ import http from 'http';
 import Koa from 'koa';
 import crypto from 'crypto';
 import { Server } from 'socket.io';
-import cors from 'kcors';
-import Router from 'koa-router';
+import cors from './corsMiddleware';
 import koaStatic from 'koa-static';
 import koaSend from 'koa-send';
 import detectPort from 'detect-port';
@@ -202,13 +201,15 @@ class DeskreenSignalingServer {
 
 	init(): void {
 		this.app = new Koa();
-		const router = new Router();
-		router.get('/ping', (ctx) => {
-			ctx.body = 'pong';
-		});
 
 		this.app.use(cors());
-		this.app.use(router.routes());
+		this.app.use(async (ctx, next) => {
+			if (ctx.path === '/ping' && ctx.method === 'GET') {
+				ctx.body = 'pong';
+				return;
+			}
+			await next();
+		});
 
 		const clientDistDirectory = this.clientDistDirectory;
 

@@ -85,19 +85,43 @@ export class AdbService {
 
 		// Clean up obsolete launched sessions when renewing or setting a new session
 		if (roomID && roomID !== previousRoomId) {
+			const deskreenGlobal = getDeskreenGlobal();
+			const activeRoomIds = new Set<string>();
+			for (const session of deskreenGlobal?.sharingSessionService?.sharingSessions?.values() || []) {
+				if (
+					session.status === SharingSessionStatusEnum.SHARING ||
+					session.status === SharingSessionStatusEnum.CONNECTED
+				) {
+					if (session.roomID) activeRoomIds.add(session.roomID);
+				}
+			}
+
 			for (const key of Array.from(this.launchedSessions)) {
 				const lastColonIndex = key.lastIndexOf(':');
 				const keyRoom =
 					lastColonIndex !== -1 ? key.slice(lastColonIndex + 1) : '';
-				if (keyRoom !== roomID) {
+				if (keyRoom !== roomID && !activeRoomIds.has(keyRoom)) {
 					this.launchedSessions.delete(key);
 				}
 			}
 			// Synchronize device room IDs for connected devices
 			let assignedWaitingRoom = false;
 			for (const dev of this.connectedDevices.values()) {
+				// If device is already streaming/connected, do NOT reassign or relaunch it
+				const isDeviceStreaming = Array.from(
+					deskreenGlobal?.sharingSessionService?.sharingSessions?.values() || [],
+				).some(
+					(s) =>
+						s.deviceID === dev.id &&
+						(s.status === SharingSessionStatusEnum.SHARING ||
+							s.status === SharingSessionStatusEnum.CONNECTED),
+				);
+				if (isDeviceStreaming) {
+					continue;
+				}
+
 				const existingRoom = this.deviceRoomIds.get(dev.id);
-				if (!existingRoom || existingRoom === previousRoomId) {
+				if (!existingRoom || (existingRoom === previousRoomId && !activeRoomIds.has(existingRoom))) {
 					if (!assignedWaitingRoom) {
 						this.deviceRoomIds.set(dev.id, roomID);
 						assignedWaitingRoom = true;
@@ -406,6 +430,35 @@ export class AdbService {
 					);
 					return;
 				}
+			}
+
+			// Guard: If this device is already streaming or connected in an active session, do not launch a second tab
+			const deskreenGlobal = getDeskreenGlobal();
+			const isAlreadyStreaming = Array.from(
+				deskreenGlobal?.sharingSessionService?.sharingSessions?.values() || [],
+			).some(
+				(s) =>
+					s.deviceID === info.id ||
+					(roomID &&
+						s.roomID === roomID &&
+						s.status === SharingSessionStatusEnum.SHARING),
+			);
+			if (isAlreadyStreaming) {
+				console.log(
+					`[AdbService] Device ${info.id} is already in an active sharing session. Skipping auto-launch.`,
+				);
+				return;
+			}
+
+			// Guard: If a browser tab was already launched for this device in the current connection, do not open multiple tabs
+			const hasActiveTab = Array.from(this.launchedSessions).some((k) =>
+				k.startsWith(`${info.id}:`),
+			);
+			if (hasActiveTab) {
+				console.log(
+					`[AdbService] Device ${info.id} already has a launched browser tab. Keeping existing tab.`,
+				);
+				return;
 			}
 
 			// Auto open browser on device ONLY if not already launched in this session
